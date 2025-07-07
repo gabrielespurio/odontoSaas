@@ -17,13 +17,25 @@ const FDI_LOWER_RIGHT = ["48", "47", "46", "45", "44", "43", "42", "41"];
 const FDI_LOWER_LEFT = ["31", "32", "33", "34", "35", "36", "37", "38"];
 
 const TOOTH_CONDITIONS = [
-  { value: "healthy", label: "Sadio", color: "fill-green-100 stroke-green-400", bgColor: "bg-green-100", borderColor: "border-green-400" },
-  { value: "carie", label: "Cárie", color: "fill-red-200 stroke-red-500", bgColor: "bg-red-200", borderColor: "border-red-500" },
-  { value: "restoration", label: "Restauração", color: "fill-amber-200 stroke-amber-500", bgColor: "bg-amber-200", borderColor: "border-amber-500" },
-  { value: "extraction", label: "Extração", color: "fill-gray-300 stroke-gray-600", bgColor: "bg-gray-300", borderColor: "border-gray-600" },
-  { value: "planned_treatment", label: "Tratamento Planejado", color: "fill-blue-200 stroke-blue-500", bgColor: "bg-blue-200", borderColor: "border-blue-500" },
-  { value: "completed_treatment", label: "Tratamento Realizado", color: "fill-teal-200 stroke-teal-500", bgColor: "bg-teal-200", borderColor: "border-teal-500" },
+  { value: "healthy", label: "Sadio", color: "#D4EDDA", borderColor: "#28A745", bgColor: "bg-green-100", textColor: "text-green-800" },
+  { value: "carie", label: "Cárie", color: "#F8D7DA", borderColor: "#DC3545", bgColor: "bg-red-100", textColor: "text-red-800" },
+  { value: "restoration", label: "Restauração", color: "#FFF3CD", borderColor: "#FFC107", bgColor: "bg-yellow-100", textColor: "text-yellow-800" },
+  { value: "extraction", label: "Extração", color: "#F8F9FA", borderColor: "#6C757D", bgColor: "bg-gray-100", textColor: "text-gray-800" },
+  { value: "planned_treatment", label: "Tratamento Planejado", color: "#CCE5FF", borderColor: "#007BFF", bgColor: "bg-blue-100", textColor: "text-blue-800" },
+  { value: "completed_treatment", label: "Tratamento Realizado", color: "#D1ECF1", borderColor: "#17A2B8", bgColor: "bg-cyan-100", textColor: "text-cyan-800" },
 ];
+
+// SVG tooth shapes based on real dental anatomy
+const TOOTH_SHAPES = {
+  // Incisors (front teeth)
+  incisor: `M12 2 C16 2 20 6 20 12 L20 24 C20 28 16 32 12 32 C8 32 4 28 4 24 L4 12 C4 6 8 2 12 2 Z`,
+  // Canines (pointed teeth)
+  canine: `M12 2 C17 2 21 6 21 12 L21 22 C21 26 19 30 16 32 L8 32 C5 30 3 26 3 22 L3 12 C3 6 7 2 12 2 Z`,
+  // Premolars (bicuspids)
+  premolar: `M12 4 C18 4 22 8 22 14 L22 20 C22 26 18 30 12 30 C6 30 2 26 2 20 L2 14 C2 8 6 4 12 4 Z M8 12 L16 12 M10 16 L14 16`,
+  // Molars (back teeth)
+  molar: `M12 6 C19 6 24 10 24 16 L24 22 C24 28 19 32 12 32 C5 32 0 28 0 22 L0 16 C0 10 5 6 12 6 Z M6 14 L18 14 M6 18 L18 18 M8 22 L16 22`
+};
 
 interface OdontogramProps {
   patientId: number;
@@ -93,52 +105,117 @@ export default function Odontogram({ patientId }: OdontogramProps) {
     }
   };
 
-  const renderTooth = (toothNumber: string, x: number, y: number) => {
-    const isSelected = selectedTooth === toothNumber;
-    const colorClass = getToothColor(toothNumber);
+  const getToothType = (toothNumber: string) => {
+    const num = parseInt(toothNumber);
+    const lastDigit = num % 10;
     
+    if (lastDigit === 1 || lastDigit === 2) return 'incisor';
+    if (lastDigit === 3) return 'canine';
+    if (lastDigit === 4 || lastDigit === 5) return 'premolar';
+    return 'molar';
+  };
+
+  const isUpperTooth = (toothNumber: string) => {
+    const num = parseInt(toothNumber);
+    return num >= 11 && num <= 28;
+  };
+
+  const renderToothSVG = (toothNumber: string, x: number, y: number) => {
+    const isUpper = isUpperTooth(toothNumber);
+    const toothType = getToothType(toothNumber);
+    const isSelected = selectedTooth === toothNumber;
+    const condition = getToothCondition(toothNumber);
+    const conditionInfo = TOOTH_CONDITIONS.find(c => c.value === condition);
+    
+    const toothColor = conditionInfo?.color || "#F8F9FA";
+    const borderColor = conditionInfo?.borderColor || "#6C757D";
+    
+    // Different SVG paths for different tooth types
+    let toothPath = "";
+    let toothWidth = 28;
+    let toothHeight = isUpper ? 35 : 32;
+    
+    switch (toothType) {
+      case 'incisor':
+        toothPath = isUpper 
+          ? "M14 2 C18 2 22 4 22 8 L22 24 C22 28 18 32 14 32 C10 32 6 28 6 24 L6 8 C6 4 10 2 14 2 Z"
+          : "M14 4 C18 4 22 8 22 12 L22 24 C22 28 18 30 14 30 C10 30 6 28 6 24 L6 12 C6 8 10 4 14 4 Z";
+        toothWidth = 24;
+        break;
+      case 'canine':
+        toothPath = isUpper
+          ? "M14 1 C19 1 23 4 23 9 L23 22 C23 27 20 31 16 33 L12 33 C8 31 5 27 5 22 L5 9 C5 4 9 1 14 1 Z"
+          : "M14 3 C19 3 23 7 23 12 L23 22 C23 27 19 30 14 30 C9 30 5 27 5 22 L5 12 C5 7 9 3 14 3 Z";
+        toothWidth = 26;
+        break;
+      case 'premolar':
+        toothPath = isUpper
+          ? "M14 3 C20 3 25 6 25 12 L25 20 C25 26 20 30 14 30 C8 30 3 26 3 20 L3 12 C3 6 8 3 14 3 Z"
+          : "M14 4 C20 4 25 8 25 14 L25 22 C25 28 20 30 14 30 C8 30 3 28 3 22 L3 14 C3 8 8 4 14 4 Z";
+        toothWidth = 28;
+        break;
+      case 'molar':
+        toothPath = isUpper
+          ? "M14 4 C22 4 28 7 28 13 L28 21 C28 27 22 31 14 31 C6 31 0 27 0 21 L0 13 C0 7 6 4 14 4 Z"
+          : "M14 5 C22 5 28 9 28 15 L28 23 C28 29 22 31 14 31 C6 31 0 29 0 23 L0 15 C0 9 6 5 14 5 Z";
+        toothWidth = 32;
+        break;
+    }
+
     return (
-      <g key={toothNumber} onClick={() => handleToothClick(toothNumber)} className="cursor-pointer">
+      <g 
+        key={toothNumber} 
+        onClick={() => handleToothClick(toothNumber)} 
+        className="cursor-pointer tooth-svg"
+        transform={`translate(${x}, ${y})`}
+      >
         <defs>
-          <filter id={`glow-${toothNumber}`} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-            <feMerge> 
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="SourceGraphic"/> 
-            </feMerge>
+          <filter id={`shadow-${toothNumber}`} x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000000" floodOpacity="0.1"/>
           </filter>
+          {isSelected && (
+            <filter id={`glow-${toothNumber}`} x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge> 
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/> 
+              </feMerge>
+            </filter>
+          )}
         </defs>
-        <rect
-          x={x}
-          y={y}
-          width="32"
-          height="35"
-          rx="6"
-          className={`${colorClass} ${
-            isSelected 
-              ? 'stroke-primary stroke-3 drop-shadow-lg' 
-              : 'stroke-2 hover:stroke-primary hover:stroke-3'
-          } transition-all duration-200 hover:drop-shadow-md`}
+        
+        {/* Tooth body */}
+        <path
+          d={toothPath}
+          fill={toothColor}
+          stroke={isSelected ? "#00796B" : borderColor}
+          strokeWidth={isSelected ? "3" : "2"}
+          className="transition-all duration-200 hover:drop-shadow-md"
           style={{
-            filter: isSelected ? `url(#glow-${toothNumber})` : 'none'
+            filter: isSelected ? `url(#glow-${toothNumber})` : `url(#shadow-${toothNumber})`
           }}
         />
+        
+        {/* Tooth number */}
         <text
-          x={x + 16}
-          y={y + 23}
+          x={toothWidth / 2}
+          y={toothHeight / 2 + 4}
           textAnchor="middle"
-          className={`text-xs font-semibold ${
+          className={`text-xs font-bold pointer-events-none transition-colors duration-200 ${
             isSelected ? 'fill-primary' : 'fill-neutral-700'
-          } pointer-events-none transition-colors duration-200`}
+          }`}
         >
           {toothNumber}
         </text>
+        
+        {/* Selection indicator */}
         {isSelected && (
           <circle
-            cx={x + 30}
-            cy={y + 5}
+            cx={toothWidth - 4}
+            cy="4"
             r="3"
-            className="fill-primary animate-pulse"
+            fill="#00796B"
+            className="animate-pulse"
           />
         )}
       </g>
@@ -173,17 +250,17 @@ export default function Odontogram({ patientId }: OdontogramProps) {
             <div className="flex justify-center dental-chart-container">
               <svg 
                 width="100%" 
-                height="100" 
-                viewBox="0 0 700 100" 
+                height="120" 
+                viewBox="0 0 680 120" 
                 className="dental-chart-svg max-w-full border border-neutral-200 rounded-lg bg-gradient-to-b from-white to-neutral-50 shadow-inner"
               >
                 {/* Upper right teeth */}
-                {FDI_UPPER_RIGHT.map((tooth, index) => renderTooth(tooth, 30 + index * 45, 15))}
+                {FDI_UPPER_RIGHT.map((tooth, index) => renderToothSVG(tooth, 20 + index * 40, 10))}
                 {/* Upper left teeth */}
-                {FDI_UPPER_LEFT.map((tooth, index) => renderTooth(tooth, 390 + index * 45, 15))}
+                {FDI_UPPER_LEFT.map((tooth, index) => renderToothSVG(tooth, 360 + index * 40, 10))}
                 
                 {/* Central divider line */}
-                <line x1="365" y1="10" x2="365" y2="90" stroke="#e5e7eb" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="340" y1="5" x2="340" y2="115" stroke="#e5e7eb" strokeWidth="2" strokeDasharray="5,5" />
               </svg>
             </div>
           </div>
@@ -194,17 +271,17 @@ export default function Odontogram({ patientId }: OdontogramProps) {
             <div className="flex justify-center dental-chart-container">
               <svg 
                 width="100%" 
-                height="100" 
-                viewBox="0 0 700 100" 
+                height="120" 
+                viewBox="0 0 680 120" 
                 className="dental-chart-svg max-w-full border border-neutral-200 rounded-lg bg-gradient-to-t from-white to-neutral-50 shadow-inner"
               >
                 {/* Lower right teeth */}
-                {FDI_LOWER_RIGHT.map((tooth, index) => renderTooth(tooth, 30 + index * 45, 40))}
+                {FDI_LOWER_RIGHT.map((tooth, index) => renderToothSVG(tooth, 20 + index * 40, 15))}
                 {/* Lower left teeth */}
-                {FDI_LOWER_LEFT.map((tooth, index) => renderTooth(tooth, 390 + index * 45, 40))}
+                {FDI_LOWER_LEFT.map((tooth, index) => renderToothSVG(tooth, 360 + index * 40, 15))}
                 
                 {/* Central divider line */}
-                <line x1="365" y1="10" x2="365" y2="90" stroke="#e5e7eb" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="340" y1="5" x2="340" y2="115" stroke="#e5e7eb" strokeWidth="2" strokeDasharray="5,5" />
               </svg>
             </div>
           </div>
@@ -218,7 +295,13 @@ export default function Odontogram({ patientId }: OdontogramProps) {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               {TOOTH_CONDITIONS.map((condition) => (
                 <div key={condition.value} className="dental-legend-item flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded border ${condition.bgColor} ${condition.borderColor}`}></div>
+                  <div 
+                    className="w-3 h-3 rounded border-2" 
+                    style={{ 
+                      backgroundColor: condition.color, 
+                      borderColor: condition.borderColor 
+                    }}
+                  ></div>
                   <span className="text-xs font-medium text-neutral-700">{condition.label}</span>
                 </div>
               ))}
@@ -265,7 +348,13 @@ export default function Odontogram({ patientId }: OdontogramProps) {
                       {TOOTH_CONDITIONS.map((condition) => (
                         <SelectItem key={condition.value} value={condition.value}>
                           <div className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded border ${condition.bgColor} ${condition.borderColor}`}></div>
+                            <div 
+                              className="w-3 h-3 rounded border-2" 
+                              style={{ 
+                                backgroundColor: condition.color, 
+                                borderColor: condition.borderColor 
+                              }}
+                            ></div>
                             {condition.label}
                           </div>
                         </SelectItem>

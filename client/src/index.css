@@ -107,6 +107,18 @@
     @apply transition-all duration-200 hover:bg-white hover:shadow-sm rounded-md p-2 -m-2;
   }
   
+  .tooth-svg {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  .tooth-svg:hover {
+    @apply transform scale-105;
+  }
+  
+  .tooth-svg.selected {
+    @apply transform scale-110;
+  }
+  
   .status-badge {
     @apply inline-flex items-center px-2 py-1 text-xs font-medium rounded-full;
   }
