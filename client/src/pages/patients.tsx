@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Search, Eye, Edit, Wrench, Filter } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Search, Eye, Edit, Wrench, Filter, MoreHorizontal, Trash2 } from "lucide-react";
 import PatientForm from "@/components/patients/patient-form";
 import type { Patient } from "@/lib/types";
 
@@ -161,28 +162,37 @@ export default function Patients() {
                       </Badge>
                     </td>
                     <td className="py-4 px-4">
-                      <div className="flex items-center space-x-2">
-                        <Link href={`/patients/${patient.id}`}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4" />
+                            <MoreHorizontal className="w-4 h-4" />
                           </Button>
-                        </Link>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => {
-                            setEditingPatient(patient);
-                            setShowForm(true);
-                          }}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Link href={`/patients/${patient.id}?tab=odontogram`}>
-                          <Button variant="ghost" size="sm">
-                            <Wrench className="w-4 h-4" />
-                          </Button>
-                        </Link>
-                      </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/patients/${patient.id}`} className="flex items-center cursor-pointer">
+                              <Eye className="w-4 h-4 mr-2" />
+                              Visualizar
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              setEditingPatient(patient);
+                              setShowForm(true);
+                            }}
+                            className="flex items-center cursor-pointer"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="flex items-center cursor-pointer text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}

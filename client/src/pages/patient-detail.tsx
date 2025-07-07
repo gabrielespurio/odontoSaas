@@ -182,13 +182,64 @@ export default function PatientDetail() {
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="consultations" className="space-y-4">
-        <TabsList>
+      <Tabs defaultValue="informacoes" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="informacoes">Informações Pessoais</TabsTrigger>
           <TabsTrigger value="consultations">Histórico</TabsTrigger>
           <TabsTrigger value="odontogram">Odontograma</TabsTrigger>
           <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
           <TabsTrigger value="financial">Financeiro</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="informacoes" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Informações Pessoais</CardTitle>
+              <Button variant="outline" size="sm">
+                <Edit className="w-4 h-4 mr-2" />
+                Editar
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-neutral-600">Nome Completo</label>
+                    <p className="text-lg">{patient.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-neutral-600">CPF</label>
+                    <p className="text-lg">{formatCPF(patient.cpf)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-neutral-600">Data de Nascimento</label>
+                    <p className="text-lg">{formatDate(patient.birthDate)}</p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-neutral-600">Telefone</label>
+                    <p className="text-lg">{formatPhone(patient.phone)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-neutral-600">Email</label>
+                    <p className="text-lg">{patient.email || "Não informado"}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-neutral-600">Endereço</label>
+                    <p className="text-lg">{patient.address || "Não informado"}</p>
+                  </div>
+                </div>
+              </div>
+              {patient.clinicalNotes && (
+                <div className="mt-6 pt-6 border-t">
+                  <label className="text-sm font-medium text-neutral-600">Observações Clínicas</label>
+                  <p className="text-lg mt-2">{patient.clinicalNotes}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="consultations" className="space-y-4">
           <Card>
