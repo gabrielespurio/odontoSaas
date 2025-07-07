@@ -202,7 +202,7 @@ export default function Odontogram({ patientId }: OdontogramProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-8">
       {/* Main Dental Chart */}
       <Card className="shadow-sm">
         <CardHeader className="pb-3">
@@ -276,7 +276,7 @@ export default function Odontogram({ patientId }: OdontogramProps) {
 
       {/* Tooth Editor - Below the chart - Compact Layout */}
       {selectedTooth && (
-        <Card className="tooth-editor-card shadow-sm border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+        <Card className="tooth-editor-card tooth-editor-container shadow-sm border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">

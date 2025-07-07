@@ -474,7 +474,7 @@ export default function PatientDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="odontogram" className="space-y-4">
+        <TabsContent value="odontogram" className="space-y-4 odontogram-container">
           <Odontogram patientId={patientId} />
         </TabsContent>
 
