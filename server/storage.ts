@@ -265,25 +265,24 @@ export class DatabaseStorage implements IStorage {
 
   // Dental Chart
   async getDentalChart(patientId: number): Promise<DentalChart[]> {
-    return await db.select().from(dentalChart).where(eq(dentalChart.patientId, patientId));
+    // Get all records ordered by creation date (newest first) for history display
+    return await db.select().from(dentalChart)
+      .where(eq(dentalChart.patientId, patientId))
+      .orderBy(dentalChart.createdAt);
   }
 
   async updateToothCondition(patientId: number, toothNumber: string, insertDentalChart: InsertDentalChart): Promise<DentalChart> {
-    const existingRecord = await db.select().from(dentalChart)
-      .where(and(eq(dentalChart.patientId, patientId), eq(dentalChart.toothNumber, toothNumber)));
-
-    if (existingRecord.length > 0) {
-      const [updated] = await db.update(dentalChart)
-        .set(insertDentalChart)
-        .where(and(eq(dentalChart.patientId, patientId), eq(dentalChart.toothNumber, toothNumber)))
-        .returning();
-      return updated;
-    } else {
-      const [created] = await db.insert(dentalChart)
-        .values({ ...insertDentalChart, patientId, toothNumber })
-        .returning();
-      return created;
-    }
+    // Always create a new record to maintain history
+    const [created] = await db.insert(dentalChart)
+      .values({ 
+        ...insertDentalChart, 
+        patientId, 
+        toothNumber,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+      .returning();
+    return created;
   }
 
   // Anamnese

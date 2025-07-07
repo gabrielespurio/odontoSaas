@@ -78,8 +78,16 @@ export default function Odontogram({ patientId }: OdontogramProps) {
   });
 
   const getToothCondition = (toothNumber: string) => {
-    const tooth = dentalChart?.find(t => t.toothNumber === toothNumber);
-    return tooth?.condition || "healthy";
+    // Get the most recent condition for this tooth
+    const toothRecords = dentalChart?.filter(t => t.toothNumber === toothNumber);
+    if (!toothRecords || toothRecords.length === 0) return "healthy";
+    
+    // Sort by createdAt (newest first) and get the most recent
+    const sortedRecords = toothRecords.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    
+    return sortedRecords[0]?.condition || "healthy";
   };
 
   const getToothColor = (toothNumber: string) => {
@@ -90,9 +98,23 @@ export default function Odontogram({ patientId }: OdontogramProps) {
 
   const handleToothClick = (toothNumber: string) => {
     setSelectedTooth(toothNumber);
-    const tooth = dentalChart?.find(t => t.toothNumber === toothNumber);
-    setSelectedCondition(tooth?.condition || "healthy");
-    setNotes(tooth?.notes || "");
+    
+    // Get the most recent condition for this tooth
+    const toothRecords = dentalChart?.filter(t => t.toothNumber === toothNumber);
+    if (!toothRecords || toothRecords.length === 0) {
+      setSelectedCondition("healthy");
+      setNotes("");
+      return;
+    }
+    
+    // Sort by createdAt (newest first) and get the most recent
+    const sortedRecords = toothRecords.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    
+    const latestRecord = sortedRecords[0];
+    setSelectedCondition(latestRecord?.condition || "healthy");
+    setNotes(latestRecord?.notes || "");
   };
 
   const handleUpdateTooth = async () => {
@@ -368,6 +390,8 @@ export default function Odontogram({ patientId }: OdontogramProps) {
               <div className="space-y-3 max-h-40 overflow-y-auto bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-lg p-4 border border-neutral-200">
                 {dentalChart
                   ?.filter(tooth => tooth.toothNumber === selectedTooth)
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .slice(0, 5) // Show only the last 5 records
                   .map((tooth) => {
                     const conditionInfo = TOOTH_CONDITIONS.find(c => c.value === tooth.condition);
                     return (
