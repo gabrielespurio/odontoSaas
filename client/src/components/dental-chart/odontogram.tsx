@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Activity, Save, X, History } from "lucide-react";
+import { Activity, Save, X, History, Calendar } from "lucide-react";
 import type { DentalChart } from "@/lib/types";
 
 const FDI_UPPER_RIGHT = ["18", "17", "16", "15", "14", "13", "12", "11"];
@@ -359,34 +359,70 @@ export default function Odontogram({ patientId }: OdontogramProps) {
               </Button>
             </div>
 
-            {/* History - Collapsed by default for space */}
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold flex items-center gap-2">
-                <History className="w-4 h-4" />
+            {/* History - Enhanced Design */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold flex items-center gap-2 text-neutral-800">
+                <History className="w-4 h-4 text-primary" />
                 Histórico do Dente
               </Label>
-              <div className="space-y-2 max-h-32 overflow-y-auto bg-neutral-50 rounded-lg p-3">
+              <div className="space-y-3 max-h-40 overflow-y-auto bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-lg p-4 border border-neutral-200">
                 {dentalChart
                   ?.filter(tooth => tooth.toothNumber === selectedTooth)
-                  .map((tooth) => (
-                    <div key={tooth.id} className="p-2 bg-white rounded border border-neutral-200 shadow-sm">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="secondary" className="text-xs">
-                          {TOOTH_CONDITIONS.find(c => c.value === tooth.condition)?.label}
-                        </Badge>
-                        <span className="text-xs text-neutral-500">
-                          {tooth.treatmentDate ? new Date(tooth.treatmentDate).toLocaleDateString('pt-BR') : 'Sem data'}
-                        </span>
+                  .map((tooth) => {
+                    const conditionInfo = TOOTH_CONDITIONS.find(c => c.value === tooth.condition);
+                    return (
+                      <div key={tooth.id} className="bg-white rounded-lg border border-neutral-200 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+                        {/* Header with condition and date */}
+                        <div className="flex items-center justify-between p-3 bg-gradient-to-r from-neutral-50 to-white border-b border-neutral-100">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-3 h-3 rounded-full border-2" 
+                              style={{ 
+                                backgroundColor: conditionInfo?.color || '#f8f9fa', 
+                                borderColor: conditionInfo?.borderColor || '#6c757d' 
+                              }}
+                            ></div>
+                            <Badge 
+                              className={`text-xs font-medium ${conditionInfo?.bgColor} ${conditionInfo?.textColor}`}
+                              variant="secondary"
+                            >
+                              {conditionInfo?.label || 'Condição desconhecida'}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-neutral-500">
+                            <Calendar className="w-3 h-3" />
+                            <span>
+                              {tooth.treatmentDate ? new Date(tooth.treatmentDate).toLocaleDateString('pt-BR') : 'Sem data'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Notes section */}
+                        {tooth.notes ? (
+                          <div className="p-3">
+                            <div className="flex items-start gap-2">
+                              <div className="w-1 h-4 bg-primary rounded-full mt-1 flex-shrink-0"></div>
+                              <div className="flex-1">
+                                <p className="text-sm text-neutral-700 leading-relaxed">{tooth.notes}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-3 text-center">
+                            <p className="text-xs text-neutral-400 italic">Nenhuma observação registrada</p>
+                          </div>
+                        )}
                       </div>
-                      {tooth.notes && (
-                        <p className="text-sm text-neutral-700 mt-1">{tooth.notes}</p>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 {(!dentalChart || dentalChart.filter(tooth => tooth.toothNumber === selectedTooth).length === 0) && (
-                  <p className="text-sm text-neutral-500 italic text-center py-2">
-                    Nenhum histórico encontrado
-                  </p>
+                  <div className="text-center py-6">
+                    <History className="w-8 h-8 text-neutral-300 mx-auto mb-2" />
+                    <p className="text-sm text-neutral-500 font-medium">Nenhum histórico encontrado</p>
+                    <p className="text-xs text-neutral-400 mt-1">
+                      Os tratamentos realizados neste dente aparecerão aqui
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
