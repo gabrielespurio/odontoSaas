@@ -1,10 +1,18 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { useParams, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   ArrowLeft, 
   CalendarPlus, 
@@ -22,9 +30,23 @@ import Odontogram from "@/components/dental-chart/odontogram";
 import AnamneseForm from "@/components/patients/anamnese-form";
 import type { Patient, Consultation, Financial } from "@/lib/types";
 
+const patientEditSchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório"),
+  cpf: z.string().min(11, "CPF é obrigatório"),
+  birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
+  phone: z.string().min(1, "Telefone é obrigatório"),
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  address: z.string().optional(),
+  clinicalNotes: z.string().optional(),
+});
+
+type PatientEditData = z.infer<typeof patientEditSchema>;
+
 export default function PatientDetail() {
   const { id } = useParams();
   const patientId = parseInt(id || "0");
+  const [isEditing, setIsEditing] = useState(false);
+  const { toast } = useToast();
   
   const { data: patient, isLoading: patientLoading } = useQuery<Patient>({
     queryKey: [`/api/patients/${patientId}`],
@@ -40,6 +62,58 @@ export default function PatientDetail() {
     queryKey: [`/api/financial`, { patientId }],
     enabled: !!patientId,
   });
+
+  const form = useForm<PatientEditData>({
+    resolver: zodResolver(patientEditSchema),
+    defaultValues: {
+      name: patient?.name || "",
+      cpf: patient?.cpf || "",
+      birthDate: patient?.birthDate || "",
+      phone: patient?.phone || "",
+      email: patient?.email || "",
+      address: patient?.address || "",
+      clinicalNotes: patient?.clinicalNotes || "",
+    },
+  });
+
+  const updatePatientMutation = useMutation({
+    mutationFn: (data: PatientEditData) => 
+      apiRequest("PUT", `/api/patients/${patientId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/patients/${patientId}`] });
+      setIsEditing(false);
+      toast({
+        title: "Sucesso",
+        description: "Informações do paciente atualizadas com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar as informações do paciente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: PatientEditData) => {
+    updatePatientMutation.mutate(data);
+  };
+
+  // Reset form when patient data changes
+  useEffect(() => {
+    if (patient) {
+      form.reset({
+        name: patient.name,
+        cpf: patient.cpf,
+        birthDate: patient.birthDate,
+        phone: patient.phone,
+        email: patient.email || "",
+        address: patient.address || "",
+        clinicalNotes: patient.clinicalNotes || "",
+      });
+    }
+  }, [patient, form]);
 
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
@@ -134,53 +208,7 @@ export default function PatientDetail() {
         </div>
       </div>
 
-      {/* Patient Info Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Informações Pessoais</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="flex items-center">
-              <User className="w-5 h-5 text-neutral-400 mr-2" />
-              <div>
-                <p className="text-sm text-neutral-600">CPF</p>
-                <p className="font-medium">{formatCPF(patient.cpf)}</p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <Calendar className="w-5 h-5 text-neutral-400 mr-2" />
-              <div>
-                <p className="text-sm text-neutral-600">Data de Nascimento</p>
-                <p className="font-medium">{formatDate(patient.birthDate)}</p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <Phone className="w-5 h-5 text-neutral-400 mr-2" />
-              <div>
-                <p className="text-sm text-neutral-600">Telefone</p>
-                <p className="font-medium">{formatPhone(patient.phone)}</p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <Mail className="w-5 h-5 text-neutral-400 mr-2" />
-              <div>
-                <p className="text-sm text-neutral-600">Email</p>
-                <p className="font-medium">{patient.email || "Não informado"}</p>
-              </div>
-            </div>
-          </div>
-          {patient.address && (
-            <div className="mt-4 flex items-center">
-              <MapPin className="w-5 h-5 text-neutral-400 mr-2" />
-              <div>
-                <p className="text-sm text-neutral-600">Endereço</p>
-                <p className="font-medium">{patient.address}</p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
 
       {/* Tabs */}
       <Tabs defaultValue="informacoes" className="space-y-4">
@@ -196,64 +224,203 @@ export default function PatientDetail() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Informações Pessoais</CardTitle>
-              <Button variant="outline" size="sm">
-                <Edit className="w-4 h-4 mr-2" />
-                Editar
-              </Button>
+              <div className="flex gap-2">
+                {isEditing ? (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setIsEditing(false);
+                        form.reset();
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={form.handleSubmit(onSubmit)}
+                      disabled={updatePatientMutation.isPending}
+                    >
+                      {updatePatientMutation.isPending ? "Salvando..." : "Salvar"}
+                    </Button>
+                  </>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <User className="w-4 h-4 text-neutral-600" />
-                      <label className="text-sm font-medium text-neutral-600">Nome Completo</label>
+              {isEditing ? (
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome Completo</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Nome completo" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="cpf"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>CPF</FormLabel>
+                              <FormControl>
+                                <Input placeholder="000.000.000-00" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="birthDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Data de Nascimento</FormLabel>
+                              <FormControl>
+                                <Input type="date" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Telefone</FormLabel>
+                              <FormControl>
+                                <Input placeholder="(00) 00000-0000" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input type="email" placeholder="email@exemplo.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="address"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Endereço</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Endereço completo" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </div>
-                    <p className="text-lg font-medium text-neutral-900 break-words">{patient.name}</p>
+                    <FormField
+                      control={form.control}
+                      name="clinicalNotes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Observações Clínicas</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Observações e anotações clínicas..."
+                              className="min-h-[100px]"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </form>
+                </Form>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <User className="w-4 h-4 text-neutral-600" />
+                        <label className="text-sm font-medium text-neutral-600">Nome Completo</label>
+                      </div>
+                      <p className="text-lg font-medium text-neutral-900 break-words">{patient.name}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="w-4 h-4 text-neutral-600" />
+                        <label className="text-sm font-medium text-neutral-600">CPF</label>
+                      </div>
+                      <p className="text-lg font-medium text-neutral-900 font-mono">{formatCPF(patient.cpf)}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-neutral-600" />
+                        <label className="text-sm font-medium text-neutral-600">Data de Nascimento</label>
+                      </div>
+                      <p className="text-lg font-medium text-neutral-900">{formatDate(patient.birthDate)}</p>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <FileText className="w-4 h-4 text-neutral-600" />
-                      <label className="text-sm font-medium text-neutral-600">CPF</label>
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Phone className="w-4 h-4 text-neutral-600" />
+                        <label className="text-sm font-medium text-neutral-600">Telefone</label>
+                      </div>
+                      <p className="text-lg font-medium text-neutral-900 font-mono">{formatPhone(patient.phone)}</p>
                     </div>
-                    <p className="text-lg font-medium text-neutral-900 font-mono">{formatCPF(patient.cpf)}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-neutral-600" />
-                      <label className="text-sm font-medium text-neutral-600">Data de Nascimento</label>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Mail className="w-4 h-4 text-neutral-600" />
+                        <label className="text-sm font-medium text-neutral-600">Email</label>
+                      </div>
+                      <p className="text-lg font-medium text-neutral-900 break-all">{patient.email || "Não informado"}</p>
                     </div>
-                    <p className="text-lg font-medium text-neutral-900">{formatDate(patient.birthDate)}</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4 text-neutral-600" />
+                        <label className="text-sm font-medium text-neutral-600">Endereço</label>
+                      </div>
+                      <p className="text-lg font-medium text-neutral-900 break-words">{patient.address || "Não informado"}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4 text-neutral-600" />
-                      <label className="text-sm font-medium text-neutral-600">Telefone</label>
-                    </div>
-                    <p className="text-lg font-medium text-neutral-900 font-mono">{formatPhone(patient.phone)}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Mail className="w-4 h-4 text-neutral-600" />
-                      <label className="text-sm font-medium text-neutral-600">Email</label>
-                    </div>
-                    <p className="text-lg font-medium text-neutral-900 break-all">{patient.email || "Não informado"}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-neutral-600" />
-                      <label className="text-sm font-medium text-neutral-600">Endereço</label>
-                    </div>
-                    <p className="text-lg font-medium text-neutral-900 break-words">{patient.address || "Não informado"}</p>
-                  </div>
-                </div>
-              </div>
-              {patient.clinicalNotes && (
+              )}
+              {!isEditing && patient.clinicalNotes && (
                 <div className="mt-6 pt-6 border-t">
-                  <label className="text-sm font-medium text-neutral-600">Observações Clínicas</label>
-                  <p className="text-lg mt-2">{patient.clinicalNotes}</p>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <ClipboardList className="w-4 h-4 text-neutral-600" />
+                    <label className="text-sm font-medium text-neutral-600">Observações Clínicas</label>
+                  </div>
+                  <p className="text-lg text-neutral-900 leading-relaxed">{patient.clinicalNotes}</p>
                 </div>
               )}
             </CardContent>
