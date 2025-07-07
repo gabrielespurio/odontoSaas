@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -13,14 +13,24 @@ import type { Patient } from "@/lib/types";
 
 export default function Patients() {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
 
+  // Debounce search to avoid too many API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const { data: patients, isLoading, error } = useQuery<Patient[]>({
-    queryKey: ["/api/patients"],
+    queryKey: ["/api/patients", { search: debouncedSearch }],
     queryFn: async () => {
       const token = localStorage.getItem("token");
-      const url = search ? `/api/patients?search=${encodeURIComponent(search)}` : "/api/patients";
+      const url = debouncedSearch ? `/api/patients?search=${encodeURIComponent(debouncedSearch)}` : "/api/patients";
       
       const response = await fetch(url, {
         headers: {
