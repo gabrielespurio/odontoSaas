@@ -104,30 +104,30 @@ export default function PatientDetail() {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-6">
+        <div className="flex items-center space-x-4">
           <Link href="/patients">
-            <Button variant="outline" size="sm" className="mr-4">
+            <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
           </Link>
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white text-lg font-medium mr-4">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white text-lg font-medium shrink-0">
               {getInitials(patient.name)}
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-neutral-900">{patient.name}</h1>
-              <p className="text-neutral-600">{patient.email}</p>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-bold text-neutral-900 break-words">{patient.name}</h1>
+              <p className="text-neutral-600 truncate">{patient.email || 'Email não informado'}</p>
             </div>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline">
+        <div className="flex flex-col sm:flex-row gap-2 lg:shrink-0">
+          <Button variant="outline" className="sm:w-auto">
             <CalendarPlus className="w-4 h-4 mr-2" />
             Agendar Consulta
           </Button>
-          <Button>
+          <Button className="sm:w-auto">
             <FileText className="w-4 h-4 mr-2" />
             Nova Consulta
           </Button>
@@ -202,33 +202,51 @@ export default function PatientDetail() {
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-neutral-600">Nome Completo</label>
-                    <p className="text-lg">{patient.name}</p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <User className="w-4 h-4 text-neutral-600" />
+                      <label className="text-sm font-medium text-neutral-600">Nome Completo</label>
+                    </div>
+                    <p className="text-lg font-medium text-neutral-900 break-words">{patient.name}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-neutral-600">CPF</label>
-                    <p className="text-lg">{formatCPF(patient.cpf)}</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <FileText className="w-4 h-4 text-neutral-600" />
+                      <label className="text-sm font-medium text-neutral-600">CPF</label>
+                    </div>
+                    <p className="text-lg font-medium text-neutral-900 font-mono">{formatCPF(patient.cpf)}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-neutral-600">Data de Nascimento</label>
-                    <p className="text-lg">{formatDate(patient.birthDate)}</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4 text-neutral-600" />
+                      <label className="text-sm font-medium text-neutral-600">Data de Nascimento</label>
+                    </div>
+                    <p className="text-lg font-medium text-neutral-900">{formatDate(patient.birthDate)}</p>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-neutral-600">Telefone</label>
-                    <p className="text-lg">{formatPhone(patient.phone)}</p>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-4 h-4 text-neutral-600" />
+                      <label className="text-sm font-medium text-neutral-600">Telefone</label>
+                    </div>
+                    <p className="text-lg font-medium text-neutral-900 font-mono">{formatPhone(patient.phone)}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-neutral-600">Email</label>
-                    <p className="text-lg">{patient.email || "Não informado"}</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Mail className="w-4 h-4 text-neutral-600" />
+                      <label className="text-sm font-medium text-neutral-600">Email</label>
+                    </div>
+                    <p className="text-lg font-medium text-neutral-900 break-all">{patient.email || "Não informado"}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-neutral-600">Endereço</label>
-                    <p className="text-lg">{patient.address || "Não informado"}</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="w-4 h-4 text-neutral-600" />
+                      <label className="text-sm font-medium text-neutral-600">Endereço</label>
+                    </div>
+                    <p className="text-lg font-medium text-neutral-900 break-words">{patient.address || "Não informado"}</p>
                   </div>
                 </div>
               </div>
@@ -259,12 +277,17 @@ export default function PatientDetail() {
               ) : consultations && consultations.length > 0 ? (
                 <div className="space-y-4">
                   {consultations.map((consultation) => (
-                    <div key={consultation.id} className="p-4 border border-neutral-200 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-medium">{consultation.procedures?.join(", ") || "Consulta"}</p>
-                        <p className="text-sm text-neutral-600">
-                          {formatDate(consultation.date)} - {consultation.dentist?.name}
-                        </p>
+                    <div key={consultation.id} className="p-6 border border-neutral-200 rounded-lg hover:border-neutral-300 transition-colors">
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-3">
+                        <div className="space-y-1">
+                          <p className="font-medium text-lg">{consultation.procedures?.join(", ") || "Consulta"}</p>
+                          <p className="text-sm text-neutral-600">
+                            {formatDate(consultation.date)} - Dr. {consultation.dentist?.name}
+                          </p>
+                        </div>
+                        <Badge className="status-attended self-start lg:self-center">
+                          Atendido
+                        </Badge>
                       </div>
                       {consultation.clinicalNotes && (
                         <p className="text-sm text-neutral-600 mb-2">{consultation.clinicalNotes}</p>
@@ -308,22 +331,28 @@ export default function PatientDetail() {
                 </div>
               ) : financial && financial.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
+                  <table className="w-full min-w-[600px]">
+                    <thead className="bg-neutral-50">
                       <tr className="border-b">
-                        <th className="text-left py-2">Descrição</th>
-                        <th className="text-left py-2">Valor</th>
-                        <th className="text-left py-2">Vencimento</th>
-                        <th className="text-left py-2">Status</th>
+                        <th className="text-left py-4 px-4 font-medium text-neutral-700">Descrição</th>
+                        <th className="text-left py-4 px-4 font-medium text-neutral-700">Valor</th>
+                        <th className="text-left py-4 px-4 font-medium text-neutral-700">Vencimento</th>
+                        <th className="text-left py-4 px-4 font-medium text-neutral-700">Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {financial.map((record) => (
-                        <tr key={record.id} className="border-b">
-                          <td className="py-2">{record.description}</td>
-                          <td className="py-2">R$ {Number(record.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                          <td className="py-2">{formatDate(record.dueDate)}</td>
-                          <td className="py-2">{getStatusBadge(record.status)}</td>
+                        <tr key={record.id} className="border-b hover:bg-neutral-50/50 transition-colors">
+                          <td className="py-4 px-4">
+                            <p className="font-medium text-neutral-900">{record.description}</p>
+                          </td>
+                          <td className="py-4 px-4">
+                            <p className="font-semibold text-lg text-neutral-900">
+                              R$ {Number(record.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </p>
+                          </td>
+                          <td className="py-4 px-4 text-neutral-900">{formatDate(record.dueDate)}</td>
+                          <td className="py-4 px-4">{getStatusBadge(record.status)}</td>
                         </tr>
                       ))}
                     </tbody>

@@ -13,8 +13,8 @@
   --card-foreground: hsl(20, 14.3%, 4.1%);
   --border: hsl(20, 5.9%, 90%);
   --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(221, 83%, 53%);
-  --primary-foreground: hsl(210, 40%, 98%);
+  --primary: hsl(174, 100%, 23%);
+  --primary-foreground: hsl(0, 0%, 100%);
   --secondary: hsl(60, 4.8%, 95.9%);
   --secondary-foreground: hsl(24, 9.8%, 10%);
   --accent: hsl(60, 4.8%, 95.9%);
@@ -29,13 +29,13 @@
   --dental-carie: hsl(0, 84%, 60%);
   --dental-restoration: hsl(43, 96%, 56%);
   --dental-extraction: hsl(0, 0%, 50%);
-  --dental-planned: hsl(217, 91%, 60%);
+  --dental-planned: hsl(174, 100%, 23%);
   --dental-completed: hsl(142, 76%, 36%);
   
   /* Status colors */
   --status-scheduled: hsl(43, 96%, 56%);
   --status-confirmed: hsl(142, 76%, 36%);
-  --status-attended: hsl(217, 91%, 60%);
+  --status-attended: hsl(174, 100%, 23%);
   --status-cancelled: hsl(0, 84%, 60%);
   
   /* Financial colors */
@@ -55,8 +55,8 @@
   --card-foreground: hsl(0, 0%, 98%);
   --border: hsl(240, 3.7%, 15.9%);
   --input: hsl(240, 3.7%, 15.9%);
-  --primary: hsl(221, 83%, 53%);
-  --primary-foreground: hsl(210, 40%, 98%);
+  --primary: hsl(174, 100%, 23%);
+  --primary-foreground: hsl(0, 0%, 100%);
   --secondary: hsl(240, 3.7%, 15.9%);
   --secondary-foreground: hsl(0, 0%, 98%);
   --accent: hsl(240, 3.7%, 15.9%);
@@ -100,7 +100,7 @@
   }
   
   .dental-tooth.planned_treatment {
-    @apply fill-blue-200 stroke-blue-600;
+    @apply fill-teal-200 stroke-teal-600;
   }
   
   .dental-tooth.completed_treatment {
@@ -108,7 +108,7 @@
   }
   
   .dental-tooth.selected {
-    @apply fill-blue-100 stroke-blue-800 stroke-2;
+    @apply fill-teal-100 stroke-teal-800 stroke-2;
   }
   
   .status-badge {
@@ -124,7 +124,7 @@
   }
   
   .status-attended {
-    @apply bg-blue-100 text-blue-800;
+    @apply bg-teal-100 text-teal-800;
   }
   
   .status-cancelled {

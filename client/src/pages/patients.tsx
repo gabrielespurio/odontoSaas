@@ -126,48 +126,49 @@ export default function Patients() {
         <CardHeader>
           <CardTitle>Lista de Pacientes</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
+            <table className="w-full min-w-[800px]">
+              <thead className="bg-neutral-50">
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-neutral-600">Paciente</th>
-                  <th className="text-left py-3 px-4 font-medium text-neutral-600">CPF</th>
-                  <th className="text-left py-3 px-4 font-medium text-neutral-600">Telefone</th>
-                  <th className="text-left py-3 px-4 font-medium text-neutral-600">Data Cadastro</th>
-                  <th className="text-left py-3 px-4 font-medium text-neutral-600">Status</th>
-                  <th className="text-left py-3 px-4 font-medium text-neutral-600">Ações</th>
+                  <th className="text-left py-4 px-6 font-medium text-neutral-700">Paciente</th>
+                  <th className="text-left py-4 px-6 font-medium text-neutral-700">CPF</th>
+                  <th className="text-left py-4 px-6 font-medium text-neutral-700">Telefone</th>
+                  <th className="text-left py-4 px-6 font-medium text-neutral-700">Data Cadastro</th>
+                  <th className="text-left py-4 px-6 font-medium text-neutral-700">Status</th>
+                  <th className="text-center py-4 px-6 font-medium text-neutral-700">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {patients?.map((patient) => (
-                  <tr key={patient.id} className="border-b hover:bg-neutral-50">
-                    <td className="py-4 px-4">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+                  <tr key={patient.id} className="border-b hover:bg-neutral-50/50 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium shrink-0">
                           {getInitials(patient.name)}
                         </div>
-                        <div className="ml-3">
-                          <p className="font-medium text-neutral-900">{patient.name}</p>
-                          <p className="text-sm text-neutral-600">{patient.email}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-neutral-900 truncate">{patient.name}</p>
+                          <p className="text-sm text-neutral-600 truncate">{patient.email || 'Email não informado'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-4 text-neutral-900">{formatCPF(patient.cpf)}</td>
-                    <td className="py-4 px-4 text-neutral-900">{formatPhone(patient.phone)}</td>
-                    <td className="py-4 px-4 text-neutral-900">{formatDate(patient.createdAt)}</td>
-                    <td className="py-4 px-4">
+                    <td className="py-4 px-6 text-neutral-900 font-mono text-sm">{formatCPF(patient.cpf)}</td>
+                    <td className="py-4 px-6 text-neutral-900 font-mono text-sm">{formatPhone(patient.phone)}</td>
+                    <td className="py-4 px-6 text-neutral-900 text-sm">{formatDate(patient.createdAt)}</td>
+                    <td className="py-4 px-6">
                       <Badge className={patient.isActive ? "status-confirmed" : "status-cancelled"}>
                         {patient.isActive ? "Ativo" : "Inativo"}
                       </Badge>
                     </td>
-                    <td className="py-4 px-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
+                    <td className="py-4 px-6">
+                      <div className="flex justify-center">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
                             <Link href={`/patients/${patient.id}`} className="flex items-center cursor-pointer">
@@ -192,7 +193,8 @@ export default function Patients() {
                             Excluir
                           </DropdownMenuItem>
                         </DropdownMenuContent>
-                      </DropdownMenu>
+                        </DropdownMenu>
+                      </div>
                     </td>
                   </tr>
                 ))}
