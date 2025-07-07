@@ -15,9 +15,30 @@ export default function Patients() {
   const [showForm, setShowForm] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
 
-  const { data: patients, isLoading } = useQuery<Patient[]>({
-    queryKey: ["/api/patients", { search }],
+  const { data: patients, isLoading, error } = useQuery<Patient[]>({
+    queryKey: ["/api/patients"],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const url = search ? `/api/patients?search=${encodeURIComponent(search)}` : "/api/patients";
+      
+      const response = await fetch(url, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
   });
+
+  console.log("Patients data:", patients);
+  console.log("Loading:", isLoading);
+  console.log("Error:", error);
 
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();

@@ -49,7 +49,9 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
   const createMutation = useMutation({
     mutationFn: (data: PatientFormData) => apiRequest("POST", "/api/patients", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === "/api/patients" 
+      });
       toast({
         title: "Sucesso",
         description: "Paciente criado com sucesso",
@@ -68,7 +70,9 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
   const updateMutation = useMutation({
     mutationFn: (data: PatientFormData) => apiRequest("PUT", `/api/patients/${patient?.id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === "/api/patients" 
+      });
       toast({
         title: "Sucesso",
         description: "Paciente atualizado com sucesso",
