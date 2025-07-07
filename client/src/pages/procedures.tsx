@@ -211,7 +211,7 @@ export default function Procedures() {
   }
 
   return (
-    <div className="p-6 pb-12">
+    <div className="page-container">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-neutral-900">Procedimentos</h1>
         <Dialog open={showForm} onOpenChange={setShowForm}>

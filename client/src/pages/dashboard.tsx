@@ -61,7 +61,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-6 pb-12">
+    <div className="page-container">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>

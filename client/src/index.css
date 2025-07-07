@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global styles to eliminate white gaps */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);
@@ -153,11 +166,11 @@
   
   /* Enhanced scroll and layout fixes */
   .page-container {
-    @apply min-h-screen pb-8 overflow-x-hidden;
+    @apply min-h-full bg-neutral-50 p-6;
   }
   
   .content-wrapper {
-    @apply max-w-7xl mx-auto space-y-6 pb-8;
+    @apply max-w-7xl mx-auto space-y-6;
   }
   
   /* Odontogram specific fixes */
