@@ -15,7 +15,8 @@ import {
   Mail,
   MapPin,
   Calendar,
-  User
+  User,
+  Edit
 } from "lucide-react";
 import Odontogram from "@/components/dental-chart/odontogram";
 import AnamneseForm from "@/components/patients/anamnese-form";
