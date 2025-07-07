@@ -277,9 +277,7 @@ export class DatabaseStorage implements IStorage {
       .values({ 
         ...insertDentalChart, 
         patientId, 
-        toothNumber,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        toothNumber
       })
       .returning();
     return created;
