@@ -1,0 +1,90 @@
+Crie um projeto completo e funcional para um MVP de um sistema SaaS de gestão de clínicas odontológicas.
+
+## Tecnologias:
+- Backend: Node.js com Express (ou NestJS se mais organizado)
+- Frontend: React + Vite
+- Banco de dados: PostgreSQL
+- ORM: Prisma
+- Autenticação: JWT
+- Organização: Monorepo (ou pastas separadas backend/frontend)
+
+## Estrutura geral dos módulos:
+
+### 1. Pacientes
+- Cadastro com: nome, CPF, nascimento, telefone, e-mail, endereço
+- Visualização do histórico de atendimentos
+- Submódulo: **Odontograma** (interativo e exclusivo por paciente)
+- Submódulo: **Anamnese** (cadastro e edição de questionário clínico)
+- Observações clínicas gerais
+- Upload de documentos ou exames (simulado com input)
+
+### 2. Odontograma (dentro de Pacientes)
+- Gráfico odontológico interativo por dente
+- Numeração odontológica padrão (FDI)
+- Clicável: registrar por dente as seguintes situações:
+  - Sadio
+  - Cárie
+  - Restauração
+  - Extração
+  - Tratamento planejado
+  - Tratamento realizado
+- Histórico por dente (o que foi feito e quando)
+- Tecnologias sugeridas: `react-konva`, `canvas`, ou SVG
+
+### 3. Anamnese (dentro de Pacientes)
+- Formulário personalizável com perguntas como:
+  - Está em tratamento médico?
+  - Usa medicamentos?
+  - Possui alergias?
+  - Já fez tratamento odontológico antes?
+- Permitir edição posterior
+- Mostrar última versão da anamnese no perfil do paciente
+
+### 4. Agenda
+- Agendamento por profissional/dentista
+- Status: Agendado, Confirmado, Atendido, Cancelado
+- Filtros por data, profissional, ou paciente
+- Integração com paciente e procedimento
+- Exibição por dia, semana, mês
+
+### 5. Atendimento Clínico
+- Registro de um atendimento (consulta)
+- Vincular paciente, dentista e procedimentos feitos
+- Observações clínicas
+- Permitir anexar exames (simulado)
+- Mostrar atalho para abrir o odontograma do paciente
+
+### 6. Procedimentos
+- Cadastro de tipos de procedimentos
+- Nome, valor, duração, categoria (ex: clínica geral, ortodontia)
+- Usados na agenda e nos atendimentos
+
+### 7. Financeiro (Contas a Receber)
+- Registro de pagamentos por paciente
+- Valor, data, vencimento, forma de pagamento
+- Relatório de recebimentos por período
+
+### 8. Usuários e Permissões
+- Perfis: Admin, Dentista, Recepção
+- Acesso controlado via JWT
+- Cada dentista vê apenas seus atendimentos
+
+### 9. Relatórios básicos
+- Total de atendimentos por período
+- Procedimentos mais realizados
+- Faturamento simples por período
+
+## Extras (não obrigatórios no MVP):
+- Dashboard com KPIs visuais
+- Envio de lembretes de consulta via WhatsApp
+- Portal do paciente para ver seus dados
+
+## Requisitos técnicos:
+- Estrutura RESTful no backend
+- Banco de dados modelado com Prisma (schema incluído)
+- Interface com TailwindCSS (ou UI simples e moderna)
+- Componentização no React
+- CRUD completo funcional para pacientes, agenda, procedimentos, e atendimentos
+- Odontograma funcional integrado ao paciente
+- Anamnese editável por paciente
+- Instruções claras de como rodar o projeto localmente (README)
