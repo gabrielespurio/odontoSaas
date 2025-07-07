@@ -19,59 +19,9 @@ import Reports from "@/pages/reports";
 import MainLayout from "@/components/layout/main-layout";
 import NotFound from "@/pages/not-found";
 
-// Override the default queryClient to add auth headers
-queryClient.setDefaultOptions({
-  queries: {
-    queryFn: async ({ queryKey }) => {
-      const token = authApi.getToken();
-      const headers: Record<string, string> = {};
-      
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-      
-      const res = await fetch(queryKey[0] as string, {
-        credentials: "include",
-        headers,
-      });
 
-      if (!res.ok) {
-        const text = (await res.text()) || res.statusText;
-        throw new Error(`${res.status}: ${text}`);
-      }
-      
-      return await res.json();
-    },
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-    retry: false,
-  },
-});
 
-// Override apiRequest to add auth headers
-const originalApiRequest = apiRequest;
-(globalThis as any).apiRequest = async (method: string, url: string, data?: unknown) => {
-  const token = authApi.getToken();
-  const headers: Record<string, string> = {
-    ...(data ? { "Content-Type": "application/json" } : {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
-  }
-  
-  return res;
-};
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
