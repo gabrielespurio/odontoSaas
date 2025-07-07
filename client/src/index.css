@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(221, 83%, 53%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  
+  /* Custom colors for dental system */
+  --dental-healthy: hsl(142, 76%, 36%);
+  --dental-carie: hsl(0, 84%, 60%);
+  --dental-restoration: hsl(43, 96%, 56%);
+  --dental-extraction: hsl(0, 0%, 50%);
+  --dental-planned: hsl(217, 91%, 60%);
+  --dental-completed: hsl(142, 76%, 36%);
+  
+  /* Status colors */
+  --status-scheduled: hsl(43, 96%, 56%);
+  --status-confirmed: hsl(142, 76%, 36%);
+  --status-attended: hsl(217, 91%, 60%);
+  --status-cancelled: hsl(0, 84%, 60%);
+  
+  /* Financial colors */
+  --financial-paid: hsl(142, 76%, 36%);
+  --financial-pending: hsl(43, 96%, 56%);
+  --financial-overdue: hsl(0, 84%, 60%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(221, 83%, 53%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .dental-tooth {
+    @apply cursor-pointer transition-all duration-200 hover:scale-105;
+  }
+  
+  .dental-tooth.healthy {
+    @apply fill-gray-200 stroke-gray-400;
+  }
+  
+  .dental-tooth.carie {
+    @apply fill-red-200 stroke-red-600;
+  }
+  
+  .dental-tooth.restoration {
+    @apply fill-yellow-200 stroke-yellow-600;
+  }
+  
+  .dental-tooth.extraction {
+    @apply fill-gray-100 stroke-gray-500;
+    stroke-dasharray: 5,5;
+  }
+  
+  .dental-tooth.planned_treatment {
+    @apply fill-blue-200 stroke-blue-600;
+  }
+  
+  .dental-tooth.completed_treatment {
+    @apply fill-green-200 stroke-green-600;
+  }
+  
+  .dental-tooth.selected {
+    @apply fill-blue-100 stroke-blue-800 stroke-2;
+  }
+  
+  .status-badge {
+    @apply inline-flex items-center px-2 py-1 text-xs font-medium rounded-full;
+  }
+  
+  .status-scheduled {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+  
+  .status-confirmed {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .status-attended {
+    @apply bg-blue-100 text-blue-800;
+  }
+  
+  .status-cancelled {
+    @apply bg-red-100 text-red-800;
+  }
+  
+  .financial-paid {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .financial-pending {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+  
+  .financial-overdue {
+    @apply bg-red-100 text-red-800;
+  }
+}

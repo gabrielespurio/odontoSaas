@@ -1,0 +1,181 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Plus, Search, Eye, Edit, Wrench, Filter } from "lucide-react";
+import PatientForm from "@/components/patients/patient-form";
+import type { Patient } from "@/lib/types";
+
+export default function Patients() {
+  const [search, setSearch] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+
+  const { data: patients, isLoading } = useQuery<Patient[]>({
+    queryKey: ["/api/patients", { search }],
+  });
+
+  const getInitials = (name: string) => {
+    return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  };
+
+  const formatCPF = (cpf: string) => {
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  };
+
+  const formatPhone = (phone: string) => {
+    return phone.replace(/(\d{2})(\d{4,5})(\d{4})/, "($1) $2-$3");
+  };
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('pt-BR');
+  };
+
+  const handleFormSuccess = () => {
+    setShowForm(false);
+    setEditingPatient(null);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="h-24 bg-gray-200 rounded mb-6"></div>
+          <div className="h-96 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-neutral-900">Pacientes</h1>
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setEditingPatient(null)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Paciente
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingPatient ? "Editar Paciente" : "Novo Paciente"}
+              </DialogTitle>
+            </DialogHeader>
+            <PatientForm
+              patient={editingPatient}
+              onSuccess={handleFormSuccess}
+              onCancel={() => setShowForm(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Search and Filters */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
+              <Input
+                placeholder="Buscar por nome, CPF ou telefone..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Button variant="outline" className="md:w-32">
+              <Filter className="w-4 h-4 mr-2" />
+              Filtros
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Patients Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Pacientes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-3 px-4 font-medium text-neutral-600">Paciente</th>
+                  <th className="text-left py-3 px-4 font-medium text-neutral-600">CPF</th>
+                  <th className="text-left py-3 px-4 font-medium text-neutral-600">Telefone</th>
+                  <th className="text-left py-3 px-4 font-medium text-neutral-600">Data Cadastro</th>
+                  <th className="text-left py-3 px-4 font-medium text-neutral-600">Status</th>
+                  <th className="text-left py-3 px-4 font-medium text-neutral-600">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {patients?.map((patient) => (
+                  <tr key={patient.id} className="border-b hover:bg-neutral-50">
+                    <td className="py-4 px-4">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+                          {getInitials(patient.name)}
+                        </div>
+                        <div className="ml-3">
+                          <p className="font-medium text-neutral-900">{patient.name}</p>
+                          <p className="text-sm text-neutral-600">{patient.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 text-neutral-900">{formatCPF(patient.cpf)}</td>
+                    <td className="py-4 px-4 text-neutral-900">{formatPhone(patient.phone)}</td>
+                    <td className="py-4 px-4 text-neutral-900">{formatDate(patient.createdAt)}</td>
+                    <td className="py-4 px-4">
+                      <Badge className={patient.isActive ? "status-confirmed" : "status-cancelled"}>
+                        {patient.isActive ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center space-x-2">
+                        <Link href={`/patients/${patient.id}`}>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setEditingPatient(patient);
+                            setShowForm(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Link href={`/patients/${patient.id}?tab=odontogram`}>
+                          <Button variant="ghost" size="sm">
+                            <Wrench className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {(!patients || patients.length === 0) && (
+            <div className="text-center py-8">
+              <p className="text-neutral-600">Nenhum paciente encontrado</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
