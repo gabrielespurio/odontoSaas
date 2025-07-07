@@ -153,9 +153,10 @@ DentalCare is a comprehensive dental clinic management SaaS system built as a fu
 - July 07, 2025. Configured PostgreSQL database connection with Neon serverless database
 - July 07, 2025. Created admin user (username: admin, password: admin123) for system access
 - July 07, 2025. Migration completed: All dependencies installed, database schema applied, sample data populated
-- July 07, 2025. Verified connection to both auto-provisioned and custom Neon database configurations
+- July 07, 2025. Successfully connected to specific Neon database: ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech
+- July 07, 2025. Modified server/db.ts to force connection to user-specified Neon database
 - July 07, 2025. Authentication system fully functional with admin user access
-- July 07, 2025. Migration completed: Database provisioned, schema applied, sample data populated
+- July 07, 2025. Database populated with sample patients and procedures for testing
 
 ## User Preferences
 
