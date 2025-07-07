@@ -474,8 +474,10 @@ export default function PatientDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="odontogram">
-          <Odontogram patientId={patientId} />
+        <TabsContent value="odontogram" className="h-[calc(100vh-280px)] overflow-hidden">
+          <div className="h-full">
+            <Odontogram patientId={patientId} />
+          </div>
         </TabsContent>
 
         <TabsContent value="anamnese">

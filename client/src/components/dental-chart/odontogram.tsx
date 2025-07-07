@@ -202,7 +202,7 @@ export default function Odontogram({ patientId }: OdontogramProps) {
   }
 
   return (
-    <div className="space-y-3 max-h-[calc(100vh-150px)] overflow-y-auto">
+    <div className="space-y-3 min-h-0 flex-1 overflow-y-auto">
       {/* Main Dental Chart */}
       <Card className="shadow-sm">
         <CardHeader className="pb-3">
@@ -299,13 +299,13 @@ export default function Odontogram({ patientId }: OdontogramProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Left side - Condition and Actions */}
-              <div className="flex-1 space-y-3">
+            <div className="flex flex-col gap-3">
+              {/* Condition and Notes in single column */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="condition" className="text-xs font-semibold">Condição do Dente</Label>
+                  <Label htmlFor="condition" className="text-sm font-semibold">Condição do Dente</Label>
                   <Select value={selectedCondition} onValueChange={setSelectedCondition}>
-                    <SelectTrigger className="mt-1 h-8">
+                    <SelectTrigger className="mt-2">
                       <SelectValue placeholder="Selecione a condição" />
                     </SelectTrigger>
                     <SelectContent>
@@ -313,13 +313,13 @@ export default function Odontogram({ patientId }: OdontogramProps) {
                         <SelectItem key={condition.value} value={condition.value}>
                           <div className="flex items-center gap-2">
                             <div 
-                              className="w-2 h-2 rounded border" 
+                              className="w-3 h-3 rounded border" 
                               style={{ 
                                 backgroundColor: condition.color, 
                                 borderColor: condition.borderColor 
                               }}
                             ></div>
-                            <span className="text-xs">{condition.label}</span>
+                            <span className="text-sm">{condition.label}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -328,51 +328,51 @@ export default function Odontogram({ patientId }: OdontogramProps) {
                 </div>
 
                 <div>
-                  <Label htmlFor="notes" className="text-xs font-semibold">Observações</Label>
+                  <Label htmlFor="notes" className="text-sm font-semibold">Observações</Label>
                   <Textarea
                     id="notes"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="mt-1 min-h-[60px] text-xs"
+                    className="mt-2 min-h-[80px]"
                     placeholder="Descreva detalhes sobre o tratamento..."
                   />
                 </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleUpdateTooth}
-                    disabled={updateToothMutation.isPending}
-                    className="flex-1 h-8 text-xs"
-                    size="sm"
-                  >
-                    <Save className="w-3 h-3 mr-1" />
-                    {updateToothMutation.isPending ? "Salvando..." : "Salvar"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedTooth(null)}
-                    size="sm"
-                    className="h-8 text-xs"
-                  >
-                    <X className="w-3 h-3 mr-1" />
-                    Cancelar
-                  </Button>
-                </div>
               </div>
 
-              {/* Right side - History */}
-              <div className="flex-1">
-                <Label className="text-xs font-semibold flex items-center gap-1 mb-2">
-                  <History className="w-3 h-3" />
+              {/* Actions */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleUpdateTooth}
+                  disabled={updateToothMutation.isPending}
+                  className="flex-1"
+                  size="sm"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {updateToothMutation.isPending ? "Salvando..." : "Salvar"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedTooth(null)}
+                  size="sm"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+              </div>
+
+              {/* History */}
+              <div>
+                <Label className="text-sm font-semibold flex items-center gap-2 mb-2">
+                  <History className="w-4 h-4" />
                   Histórico do Dente
                 </Label>
-                <div className="space-y-2 max-h-32 overflow-y-auto">
+                <div className="space-y-2 max-h-24 overflow-y-auto">
                   {dentalChart
                     ?.filter(tooth => tooth.toothNumber === selectedTooth)
                     .map((tooth) => (
                       <div key={tooth.id} className="p-2 bg-white rounded border border-neutral-200 shadow-sm">
                         <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="secondary" className="text-xs px-1 py-0">
+                          <Badge variant="secondary" className="text-xs">
                             {TOOTH_CONDITIONS.find(c => c.value === tooth.condition)?.label}
                           </Badge>
                           <span className="text-xs text-neutral-500">
@@ -380,12 +380,12 @@ export default function Odontogram({ patientId }: OdontogramProps) {
                           </span>
                         </div>
                         {tooth.notes && (
-                          <p className="text-xs text-neutral-700 mt-1">{tooth.notes}</p>
+                          <p className="text-sm text-neutral-700 mt-1">{tooth.notes}</p>
                         )}
                       </div>
                     ))}
                   {(!dentalChart || dentalChart.filter(tooth => tooth.toothNumber === selectedTooth).length === 0) && (
-                    <p className="text-xs text-neutral-500 italic p-2 bg-white rounded border border-neutral-200">
+                    <p className="text-sm text-neutral-500 italic p-2 bg-white rounded border border-neutral-200">
                       Nenhum histórico encontrado
                     </p>
                   )}
