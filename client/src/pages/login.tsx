@@ -25,10 +25,8 @@ export default function Login() {
         title: "Login realizado com sucesso",
         description: "Bem-vindo ao DentalCare!",
       });
-      // Redirecionar para o dashboard após login bem-sucedido
-      setTimeout(() => {
-        setLocation("/dashboard");
-      }, 1000);
+      // Redirecionar imediatamente para o dashboard
+      setLocation("/dashboard");
     } catch (error) {
       toast({
         title: "Erro no login",
