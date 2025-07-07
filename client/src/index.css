@@ -79,36 +79,32 @@
 
 @layer components {
   .dental-tooth {
-    @apply cursor-pointer transition-all duration-200 hover:scale-105;
+    @apply cursor-pointer transition-all duration-300 ease-in-out;
   }
   
-  .dental-tooth.healthy {
-    @apply fill-gray-200 stroke-gray-400;
-  }
-  
-  .dental-tooth.carie {
-    @apply fill-red-200 stroke-red-600;
-  }
-  
-  .dental-tooth.restoration {
-    @apply fill-yellow-200 stroke-yellow-600;
-  }
-  
-  .dental-tooth.extraction {
-    @apply fill-gray-100 stroke-gray-500;
-    stroke-dasharray: 5,5;
-  }
-  
-  .dental-tooth.planned_treatment {
-    @apply fill-teal-200 stroke-teal-600;
-  }
-  
-  .dental-tooth.completed_treatment {
-    @apply fill-green-200 stroke-green-600;
+  .dental-tooth:hover {
+    @apply drop-shadow-lg transform scale-105;
   }
   
   .dental-tooth.selected {
-    @apply fill-teal-100 stroke-teal-800 stroke-2;
+    @apply drop-shadow-2xl transform scale-110;
+    filter: drop-shadow(0 0 15px rgba(var(--primary), 0.4));
+  }
+  
+  .dental-chart-container {
+    @apply overflow-x-auto;
+  }
+  
+  .dental-chart-svg {
+    @apply min-w-max transition-all duration-300;
+  }
+  
+  .tooth-editor-card {
+    @apply animate-in slide-in-from-bottom-4 duration-300;
+  }
+  
+  .dental-legend-item {
+    @apply transition-all duration-200 hover:bg-white hover:shadow-sm rounded-md p-2 -m-2;
   }
   
   .status-badge {
