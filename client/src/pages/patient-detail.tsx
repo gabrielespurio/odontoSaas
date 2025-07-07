@@ -176,7 +176,7 @@ export default function PatientDetail() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-12">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-6">
         <div className="flex items-center space-x-4">
@@ -474,10 +474,8 @@ export default function PatientDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="odontogram" className="h-[calc(100vh-280px)] overflow-hidden">
-          <div className="h-full">
-            <Odontogram patientId={patientId} />
-          </div>
+        <TabsContent value="odontogram" className="space-y-4">
+          <Odontogram patientId={patientId} />
         </TabsContent>
 
         <TabsContent value="anamnese">

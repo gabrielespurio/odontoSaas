@@ -150,4 +150,45 @@
   .financial-overdue {
     @apply bg-red-100 text-red-800;
   }
+  
+  /* Enhanced scroll and layout fixes */
+  .page-container {
+    @apply min-h-screen pb-8 overflow-x-hidden;
+  }
+  
+  .content-wrapper {
+    @apply max-w-7xl mx-auto space-y-6 pb-8;
+  }
+  
+  .responsive-table-container {
+    @apply overflow-x-auto rounded-lg border;
+  }
+  
+  .responsive-table {
+    @apply w-full min-w-[600px];
+  }
+  
+  /* Improved mobile responsiveness */
+  @media (max-width: 768px) {
+    .dental-chart-container {
+      @apply px-2;
+    }
+    
+    .tooth-editor-card {
+      @apply mx-2;
+    }
+    
+    .content-wrapper {
+      @apply px-4 space-y-4;
+    }
+  }
+  
+  /* Better scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply overflow-x-hidden;
+  }
 }

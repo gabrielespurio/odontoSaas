@@ -75,7 +75,7 @@ export default function Patients() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-12">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-neutral-900">Pacientes</h1>
         <Dialog open={showForm} onOpenChange={setShowForm}>
@@ -127,8 +127,8 @@ export default function Patients() {
           <CardTitle>Lista de Pacientes</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px]">
+          <div className="responsive-table-container">
+            <table className="responsive-table">
               <thead className="bg-neutral-50">
                 <tr className="border-b">
                   <th className="text-left py-4 px-6 font-medium text-neutral-700">Paciente</th>
