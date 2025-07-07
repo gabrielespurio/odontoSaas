@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +25,10 @@ export default function Login() {
         title: "Login realizado com sucesso",
         description: "Bem-vindo ao DentalCare!",
       });
+      // Redirecionar para o dashboard após login bem-sucedido
+      setTimeout(() => {
+        setLocation("/dashboard");
+      }, 1000);
     } catch (error) {
       toast({
         title: "Erro no login",

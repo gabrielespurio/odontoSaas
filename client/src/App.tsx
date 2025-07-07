@@ -92,6 +92,7 @@ function Router() {
     <MainLayout>
       <Switch>
         <Route path="/" component={Dashboard} />
+        <Route path="/dashboard" component={Dashboard} />
         <Route path="/patients" component={Patients} />
         <Route path="/patients/:id" component={PatientDetail} />
         <Route path="/schedule" component={Schedule} />
