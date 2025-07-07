@@ -284,13 +284,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const patientId = parseInt(req.params.patientId);
       const toothNumber = req.params.toothNumber;
-      const dentalChartData = insertDentalChartSchema.parse(req.body);
       
-      const updatedTooth = await storage.updateToothCondition(patientId, toothNumber, dentalChartData);
+      // Create the data with required fields
+      const dentalChartData = {
+        patientId: patientId,
+        toothNumber: toothNumber,
+        condition: req.body.condition || "healthy",
+        notes: req.body.notes || "",
+        treatmentDate: req.body.treatmentDate || new Date().toISOString().split('T')[0]
+      };
+      
+      console.log('Received dental chart update:', dentalChartData);
+      
+      const validatedData = insertDentalChartSchema.parse(dentalChartData);
+      const updatedTooth = await storage.updateToothCondition(patientId, toothNumber, validatedData);
       res.json(updatedTooth);
     } catch (error) {
       console.error("Update tooth condition error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      if (error instanceof Error) {
+        console.error("Error details:", error.message);
+        console.error("Error stack:", error.stack);
+      }
+      res.status(500).json({ message: "Internal server error", error: error.message });
     }
   });
 
