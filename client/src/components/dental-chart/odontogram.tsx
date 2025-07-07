@@ -111,9 +111,9 @@ export default function Odontogram({ patientId }: OdontogramProps) {
         <rect
           x={x}
           y={y}
-          width="35"
-          height="45"
-          rx="8"
+          width="32"
+          height="35"
+          rx="6"
           className={`${colorClass} ${
             isSelected 
               ? 'stroke-primary stroke-3 drop-shadow-lg' 
@@ -124,10 +124,10 @@ export default function Odontogram({ patientId }: OdontogramProps) {
           }}
         />
         <text
-          x={x + 17.5}
-          y={y + 28}
+          x={x + 16}
+          y={y + 23}
           textAnchor="middle"
-          className={`text-sm font-semibold ${
+          className={`text-xs font-semibold ${
             isSelected ? 'fill-primary' : 'fill-neutral-700'
           } pointer-events-none transition-colors duration-200`}
         >
@@ -157,69 +157,69 @@ export default function Odontogram({ patientId }: OdontogramProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
       {/* Main Dental Chart */}
       <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5 text-primary" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Activity className="w-4 h-4 text-primary" />
             Mapa Dentário Interativo
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-8">
+        <CardContent className="space-y-4">
           {/* Upper Jaw */}
           <div>
-            <h3 className="text-lg font-semibold text-neutral-800 mb-4 text-center">Arcada Superior</h3>
+            <h3 className="text-base font-semibold text-neutral-800 mb-3 text-center">Arcada Superior</h3>
             <div className="flex justify-center dental-chart-container">
               <svg 
                 width="100%" 
-                height="140" 
-                viewBox="0 0 700 140" 
-                className="dental-chart-svg max-w-4xl border border-neutral-200 rounded-xl bg-gradient-to-b from-white to-neutral-50 shadow-inner"
+                height="100" 
+                viewBox="0 0 700 100" 
+                className="dental-chart-svg max-w-full border border-neutral-200 rounded-lg bg-gradient-to-b from-white to-neutral-50 shadow-inner"
               >
                 {/* Upper right teeth */}
-                {FDI_UPPER_RIGHT.map((tooth, index) => renderTooth(tooth, 30 + index * 45, 25))}
+                {FDI_UPPER_RIGHT.map((tooth, index) => renderTooth(tooth, 30 + index * 45, 15))}
                 {/* Upper left teeth */}
-                {FDI_UPPER_LEFT.map((tooth, index) => renderTooth(tooth, 390 + index * 45, 25))}
+                {FDI_UPPER_LEFT.map((tooth, index) => renderTooth(tooth, 390 + index * 45, 15))}
                 
                 {/* Central divider line */}
-                <line x1="365" y1="20" x2="365" y2="120" stroke="#e5e7eb" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="365" y1="10" x2="365" y2="90" stroke="#e5e7eb" strokeWidth="2" strokeDasharray="5,5" />
               </svg>
             </div>
           </div>
 
           {/* Lower Jaw */}
           <div>
-            <h3 className="text-lg font-semibold text-neutral-800 mb-4 text-center">Arcada Inferior</h3>
+            <h3 className="text-base font-semibold text-neutral-800 mb-3 text-center">Arcada Inferior</h3>
             <div className="flex justify-center dental-chart-container">
               <svg 
                 width="100%" 
-                height="140" 
-                viewBox="0 0 700 140" 
-                className="dental-chart-svg max-w-4xl border border-neutral-200 rounded-xl bg-gradient-to-t from-white to-neutral-50 shadow-inner"
+                height="100" 
+                viewBox="0 0 700 100" 
+                className="dental-chart-svg max-w-full border border-neutral-200 rounded-lg bg-gradient-to-t from-white to-neutral-50 shadow-inner"
               >
                 {/* Lower right teeth */}
-                {FDI_LOWER_RIGHT.map((tooth, index) => renderTooth(tooth, 30 + index * 45, 70))}
+                {FDI_LOWER_RIGHT.map((tooth, index) => renderTooth(tooth, 30 + index * 45, 40))}
                 {/* Lower left teeth */}
-                {FDI_LOWER_LEFT.map((tooth, index) => renderTooth(tooth, 390 + index * 45, 70))}
+                {FDI_LOWER_LEFT.map((tooth, index) => renderTooth(tooth, 390 + index * 45, 40))}
                 
                 {/* Central divider line */}
-                <line x1="365" y1="20" x2="365" y2="120" stroke="#e5e7eb" strokeWidth="2" strokeDasharray="5,5" />
+                <line x1="365" y1="10" x2="365" y2="90" stroke="#e5e7eb" strokeWidth="2" strokeDasharray="5,5" />
               </svg>
             </div>
           </div>
 
           {/* Legend */}
-          <div className="bg-neutral-50 rounded-lg p-6">
-            <h4 className="font-semibold text-neutral-800 mb-4 flex items-center gap-2">
+          <div className="bg-neutral-50 rounded-lg p-4">
+            <h4 className="font-semibold text-neutral-800 mb-3 flex items-center gap-2 text-sm">
               <div className="w-2 h-2 bg-primary rounded-full"></div>
               Legenda das Condições
             </h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               {TOOTH_CONDITIONS.map((condition) => (
                 <div key={condition.value} className="dental-legend-item flex items-center gap-2">
-                  <div className={`w-4 h-4 rounded border-2 ${condition.bgColor} ${condition.borderColor}`}></div>
-                  <span className="text-sm font-medium text-neutral-700">{condition.label}</span>
+                  <div className={`w-3 h-3 rounded border ${condition.bgColor} ${condition.borderColor}`}></div>
+                  <span className="text-xs font-medium text-neutral-700">{condition.label}</span>
                 </div>
               ))}
             </div>
@@ -230,15 +230,15 @@ export default function Odontogram({ patientId }: OdontogramProps) {
       {/* Tooth Editor - Below the chart */}
       {selectedTooth && (
         <Card className="tooth-editor-card shadow-sm border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
                   {selectedTooth}
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold">Editando Dente {selectedTooth}</h3>
-                  <p className="text-sm text-neutral-600">Defina a condição e adicione observações</p>
+                  <h3 className="text-base font-semibold">Editando Dente {selectedTooth}</h3>
+                  <p className="text-xs text-neutral-600">Defina a condição e adicione observações</p>
                 </div>
               </div>
               <Button
@@ -252,9 +252,9 @@ export default function Odontogram({ patientId }: OdontogramProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Condition Selector */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
                   <Label htmlFor="condition" className="text-sm font-semibold">Condição do Dente</Label>
                   <Select value={selectedCondition} onValueChange={setSelectedCondition}>
@@ -274,18 +274,20 @@ export default function Odontogram({ patientId }: OdontogramProps) {
                   </Select>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <Button
                     onClick={handleUpdateTooth}
                     disabled={updateToothMutation.isPending}
                     className="flex-1"
+                    size="sm"
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    {updateToothMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                    {updateToothMutation.isPending ? "Salvando..." : "Salvar"}
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => setSelectedTooth(null)}
+                    size="sm"
                   >
                     <X className="w-4 h-4 mr-2" />
                     Cancelar
@@ -293,16 +295,16 @@ export default function Odontogram({ patientId }: OdontogramProps) {
                 </div>
               </div>
 
-              {/* Notes */}
-              <div className="space-y-4">
+              {/* Notes and History */}
+              <div className="space-y-3">
                 <div>
                   <Label htmlFor="notes" className="text-sm font-semibold">Observações Clínicas</Label>
                   <Textarea
                     id="notes"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="mt-2 min-h-[100px]"
-                    placeholder="Descreva detalhes sobre o tratamento, observações clínicas, procedimentos realizados..."
+                    className="mt-2 min-h-[80px]"
+                    placeholder="Descreva detalhes sobre o tratamento..."
                   />
                 </div>
 
@@ -312,11 +314,11 @@ export default function Odontogram({ patientId }: OdontogramProps) {
                     <History className="w-4 h-4" />
                     Histórico do Dente
                   </Label>
-                  <div className="mt-2 space-y-2 max-h-32 overflow-y-auto">
+                  <div className="mt-2 space-y-2 max-h-24 overflow-y-auto">
                     {dentalChart
                       ?.filter(tooth => tooth.toothNumber === selectedTooth)
                       .map((tooth) => (
-                        <div key={tooth.id} className="p-3 bg-white rounded-md border border-neutral-200 shadow-sm">
+                        <div key={tooth.id} className="p-2 bg-white rounded-md border border-neutral-200 shadow-sm">
                           <div className="flex items-center gap-2 mb-1">
                             <Badge variant="secondary" className="text-xs">
                               {TOOTH_CONDITIONS.find(c => c.value === tooth.condition)?.label}
@@ -326,12 +328,12 @@ export default function Odontogram({ patientId }: OdontogramProps) {
                             </span>
                           </div>
                           {tooth.notes && (
-                            <p className="text-sm text-neutral-700 mt-1">{tooth.notes}</p>
+                            <p className="text-xs text-neutral-700 mt-1">{tooth.notes}</p>
                           )}
                         </div>
                       ))}
                     {(!dentalChart || dentalChart.filter(tooth => tooth.toothNumber === selectedTooth).length === 0) && (
-                      <p className="text-sm text-neutral-500 italic p-3 bg-white rounded-md border border-neutral-200">
+                      <p className="text-xs text-neutral-500 italic p-2 bg-white rounded-md border border-neutral-200">
                         Nenhum histórico encontrado para este dente
                       </p>
                     )}
@@ -346,10 +348,10 @@ export default function Odontogram({ patientId }: OdontogramProps) {
       {/* Instructions */}
       {!selectedTooth && (
         <Card className="border-dashed border-neutral-300 bg-neutral-50/50">
-          <CardContent className="text-center py-8">
-            <Activity className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-neutral-700 mb-2">Selecione um Dente</h3>
-            <p className="text-neutral-600">
+          <CardContent className="text-center py-6">
+            <Activity className="w-8 h-8 text-neutral-400 mx-auto mb-3" />
+            <h3 className="text-base font-semibold text-neutral-700 mb-2">Selecione um Dente</h3>
+            <p className="text-sm text-neutral-600">
               Clique em qualquer dente no mapa dentário acima para visualizar e editar suas informações clínicas.
             </p>
           </CardContent>
