@@ -176,7 +176,7 @@ export default function PatientDetail() {
   }
 
   return (
-    <div className="p-6 pb-12">
+    <div className="p-6 pb-12 min-h-screen">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-6">
         <div className="flex items-center space-x-4">

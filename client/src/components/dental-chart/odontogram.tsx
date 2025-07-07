@@ -202,7 +202,7 @@ export default function Odontogram({ patientId }: OdontogramProps) {
   }
 
   return (
-    <div className="space-y-4 pb-8">
+    <div className="space-y-6" style={{ paddingBottom: '120px' }}>
       {/* Main Dental Chart */}
       <Card className="shadow-sm">
         <CardHeader className="pb-3">

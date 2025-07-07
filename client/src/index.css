@@ -162,30 +162,54 @@
   
   /* Odontogram specific fixes */
   .odontogram-container {
-    @apply pb-16 min-h-screen max-h-screen overflow-y-auto;
+    @apply min-h-0 overflow-y-auto;
+    max-height: calc(100vh - 180px);
+    padding-bottom: 120px !important;
   }
   
   .tooth-editor-container {
-    @apply mb-8 pb-8;
+    @apply mb-12 pb-16;
   }
   
-  /* Ensure proper scroll within viewport */
+  /* Better scrolling experience */
+  .odontogram-container {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+  }
+  
+  /* Webkit scrollbar styling */
   .odontogram-container::-webkit-scrollbar {
-    width: 8px;
+    width: 10px;
   }
   
   .odontogram-container::-webkit-scrollbar-track {
     background: #f1f5f9;
-    border-radius: 4px;
+    border-radius: 6px;
+    margin: 10px 0;
   }
   
   .odontogram-container::-webkit-scrollbar-thumb {
     background: #cbd5e1;
-    border-radius: 4px;
+    border-radius: 6px;
+    border: 2px solid #f1f5f9;
   }
   
   .odontogram-container::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+  }
+  
+  /* Ensure the container takes full height properly */
+  @media (min-height: 600px) {
+    .odontogram-container {
+      max-height: calc(100vh - 160px);
+    }
+  }
+  
+  @media (max-height: 599px) {
+    .odontogram-container {
+      max-height: 70vh;
+    }
   }
   
   .responsive-table-container {
