@@ -221,8 +221,8 @@ export default function Schedule() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
-              {/* Header with Days */}
-              <div className="grid grid-cols-8 border-b">
+              {/* Header with Days - Fixed position */}
+              <div className="grid grid-cols-8 border-b sticky top-0 z-30 bg-white shadow-sm">
                 <div className="p-4 bg-neutral-50 border-r"></div>
                 {weekDates.map((date, index) => (
                   <div key={index} className="p-4 bg-neutral-50 border-r text-center">
@@ -240,12 +240,12 @@ export default function Schedule() {
               </div>
 
               {/* Schedule Grid Body */}
-              <div className="relative">
+              <div className="relative max-h-[70vh] overflow-y-auto">
                 {/* Time slots row */}
                 {timeSlots.map((time, timeIndex) => (
                   <div key={time} className="grid grid-cols-8 border-b border-neutral-100 min-h-[60px]">
-                    {/* Time column */}
-                    <div className="p-3 bg-neutral-50 border-r text-center">
+                    {/* Time column - Also sticky for better UX */}
+                    <div className="p-3 bg-neutral-50 border-r text-center sticky left-0 z-10">
                       <span className="text-sm font-medium text-neutral-700">{time}</span>
                     </div>
                     
