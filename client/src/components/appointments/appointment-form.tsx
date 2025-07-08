@@ -112,10 +112,11 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
       });
       onSuccess();
     },
-    onError: () => {
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.message || "Erro ao criar agendamento";
       toast({
         title: "Erro",
-        description: "Erro ao criar agendamento",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -138,10 +139,11 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
       });
       onSuccess();
     },
-    onError: () => {
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.message || "Erro ao atualizar agendamento";
       toast({
         title: "Erro",
-        description: "Erro ao atualizar agendamento",
+        description: errorMessage,
         variant: "destructive",
       });
     },

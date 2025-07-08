@@ -352,6 +352,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/appointments", async (req, res) => {
     try {
       const appointmentData = insertAppointmentSchema.parse(req.body);
+      
+      // Validar se o horário está disponível
+      const scheduledDate = new Date(appointmentData.scheduledDate);
+      const existingAppointments = await storage.getAppointments(scheduledDate, appointmentData.dentistId);
+      
+      // Verificar se já existe um agendamento no mesmo horário e dentista
+      const conflictingAppointment = existingAppointments.find(apt => {
+        const aptDate = new Date(apt.scheduledDate);
+        return aptDate.getTime() === scheduledDate.getTime();
+      });
+      
+      if (conflictingAppointment) {
+        return res.status(409).json({ 
+          message: "Horário já ocupado. Escolha outro horário para o agendamento." 
+        });
+      }
+      
       const appointment = await storage.createAppointment(appointmentData);
       res.json(appointment);
     } catch (error) {
@@ -364,6 +381,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const appointmentData = insertAppointmentSchema.partial().parse(req.body);
+      
+      // Validar se o horário está disponível (apenas se a data estiver sendo alterada)
+      if (appointmentData.scheduledDate) {
+        const scheduledDate = new Date(appointmentData.scheduledDate);
+        const existingAppointments = await storage.getAppointments(scheduledDate, appointmentData.dentistId);
+        
+        // Verificar se já existe um agendamento no mesmo horário e dentista (exceto o atual)
+        const conflictingAppointment = existingAppointments.find(apt => {
+          const aptDate = new Date(apt.scheduledDate);
+          return aptDate.getTime() === scheduledDate.getTime() && apt.id !== id;
+        });
+        
+        if (conflictingAppointment) {
+          return res.status(409).json({ 
+            message: "Horário já ocupado. Escolha outro horário para o agendamento." 
+          });
+        }
+      }
+      
       const appointment = await storage.updateAppointment(id, appointmentData);
       res.json(appointment);
     } catch (error) {
