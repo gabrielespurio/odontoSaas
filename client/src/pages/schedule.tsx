@@ -78,7 +78,7 @@ export default function Schedule() {
   });
 
   const { data: dentists } = useQuery<User[]>({
-    queryKey: ["/api/users", { role: "dentist" }],
+    queryKey: ["/api/users/dentists"],
   });
 
   const updateAppointmentMutation = useMutation({
