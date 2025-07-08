@@ -105,43 +105,28 @@ export default function Schedule() {
     if (!appointments) return null;
     
     const [hour, minute] = time.split(':').map(Number);
-    const slotDateTime = new Date(date);
-    slotDateTime.setHours(hour, minute, 0, 0);
     
     return appointments.find(apt => {
       const aptDate = new Date(apt.scheduledDate);
       
       // Compare date first
-      const sameDate = aptDate.getFullYear() === slotDateTime.getFullYear() &&
-                       aptDate.getMonth() === slotDateTime.getMonth() &&
-                       aptDate.getDate() === slotDateTime.getDate();
+      const sameDate = aptDate.getFullYear() === date.getFullYear() &&
+                       aptDate.getMonth() === date.getMonth() &&
+                       aptDate.getDate() === date.getDate();
       
       if (!sameDate) return false;
       
-      // Check if appointment starts within this 30-minute slot
+      // Check if appointment starts at exactly this time slot
       const aptHour = aptDate.getHours();
       const aptMinute = aptDate.getMinutes();
-      const slotHour = slotDateTime.getHours();
-      const slotMinute = slotDateTime.getMinutes();
+      const slotHour = hour;
+      const slotMinute = minute;
       
-      // For exact time matching - appointment should show in the exact slot it starts
-      const sameTime = aptHour === slotHour && aptMinute === slotMinute;
-      
-      // Debug logging
-      if (apt.id === 1) {
-        console.log('DEBUG Appointment:', {
-          aptDate: aptDate.toISOString(),
-          aptHour,
-          aptMinute,
-          slotHour,
-          slotMinute,
-          time,
-          sameTime
-        });
-      }
+      // Direct time comparison - appointment must start exactly at this slot time
+      const exactTimeMatch = aptHour === slotHour && aptMinute === slotMinute;
       
       const sameDentist = dentistId ? apt.dentistId === dentistId : true;
-      return sameTime && sameDentist;
+      return exactTimeMatch && sameDentist;
     });
   };
 
