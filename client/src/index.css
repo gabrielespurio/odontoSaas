@@ -302,7 +302,7 @@ html, body {
     height: 60px;
     padding: 0.5rem;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     box-sizing: border-box;
     position: relative;

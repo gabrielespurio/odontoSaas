@@ -1,0 +1,24 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+schedule.tsx:170 Checking continuation for apt 1 at slot 12:30: aptTime=750, slotTime=750, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 08:00: aptTime=750, slotTime=480, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 08:30: aptTime=750, slotTime=510, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 09:00: aptTime=750, slotTime=540, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 09:30: aptTime=750, slotTime=570, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 10:00: aptTime=750, slotTime=600, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 10:30: aptTime=750, slotTime=630, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 11:00: aptTime=750, slotTime=660, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 11:30: aptTime=750, slotTime=690, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 12:00: aptTime=750, slotTime=720, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 12:30: aptTime=750, slotTime=750, endTime=810, isWithin=false
+schedule.tsx:354 RENDERING appointment 1 at slot 12:30 on date 2025-07-08T22:02:01.245Z
+schedule.tsx:170 Checking continuation for apt 1 at slot 13:00: aptTime=750, slotTime=780, endTime=810, isWithin=true
+schedule.tsx:385 RENDERING CONTINUATION of appointment 1 at slot 13:00
+schedule.tsx:170 Checking continuation for apt 1 at slot 13:30: aptTime=750, slotTime=810, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 14:00: aptTime=750, slotTime=840, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 14:30: aptTime=750, slotTime=870, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 15:00: aptTime=750, slotTime=900, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 15:30: aptTime=750, slotTime=930, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 16:00: aptTime=750, slotTime=960, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 16:30: aptTime=750, slotTime=990, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 17:00: aptTime=750, slotTime=1020, endTime=810, isWithin=false
+schedule.tsx:170 Checking continuation for apt 1 at slot 17:30: aptTime=750, slotTime=1050, endTime=810, isWithin=false

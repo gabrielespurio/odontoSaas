@@ -165,10 +165,7 @@ export default function Schedule() {
       // 3. The slot is exactly 30 minutes after the appointment start (for continuation slots)
       const isWithinDuration = aptTimeInMinutes < slotTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
       
-      // Debug for appointment ID 1
-      if (apt.id === 1) {
-        console.log(`Checking continuation for apt ${apt.id} at slot ${time}: aptTime=${aptTimeInMinutes}, slotTime=${slotTimeInMinutes}, endTime=${endTimeInMinutes}, isWithin=${isWithinDuration}`);
-      }
+
       
       if (isWithinDuration) {
         return apt;
@@ -349,17 +346,17 @@ export default function Schedule() {
                           const duration = appointment.procedure?.duration || 30;
                           const slotSpan = getAppointmentSlotSpan(appointment);
                           
-                          // Debug log to see where appointment is being rendered
-                          if (appointment.id === 1) {
-                            console.log(`RENDERING appointment ${appointment.id} at slot ${time} on date ${date.toISOString()}`);
-                          }
+
                           
                           return (
                             <div key={dayIndex} className="schedule-day-cell">
                               <div className={`rounded p-2 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white w-full`}
                                    style={{ 
                                      height: `${slotSpan * 60 - 8}px`, // 60px per slot minus padding
-                                     position: 'relative',
+                                     position: 'absolute',
+                                     top: '0.5rem',
+                                     left: '0.5rem',
+                                     right: '0.5rem',
                                      zIndex: 10
                                    }}
                                    onClick={() => {
@@ -380,10 +377,7 @@ export default function Schedule() {
                             </div>
                           );
                         } else if (occupiedByPrevious) {
-                          // Debug log to see where continuation is being rendered
-                          if (occupiedByPrevious.id === 1) {
-                            console.log(`RENDERING CONTINUATION of appointment ${occupiedByPrevious.id} at slot ${time}`);
-                          }
+
                           
                           // This slot is occupied by a previous appointment, show as continuation
                           return (
