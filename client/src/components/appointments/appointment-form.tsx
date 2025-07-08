@@ -197,7 +197,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
               <SelectTrigger>
                 <SelectValue placeholder="Selecionar paciente" />
               </SelectTrigger>
-              <SelectContent className="max-h-[200px]" position="popper" sideOffset={5}>
+              <SelectContent className="max-h-[200px] z-50" position="popper" sideOffset={5} align="start">
                 {patients?.map((patient) => (
                   <SelectItem key={patient.id} value={patient.id.toString()}>
                     {patient.name}
@@ -220,7 +220,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
               <SelectTrigger>
                 <SelectValue placeholder="Selecionar dentista" />
               </SelectTrigger>
-              <SelectContent className="max-h-[200px]" position="popper" sideOffset={5}>
+              <SelectContent className="max-h-[200px] z-50" position="popper" sideOffset={5} align="start">
                 {dentists?.map((dentist) => (
                   <SelectItem key={dentist.id} value={dentist.id.toString()}>
                     {dentist.name}
@@ -273,7 +273,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
                     <SelectTrigger>
                       <SelectValue placeholder="Selecionar procedimento" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[200px]" position="popper" sideOffset={5}>
+                    <SelectContent className="max-h-[200px] z-50" position="popper" sideOffset={5} align="start">
                       {procedures?.map((procedure) => (
                         <SelectItem key={procedure.id} value={procedure.id.toString()}>
                           <div className="flex flex-col">
@@ -345,7 +345,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-50" position="popper" sideOffset={5} align="start">
                 {getStatusOptions().map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
