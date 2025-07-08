@@ -100,45 +100,46 @@ export default function Schedule() {
     },
   });
 
-  // Get appointment for specific time slot and date
+  // Get appointment that starts at this specific time slot
   const getAppointmentForSlot = (date: Date, time: string, dentistId?: number) => {
     if (!appointments) return null;
     
+    // Parse the time slot (e.g., "12:30")
     const [slotHour, slotMinute] = time.split(':').map(Number);
     
+    // Find appointment that starts at this exact time
     return appointments.find(apt => {
       const aptDate = new Date(apt.scheduledDate);
       
-      // Compare date first
-      const sameDate = aptDate.getFullYear() === date.getFullYear() &&
-                       aptDate.getMonth() === date.getMonth() &&
-                       aptDate.getDate() === date.getDate();
+      // Must be same date
+      const isSameDate = aptDate.getDate() === date.getDate() &&
+                         aptDate.getMonth() === date.getMonth() &&
+                         aptDate.getFullYear() === date.getFullYear();
       
-      if (!sameDate) return false;
+      if (!isSameDate) return false;
       
-      // Get appointment time components
+      // Must be same dentist (if specified)
+      if (dentistId && apt.dentistId !== dentistId) return false;
+      
+      // Must start at exact time slot
       const aptHour = aptDate.getHours();
       const aptMinute = aptDate.getMinutes();
       
-      // Check if appointment starts exactly at this time slot
-      const isExactStartTime = aptHour === slotHour && aptMinute === slotMinute;
+      const isExactMatch = aptHour === slotHour && aptMinute === slotMinute;
       
-      const sameDentist = dentistId ? apt.dentistId === dentistId : true;
-      
-      // Debug for appointment ID 1
-      if (apt.id === 1 && sameDate) {
-        console.log(`Checking appointment ${apt.id} for slot ${time}:`, {
+      // Debug log for appointment ID 1 on today's date
+      if (apt.id === 1 && isSameDate) {
+        console.log(`DEBUG: Appointment ${apt.id} - Slot ${time}:`, {
           scheduledDate: apt.scheduledDate,
           aptHour,
           aptMinute,
           slotHour,
           slotMinute,
-          isExactStartTime,
-          sameDentist
+          isExactMatch
         });
       }
       
-      return isExactStartTime && sameDentist;
+      return isExactMatch;
     });
   };
 
