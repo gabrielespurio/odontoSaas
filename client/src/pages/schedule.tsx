@@ -127,13 +127,7 @@ export default function Schedule() {
       
       // Force exact match - appointment at 12:30 should ONLY appear in 12:30 slot
       if (aptHour === slotHour && aptMinute === slotMinute) {
-        console.log(`MATCH FOUND: Appointment ${apt.id} at ${aptHour}:${aptMinute} matches slot ${slotHour}:${slotMinute}`);
         return apt;
-      }
-      
-      // Debug every comparison for appointment ID 1
-      if (apt.id === 1) {
-        console.log(`Checking apt ${apt.id}: ${aptHour}:${aptMinute} vs slot ${slotHour}:${slotMinute} = ${aptHour === slotHour && aptMinute === slotMinute}`);
       }
     }
     
@@ -147,28 +141,35 @@ export default function Schedule() {
     const [slotHour, slotMinute] = time.split(':').map(Number);
     const slotTimeInMinutes = slotHour * 60 + slotMinute;
     
-    return appointments.find(apt => {
+    for (const apt of appointments) {
       const aptDate = new Date(apt.scheduledDate);
       const sameDentist = dentistId ? apt.dentistId === dentistId : true;
       
-      if (!sameDentist) return false;
+      if (!sameDentist) continue;
       
       // Same date check
       const sameDate = aptDate.getFullYear() === date.getFullYear() &&
                        aptDate.getMonth() === date.getMonth() &&
                        aptDate.getDate() === date.getDate();
       
-      if (!sameDate) return false;
+      if (!sameDate) continue;
       
       const duration = apt.procedure?.duration || 30;
       const aptTimeInMinutes = aptDate.getHours() * 60 + aptDate.getMinutes();
       const endTimeInMinutes = aptTimeInMinutes + duration;
       
       // Check if current slot is within the appointment duration but not the starting slot
+      // This slot is occupied by a previous appointment if:
+      // 1. The appointment started before this slot
+      // 2. The appointment ends after this slot starts
       const isWithinDuration = aptTimeInMinutes < slotTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
       
-      return isWithinDuration;
-    });
+      if (isWithinDuration) {
+        return apt;
+      }
+    }
+    
+    return null;
   };
 
   // Calculate how many slots an appointment should span
@@ -341,6 +342,11 @@ export default function Schedule() {
                           // This is the starting slot of the appointment
                           const duration = appointment.procedure?.duration || 30;
                           const slotSpan = getAppointmentSlotSpan(appointment);
+                          
+                          // Debug log to see where appointment is being rendered
+                          if (appointment.id === 1) {
+                            console.log(`RENDERING appointment ${appointment.id} at slot ${time} on date ${date.toISOString()}`);
+                          }
                           
                           return (
                             <div key={dayIndex} className="schedule-day-cell">
