@@ -33,7 +33,7 @@ function Router() {
   useEffect(() => {
     if (isAuthenticated && (location === "/login" || location === "/")) {
       console.log("Redirecionando para dashboard...");
-      setLocation("/dashboard");
+      window.location.href = "/dashboard";
     }
   }, [isAuthenticated, location, setLocation]);
 

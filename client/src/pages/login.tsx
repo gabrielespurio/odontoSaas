@@ -25,17 +25,14 @@ export default function Login() {
         title: "Login realizado com sucesso",
         description: "Bem-vindo ao DentalCare!",
       });
-      // Redirecionamento manual garantido
-      setTimeout(() => {
-        setLocation("/dashboard");
-      }, 100);
+      // Forçar redirecionamento imediato
+      window.location.href = "/dashboard";
     } catch (error) {
       toast({
         title: "Erro no login",
         description: "Usuário ou senha incorretos",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
