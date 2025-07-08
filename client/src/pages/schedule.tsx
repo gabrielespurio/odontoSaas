@@ -127,6 +127,19 @@ export default function Schedule() {
       // For exact time matching - appointment should show in the exact slot it starts
       const sameTime = aptHour === slotHour && aptMinute === slotMinute;
       
+      // Debug logging
+      if (apt.id === 1) {
+        console.log('DEBUG Appointment:', {
+          aptDate: aptDate.toISOString(),
+          aptHour,
+          aptMinute,
+          slotHour,
+          slotMinute,
+          time,
+          sameTime
+        });
+      }
+      
       const sameDentist = dentistId ? apt.dentistId === dentistId : true;
       return sameTime && sameDentist;
     });
