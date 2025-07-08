@@ -27,6 +27,10 @@ export default function Sidebar() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
 
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
     <div className="hidden lg:flex lg:flex-shrink-0">
       <div className="flex flex-col w-64 bg-white border-r border-neutral-200">
@@ -71,7 +75,7 @@ export default function Sidebar() {
               </div>
             </div>
             <button 
-              onClick={logout}
+              onClick={handleLogout}
               className="p-2 text-neutral-600 hover:text-neutral-900 transition-colors"
               title="Sair"
             >

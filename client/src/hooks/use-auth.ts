@@ -35,6 +35,8 @@ export function useAuth() {
     authApi.logout();
     setUser(null);
     setIsAuthenticated(false);
+    // Força o redirecionamento para a página de login
+    window.location.href = "/";
   };
 
   const register = async (userData: {
