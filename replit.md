@@ -226,6 +226,9 @@ DentalCare is a comprehensive dental clinic management SaaS system built as a fu
 - July 08, 2025. **INTUITIVE CONFLICT VALIDATION**: Improved UX for appointment conflicts with real-time validation
 - July 08, 2025. Added visual feedback with red border and inline error message for time conflicts
 - July 08, 2025. Implemented client-side validation that prevents form submission when conflicts are detected
+- July 08, 2025. **PROCEDURE DURATION VALIDATION**: Enhanced conflict detection to consider procedure duration
+- July 08, 2025. System now blocks time slots during entire procedure duration (e.g., 90min procedure blocks 1.5 hours)
+- July 08, 2025. Improved error messages to show exact conflict times and procedure names
 - July 08, 2025. **MIGRATION COMPLETED**: Successfully migrated DentalCare project from Replit Agent to standard Replit environment
 - July 08, 2025. **APPOINTMENT FORM IMPROVEMENTS**: Fixed dropdown cutting issue in appointment form - increased dialog height, added dropdown height limits, improved overflow handling
 

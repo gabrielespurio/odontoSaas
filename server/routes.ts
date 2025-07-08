@@ -353,26 +353,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const appointmentData = insertAppointmentSchema.parse(req.body);
       
-      // Validar se o horário está disponível
+      // Validar se o horário está disponível considerando a duração dos procedimentos
       const scheduledDate = new Date(appointmentData.scheduledDate);
+      const newStartTime = scheduledDate.getTime();
       
       // Buscar todos os agendamentos do mesmo dia e dentista
       const existingAppointments = await storage.getAppointments(scheduledDate, appointmentData.dentistId);
       
-      // Verificar se já existe um agendamento no mesmo horário exato
+      // Verificar se o novo horário conflita com algum procedimento em andamento
       const conflictingAppointment = existingAppointments.find(apt => {
         const aptDate = new Date(apt.scheduledDate);
-        const aptHour = aptDate.getHours();
-        const aptMinute = aptDate.getMinutes();
-        const newHour = scheduledDate.getHours();
-        const newMinute = scheduledDate.getMinutes();
+        const aptStartTime = aptDate.getTime();
+        const aptEndTime = aptStartTime + (apt.procedure.duration * 60 * 1000); // duração em minutos para millisegundos
         
-        return aptHour === newHour && aptMinute === newMinute;
+        // Verifica se o novo horário está dentro do período do procedimento existente
+        return newStartTime >= aptStartTime && newStartTime < aptEndTime;
       });
       
       if (conflictingAppointment) {
+        const conflictStart = new Date(conflictingAppointment.scheduledDate);
+        const conflictEnd = new Date(conflictStart.getTime() + (conflictingAppointment.procedure.duration * 60 * 1000));
+        
         return res.status(409).json({ 
-          message: "Horário já ocupado. Escolha outro horário para o agendamento." 
+          message: `Horário ocupado pelo procedimento "${conflictingAppointment.procedure.name}" que vai das ${conflictStart.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} às ${conflictEnd.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}.` 
         });
       }
       
@@ -392,24 +395,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validar se o horário está disponível (apenas se a data estiver sendo alterada)
       if (appointmentData.scheduledDate) {
         const scheduledDate = new Date(appointmentData.scheduledDate);
+        const newStartTime = scheduledDate.getTime();
         const existingAppointments = await storage.getAppointments(scheduledDate, appointmentData.dentistId);
         
-        // Verificar se já existe um agendamento no mesmo horário exato (exceto o atual)
+        // Verificar se o novo horário conflita com algum procedimento em andamento (exceto o atual)
         const conflictingAppointment = existingAppointments.find(apt => {
           if (apt.id === id) return false; // Ignora o próprio agendamento
           
           const aptDate = new Date(apt.scheduledDate);
-          const aptHour = aptDate.getHours();
-          const aptMinute = aptDate.getMinutes();
-          const newHour = scheduledDate.getHours();
-          const newMinute = scheduledDate.getMinutes();
+          const aptStartTime = aptDate.getTime();
+          const aptEndTime = aptStartTime + (apt.procedure.duration * 60 * 1000);
           
-          return aptHour === newHour && aptMinute === newMinute;
+          // Verifica se o novo horário está dentro do período do procedimento existente
+          return newStartTime >= aptStartTime && newStartTime < aptEndTime;
         });
         
         if (conflictingAppointment) {
+          const conflictStart = new Date(conflictingAppointment.scheduledDate);
+          const conflictEnd = new Date(conflictStart.getTime() + (conflictingAppointment.procedure.duration * 60 * 1000));
+          
           return res.status(409).json({ 
-            message: "Horário já ocupado. Escolha outro horário para o agendamento." 
+            message: `Horário ocupado pelo procedimento "${conflictingAppointment.procedure.name}" que vai das ${conflictStart.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} às ${conflictEnd.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}.` 
           });
         }
       }

@@ -55,31 +55,36 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     queryKey: ["/api/appointments"],
   });
 
-  // Função para verificar conflitos de horário
+  // Função para verificar conflitos de horário considerando duração dos procedimentos
   const checkTimeConflict = (scheduledDate: string, dentistId: number, excludeId?: number) => {
-    if (!appointments || !scheduledDate || !dentistId) return false;
+    if (!appointments || !scheduledDate || !dentistId || !procedures) return false;
     
     const newDate = new Date(scheduledDate);
-    const newHour = newDate.getHours();
-    const newMinute = newDate.getMinutes();
+    const newStartTime = newDate.getTime();
     
     return appointments.some(apt => {
       if (excludeId && apt.id === excludeId) return false;
+      if (apt.dentistId !== dentistId) return false;
       
       const aptDate = new Date(apt.scheduledDate);
-      const aptHour = aptDate.getHours();
-      const aptMinute = aptDate.getMinutes();
       
       // Verifica se é o mesmo dia
       const isSameDay = aptDate.getDate() === newDate.getDate() &&
                        aptDate.getMonth() === newDate.getMonth() &&
                        aptDate.getFullYear() === newDate.getFullYear();
       
-      // Verifica se é o mesmo dentista e horário
-      return isSameDay && 
-             apt.dentistId === dentistId && 
-             aptHour === newHour && 
-             aptMinute === newMinute;
+      if (!isSameDay) return false;
+      
+      // Encontra o procedimento do agendamento existente
+      const existingProcedure = procedures.find(p => p.id === apt.procedure.id);
+      if (!existingProcedure) return false;
+      
+      const aptStartTime = aptDate.getTime();
+      const aptEndTime = aptStartTime + (existingProcedure.duration * 60 * 1000); // duração em minutos para millisegundos
+      
+      // Verifica se o novo horário conflita com o período do procedimento existente
+      // O conflito ocorre se o novo horário está dentro do período do procedimento existente
+      return newStartTime >= aptStartTime && newStartTime < aptEndTime;
     });
   };
 
@@ -119,12 +124,12 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     if (watchedDate && watchedDentist) {
       const hasConflict = checkTimeConflict(watchedDate, watchedDentist, appointment?.id);
       if (hasConflict) {
-        setTimeConflictError("Este horário já está ocupado para o dentista selecionado");
+        setTimeConflictError("Este horário conflita com outro procedimento em andamento");
       } else {
         setTimeConflictError(null);
       }
     }
-  }, [watchedDate, watchedDentist, appointments, appointment?.id]);
+  }, [watchedDate, watchedDentist, appointments, appointment?.id, procedures]);
 
   // Initialize procedures when editing or creating
   useEffect(() => {
