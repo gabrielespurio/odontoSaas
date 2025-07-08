@@ -124,15 +124,11 @@ export default function Schedule() {
       const slotHour = slotDateTime.getHours();
       const slotMinute = slotDateTime.getMinutes();
       
-      // Convert both times to minutes for easier comparison
-      const aptTimeInMinutes = aptHour * 60 + aptMinute;
-      const slotTimeInMinutes = slotHour * 60 + slotMinute;
-      
-      // Appointment starts in this slot if it's within the 30-minute window
-      const isInSlot = aptTimeInMinutes >= slotTimeInMinutes && aptTimeInMinutes < slotTimeInMinutes + 30;
+      // For exact time matching - appointment should show in the exact slot it starts
+      const sameTime = aptHour === slotHour && aptMinute === slotMinute;
       
       const sameDentist = dentistId ? apt.dentistId === dentistId : true;
-      return isInSlot && sameDentist;
+      return sameTime && sameDentist;
     });
   };
 
@@ -163,6 +159,7 @@ export default function Schedule() {
       const endTimeInMinutes = aptTimeInMinutes + duration;
       
       // Check if current slot is within the appointment duration but not the starting slot
+      // The slot is occupied if it's after the start time and before the end time
       return aptTimeInMinutes < slotTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
     });
   };
