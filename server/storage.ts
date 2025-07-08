@@ -56,7 +56,7 @@ export interface IStorage {
   updateProcedure(id: number, procedure: Partial<InsertProcedure>): Promise<Procedure>;
   
   // Appointments
-  getAppointments(date?: Date, dentistId?: number): Promise<(Appointment & { patient: Patient; dentist: User; procedure: Procedure })[]>;
+  getAppointments(date?: Date, dentistId?: number, startDate?: Date, endDate?: Date): Promise<(Appointment & { patient: Patient; dentist: User; procedure: Procedure })[]>;
   getAppointment(id: number): Promise<Appointment | undefined>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: number, appointment: Partial<InsertAppointment>): Promise<Appointment>;
@@ -186,7 +186,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Appointments
-  async getAppointments(date?: Date, dentistId?: number): Promise<(Appointment & { patient: Patient; dentist: User; procedure: Procedure })[]> {
+  async getAppointments(date?: Date, dentistId?: number, startDate?: Date, endDate?: Date): Promise<(Appointment & { patient: Patient; dentist: User; procedure: Procedure })[]> {
     let whereConditions = [];
 
     if (date) {
@@ -198,6 +198,18 @@ export class DatabaseStorage implements IStorage {
       whereConditions.push(
         sql`${appointments.scheduledDate} >= ${startOfDay}`,
         sql`${appointments.scheduledDate} <= ${endOfDay}`
+      );
+    }
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      
+      whereConditions.push(
+        sql`${appointments.scheduledDate} >= ${start}`,
+        sql`${appointments.scheduledDate} <= ${end}`
       );
     }
 

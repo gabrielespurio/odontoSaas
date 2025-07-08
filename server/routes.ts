@@ -337,9 +337,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/appointments", async (req, res) => {
     try {
       const date = req.query.date ? new Date(req.query.date as string) : undefined;
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
       const dentistId = req.query.dentistId ? parseInt(req.query.dentistId as string) : undefined;
       
-      const appointments = await storage.getAppointments(date, dentistId);
+      const appointments = await storage.getAppointments(date, dentistId, startDate, endDate);
       res.json(appointments);
     } catch (error) {
       console.error("Get appointments error:", error);

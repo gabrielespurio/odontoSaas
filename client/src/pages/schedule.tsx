@@ -25,12 +25,56 @@ export default function Schedule() {
   const [showForm, setShowForm] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
-  const [view, setView] = useState<"day" | "week" | "month">("day");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Time slots for schedule (8 AM to 6 PM)
+  const timeSlots = Array.from({ length: 20 }, (_, i) => {
+    const hour = Math.floor(8 + i / 2);
+    const minute = (i % 2) * 30;
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  });
+
+  // Get week dates
+  const getWeekDates = (date: Date) => {
+    const week = [];
+    const startOfWeek = new Date(date);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Start on Monday
+    startOfWeek.setDate(diff);
+    
+    for (let i = 0; i < 7; i++) {
+      const currentDate = new Date(startOfWeek);
+      currentDate.setDate(startOfWeek.getDate() + i);
+      week.push(currentDate);
+    }
+    return week;
+  };
+
+  const weekDates = getWeekDates(selectedDate);
+
+  const navigateWeek = (direction: "prev" | "next") => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(selectedDate.getDate() + (direction === "next" ? 7 : -7));
+    setSelectedDate(newDate);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "scheduled": return "bg-blue-500";
+      case "confirmed": return "bg-green-500";
+      case "attended": return "bg-purple-500";
+      case "cancelled": return "bg-red-500";
+      default: return "bg-gray-500";
+    }
+  };
+
   const { data: appointments, isLoading: appointmentsLoading } = useQuery<Appointment[]>({
-    queryKey: ["/api/appointments", { date: selectedDate.toISOString().split('T')[0], dentistId: selectedDentist !== "all" ? parseInt(selectedDentist) : undefined }],
+    queryKey: ["/api/appointments", { 
+      startDate: weekDates[0].toISOString().split('T')[0], 
+      endDate: weekDates[6].toISOString().split('T')[0],
+      dentistId: selectedDentist !== "all" ? parseInt(selectedDentist) : undefined 
+    }],
   });
 
   const { data: dentists } = useQuery<User[]>({
@@ -56,69 +100,19 @@ export default function Schedule() {
     },
   });
 
-  const getStatusBadge = (status: string) => {
-    const statusMap = {
-      scheduled: { label: "Agendado", className: "status-scheduled" },
-      confirmed: { label: "Confirmado", className: "status-confirmed" },
-      attended: { label: "Atendido", className: "status-attended" },
-      cancelled: { label: "Cancelado", className: "status-cancelled" },
-    };
+  // Get appointment for specific time slot and date
+  const getAppointmentForSlot = (date: Date, time: string, dentistId?: number) => {
+    if (!appointments) return null;
     
-    const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.scheduled;
-    return (
-      <Badge className={`status-badge ${statusInfo.className}`}>
-        {statusInfo.label}
-      </Badge>
-    );
-  };
-
-  const handleReserveTime = (time: string) => {
-    setSelectedTimeSlot(time);
-    setEditingAppointment(null);
-    setShowForm(true);
-  };
-
-  const formatTime = (dateTime: string) => {
-    return new Date(dateTime).toLocaleTimeString('pt-BR', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('pt-BR', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric',
-      weekday: 'long'
-    });
-  };
-
-  const changeDate = (direction: 'prev' | 'next') => {
-    const newDate = new Date(selectedDate);
-    if (view === "day") {
-      newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
-    } else if (view === "week") {
-      newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
-    } else if (view === "month") {
-      newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
-    }
-    setSelectedDate(newDate);
-  };
-
-  const generateTimeSlots = () => {
-    const slots = [];
-    for (let hour = 8; hour < 18; hour++) {
-      slots.push(`${hour.toString().padStart(2, '0')}:00`);
-      slots.push(`${hour.toString().padStart(2, '0')}:30`);
-    }
-    return slots;
-  };
-
-  const getAppointmentForSlot = (time: string) => {
-    return appointments?.find(apt => {
-      const aptTime = formatTime(apt.scheduledDate);
-      return aptTime === time;
+    const [hour, minute] = time.split(':').map(Number);
+    const slotDateTime = new Date(date);
+    slotDateTime.setHours(hour, minute, 0, 0);
+    
+    return appointments.find(apt => {
+      const aptDate = new Date(apt.scheduledDate);
+      const sameDateTime = aptDate.getTime() === slotDateTime.getTime();
+      const sameDentist = dentistId ? apt.dentistId === dentistId : true;
+      return sameDateTime && sameDentist;
     });
   };
 
@@ -134,23 +128,19 @@ export default function Schedule() {
 
   if (appointmentsLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-24 bg-gray-200 rounded"></div>
-          <div className="h-96 bg-gray-200 rounded"></div>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
       </div>
     );
   }
 
   return (
     <div className="page-container">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-neutral-900">Agenda</h1>
+      <div className="page-header">
+        <h1 className="page-title">Agenda</h1>
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingAppointment(null)}>
+            <Button className="bg-teal-600 hover:bg-teal-700">
               <Plus className="w-4 h-4 mr-2" />
               Novo Agendamento
             </Button>
@@ -163,11 +153,14 @@ export default function Schedule() {
             </DialogHeader>
             <AppointmentForm
               appointment={editingAppointment}
-              selectedDate={selectedDate.toISOString().split('T')[0]}
-              selectedTime={selectedTimeSlot}
-              onSuccess={handleFormSuccess}
+              prefilledDateTime={selectedTimeSlot}
+              onSuccess={() => {
+                handleFormSuccess();
+                queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+              }}
               onCancel={() => {
                 setShowForm(false);
+                setEditingAppointment(null);
                 setSelectedTimeSlot("");
               }}
             />
@@ -181,13 +174,13 @@ export default function Schedule() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <h3 className="text-lg font-semibold text-neutral-900">
-                {formatDate(selectedDate)}
+                {weekDates[0].toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} - {weekDates[6].toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}
               </h3>
               <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" onClick={() => changeDate('prev')}>
+                <Button variant="outline" size="sm" onClick={() => navigateWeek('prev')}>
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => changeDate('next')}>
+                <Button variant="outline" size="sm" onClick={() => navigateWeek('next')}>
                   <ChevronRight className="w-4 h-4" />
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date())}>
@@ -211,25 +204,11 @@ export default function Schedule() {
               </Select>
               <div className="flex items-center space-x-2">
                 <Button 
-                  variant={view === "day" ? "default" : "outline"} 
+                  variant="default"
                   size="sm"
-                  onClick={() => setView("day")}
-                >
-                  Dia
-                </Button>
-                <Button 
-                  variant={view === "week" ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => setView("week")}
+                  disabled
                 >
                   Semana
-                </Button>
-                <Button 
-                  variant={view === "month" ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => setView("month")}
-                >
-                  Mês
                 </Button>
               </div>
             </div>
@@ -237,178 +216,158 @@ export default function Schedule() {
         </CardContent>
       </Card>
 
-      {/* Schedule Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Morning Schedule */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Clock className="w-5 h-5 mr-2" />
-              Manhã (08:00 - 12:00)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {generateTimeSlots().filter(time => {
-                const hour = parseInt(time.split(':')[0]);
-                return hour >= 8 && hour < 12;
-              }).map((time) => {
-                const appointment = getAppointmentForSlot(time);
-                
-                if (appointment) {
-                  return (
-                    <div key={time} className={`flex items-center p-3 rounded-lg border-2 ${
-                      appointment.status === 'confirmed' ? 'bg-green-50 border-green-200' :
-                      appointment.status === 'scheduled' ? 'bg-yellow-50 border-yellow-200' :
-                      appointment.status === 'attended' ? 'bg-blue-50 border-blue-200' :
-                      'bg-red-50 border-red-200'
-                    }`}>
-                      <div className="w-16 text-center">
-                        <p className="text-sm font-medium">{time}</p>
-                      </div>
-                      <div className="flex-1 ml-3">
-                        <p className="text-sm font-medium">{appointment.patient?.name}</p>
-                        <p className="text-xs text-neutral-600">{appointment.procedure?.name}</p>
-                        <p className="text-xs text-neutral-500">{appointment.dentist?.name}</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {getStatusBadge(appointment.status)}
-                        <Select
-                          value={appointment.status}
-                          onValueChange={(value) => handleStatusChange(appointment.id, value)}
-                        >
-                          <SelectTrigger className="w-24 h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="scheduled">Agendado</SelectItem>
-                            <SelectItem value="confirmed">Confirmado</SelectItem>
-                            <SelectItem value="attended">Atendido</SelectItem>
-                            <SelectItem value="cancelled">Cancelado</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => {
-                            setEditingAppointment(appointment);
-                            setShowForm(true);
-                          }}
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+      {/* Teams-style Schedule Grid */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <div className="min-w-[800px]">
+              {/* Header with Days */}
+              <div className="grid grid-cols-8 border-b">
+                <div className="p-4 bg-neutral-50 border-r"></div>
+                {weekDates.map((date, index) => (
+                  <div key={index} className="p-4 bg-neutral-50 border-r text-center">
+                    <div className="font-medium text-sm">
+                      {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
                     </div>
-                  );
-                }
-
-                return (
-                  <div key={time} className="flex items-center p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
-                    <div className="w-16 text-center">
-                      <p className="text-sm font-medium text-neutral-500">{time}</p>
+                    <div className="text-lg font-bold">
+                      {date.getDate()}
                     </div>
-                    <div className="flex-1 ml-3">
-                      <p className="text-sm text-neutral-500">Horário Disponível</p>
+                    <div className="text-xs text-neutral-600">
+                      {date.toLocaleDateString('pt-BR', { month: 'short' })}
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleReserveTime(time)}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
 
-        {/* Afternoon Schedule */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Clock className="w-5 h-5 mr-2" />
-              Tarde (14:00 - 18:00)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {generateTimeSlots().filter(time => {
-                const hour = parseInt(time.split(':')[0]);
-                return hour >= 14 && hour < 18;
-              }).map((time) => {
-                const appointment = getAppointmentForSlot(time);
-                
-                if (appointment) {
-                  return (
-                    <div key={time} className={`flex items-center p-3 rounded-lg border-2 ${
-                      appointment.status === 'confirmed' ? 'bg-green-50 border-green-200' :
-                      appointment.status === 'scheduled' ? 'bg-yellow-50 border-yellow-200' :
-                      appointment.status === 'attended' ? 'bg-blue-50 border-blue-200' :
-                      'bg-red-50 border-red-200'
-                    }`}>
-                      <div className="w-16 text-center">
-                        <p className="text-sm font-medium">{time}</p>
-                      </div>
-                      <div className="flex-1 ml-3">
-                        <p className="text-sm font-medium">{appointment.patient?.name}</p>
-                        <p className="text-xs text-neutral-600">{appointment.procedure?.name}</p>
-                        <p className="text-xs text-neutral-500">{appointment.dentist?.name}</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {getStatusBadge(appointment.status)}
-                        <Select
-                          value={appointment.status}
-                          onValueChange={(value) => handleStatusChange(appointment.id, value)}
-                        >
-                          <SelectTrigger className="w-24 h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="scheduled">Agendado</SelectItem>
-                            <SelectItem value="confirmed">Confirmado</SelectItem>
-                            <SelectItem value="attended">Atendido</SelectItem>
-                            <SelectItem value="cancelled">Cancelado</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => {
-                            setEditingAppointment(appointment);
-                            setShowForm(true);
-                          }}
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+              {/* Schedule Grid Body */}
+              <div className="relative">
+                {/* Time slots row */}
+                {timeSlots.map((time, timeIndex) => (
+                  <div key={time} className="grid grid-cols-8 border-b border-neutral-100 min-h-[60px]">
+                    {/* Time column */}
+                    <div className="p-3 bg-neutral-50 border-r text-center">
+                      <span className="text-sm font-medium text-neutral-700">{time}</span>
                     </div>
-                  );
-                }
-
-                return (
-                  <div key={time} className="flex items-center p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
-                    <div className="w-16 text-center">
-                      <p className="text-sm font-medium text-neutral-500">{time}</p>
-                    </div>
-                    <div className="flex-1 ml-3">
-                      <p className="text-sm text-neutral-500">Horário Disponível</p>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleReserveTime(time)}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
+                    
+                    {/* Day columns */}
+                    {weekDates.map((date, dayIndex) => {
+                      const filteredDentists = selectedDentist === "all" 
+                        ? dentists || [] 
+                        : dentists?.filter(d => d.id.toString() === selectedDentist) || [];
+                      
+                      if (filteredDentists.length === 0) {
+                        // No dentist selected or available
+                        return (
+                          <div key={dayIndex} className="border-r bg-neutral-25 hover:bg-neutral-50 cursor-pointer p-2 relative group"
+                               onClick={() => {
+                                 const dateTime = new Date(date);
+                                 const [hour, minute] = time.split(':').map(Number);
+                                 dateTime.setHours(hour, minute, 0, 0);
+                                 setSelectedTimeSlot(dateTime.toISOString().slice(0, 16));
+                                 setEditingAppointment(null);
+                                 setShowForm(true);
+                               }}>
+                            <div className="opacity-0 group-hover:opacity-100 absolute inset-0 flex items-center justify-center bg-teal-50 transition-opacity">
+                              <Button size="sm" variant="outline" className="text-xs">
+                                Agendar
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      }
+                      
+                      if (filteredDentists.length === 1) {
+                        // Single dentist view
+                        const dentist = filteredDentists[0];
+                        const appointment = getAppointmentForSlot(date, time, dentist.id);
+                        
+                        if (appointment) {
+                          return (
+                            <div key={dayIndex} className="border-r p-1 relative">
+                              <div className={`rounded p-2 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
+                                   onClick={() => {
+                                     setEditingAppointment(appointment);
+                                     setShowForm(true);
+                                   }}>
+                                <div className="font-medium truncate">{appointment.patient?.name}</div>
+                                <div className="opacity-90 truncate">{appointment.procedure?.name}</div>
+                              </div>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div key={dayIndex} className="border-r bg-neutral-25 hover:bg-neutral-50 cursor-pointer p-2 relative group"
+                                 onClick={() => {
+                                   const dateTime = new Date(date);
+                                   const [hour, minute] = time.split(':').map(Number);
+                                   dateTime.setHours(hour, minute, 0, 0);
+                                   setSelectedTimeSlot(dateTime.toISOString().slice(0, 16));
+                                   setEditingAppointment(null);
+                                   setShowForm(true);
+                                 }}>
+                              <div className="opacity-0 group-hover:opacity-100 absolute inset-0 flex items-center justify-center bg-teal-50 transition-opacity">
+                                <Button size="sm" variant="outline" className="text-xs">
+                                  Agendar
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        }
+                      } else {
+                        // Multiple dentists view - show stacked appointments
+                        const hasAnyAppointment = filteredDentists.some(dentist => 
+                          getAppointmentForSlot(date, time, dentist.id)
+                        );
+                        
+                        if (hasAnyAppointment) {
+                          return (
+                            <div key={dayIndex} className="border-r p-1 space-y-1">
+                              {filteredDentists.map((dentist) => {
+                                const appointment = getAppointmentForSlot(date, time, dentist.id);
+                                if (appointment) {
+                                  return (
+                                    <div key={dentist.id} className={`rounded p-1 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
+                                         onClick={() => {
+                                           setEditingAppointment(appointment);
+                                           setShowForm(true);
+                                         }}>
+                                      <div className="font-medium truncate">{appointment.patient?.name}</div>
+                                      <div className="opacity-90 truncate">{dentist.name}</div>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })}
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div key={dayIndex} className="border-r bg-neutral-25 hover:bg-neutral-50 cursor-pointer p-2 relative group"
+                                 onClick={() => {
+                                   const dateTime = new Date(date);
+                                   const [hour, minute] = time.split(':').map(Number);
+                                   dateTime.setHours(hour, minute, 0, 0);
+                                   setSelectedTimeSlot(dateTime.toISOString().slice(0, 16));
+                                   setEditingAppointment(null);
+                                   setShowForm(true);
+                                 }}>
+                              <div className="opacity-0 group-hover:opacity-100 absolute inset-0 flex items-center justify-center bg-teal-50 transition-opacity">
+                                <Button size="sm" variant="outline" className="text-xs">
+                                  Agendar
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        }
+                      }
+                    })}
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
