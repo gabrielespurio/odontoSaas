@@ -100,6 +100,21 @@ export default function Schedule() {
     },
   });
 
+  // Helper function to format datetime for HTML input (local time)
+  const formatLocalDateTime = (date: Date, time: string) => {
+    const dateTime = new Date(date);
+    const [hour, minute] = time.split(':').map(Number);
+    dateTime.setHours(hour, minute, 0, 0);
+    
+    const year = dateTime.getFullYear();
+    const month = String(dateTime.getMonth() + 1).padStart(2, '0');
+    const day = String(dateTime.getDate()).padStart(2, '0');
+    const hours = String(dateTime.getHours()).padStart(2, '0');
+    const minutes = String(dateTime.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   // Get appointment that starts at this specific time slot
   const getAppointmentForSlot = (date: Date, time: string, dentistId?: number) => {
     if (!appointments) return null;
@@ -320,10 +335,9 @@ export default function Schedule() {
                         return (
                           <div key={dayIndex} className="schedule-day-cell schedule-empty-cell"
                                onClick={() => {
-                                 const dateTime = new Date(date);
-                                 const [hour, minute] = time.split(':').map(Number);
-                                 dateTime.setHours(hour, minute, 0, 0);
-                                 setSelectedTimeSlot(dateTime.toISOString().slice(0, 16));
+
+                                 
+                                 setSelectedTimeSlot(formatLocalDateTime(date, time));
                                  setEditingAppointment(null);
                                  setShowForm(true);
                                }}>
@@ -409,10 +423,7 @@ export default function Schedule() {
                           return (
                             <div key={dayIndex} className="schedule-day-cell schedule-empty-cell"
                                  onClick={() => {
-                                   const dateTime = new Date(date);
-                                   const [hour, minute] = time.split(':').map(Number);
-                                   dateTime.setHours(hour, minute, 0, 0);
-                                   setSelectedTimeSlot(dateTime.toISOString().slice(0, 16));
+                                   setSelectedTimeSlot(formatLocalDateTime(date, time));
                                    setEditingAppointment(null);
                                    setShowForm(true);
                                  }}>
@@ -488,10 +499,7 @@ export default function Schedule() {
                           return (
                             <div key={dayIndex} className="schedule-day-cell schedule-empty-cell"
                                  onClick={() => {
-                                   const dateTime = new Date(date);
-                                   const [hour, minute] = time.split(':').map(Number);
-                                   dateTime.setHours(hour, minute, 0, 0);
-                                   setSelectedTimeSlot(dateTime.toISOString().slice(0, 16));
+                                   setSelectedTimeSlot(formatLocalDateTime(date, time));
                                    setEditingAppointment(null);
                                    setShowForm(true);
                                  }}>
