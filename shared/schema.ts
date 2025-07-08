@@ -47,6 +47,15 @@ export const patients = pgTable("patients", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Procedure Categories table
+export const procedureCategories = pgTable("procedure_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Procedures table
 export const procedures = pgTable("procedures", {
   id: serial("id").primaryKey(),
@@ -139,6 +148,10 @@ export const patientsRelations = relations(patients, ({ many }) => ({
   dentalChart: many(dentalChart),
   anamnese: many(anamnese),
   financial: many(financial),
+}));
+
+export const procedureCategoriesRelations = relations(procedureCategories, ({ many }) => ({
+  procedures: many(procedures),
 }));
 
 export const proceduresRelations = relations(procedures, ({ many }) => ({
@@ -252,6 +265,11 @@ export const insertFinancialSchema = createInsertSchema(financial).omit({
   updatedAt: true,
 });
 
+export const insertProcedureCategorySchema = createInsertSchema(procedureCategories).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -269,3 +287,5 @@ export type Anamnese = typeof anamnese.$inferSelect;
 export type InsertAnamnese = z.infer<typeof insertAnamneseSchema>;
 export type Financial = typeof financial.$inferSelect;
 export type InsertFinancial = z.infer<typeof insertFinancialSchema>;
+export type ProcedureCategory = typeof procedureCategories.$inferSelect;
+export type InsertProcedureCategory = z.infer<typeof insertProcedureCategorySchema>;

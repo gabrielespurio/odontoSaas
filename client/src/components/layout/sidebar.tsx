@@ -8,6 +8,7 @@ import {
   Wrench, 
   DollarSign, 
   FileText,
+  Settings,
   LogOut 
 } from "lucide-react";
 
@@ -19,6 +20,7 @@ const navigation = [
   { name: "Procedimentos", href: "/procedures", icon: Wrench },
   { name: "Financeiro", href: "/financial", icon: DollarSign },
   { name: "Relatórios", href: "/reports", icon: FileText },
+  { name: "Configurações", href: "/settings", icon: Settings },
 ];
 
 export default function Sidebar() {

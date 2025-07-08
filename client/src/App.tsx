@@ -17,6 +17,7 @@ import Consultations from "@/pages/consultations";
 import Procedures from "@/pages/procedures";
 import Financial from "@/pages/financial";
 import Reports from "@/pages/reports";
+import Settings from "@/pages/settings";
 import MainLayout from "@/components/layout/main-layout";
 import NotFound from "@/pages/not-found";
 
@@ -59,6 +60,7 @@ function Router() {
         <Route path="/procedures" component={Procedures} />
         <Route path="/financial" component={Financial} />
         <Route path="/reports" component={Reports} />
+        <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
     </MainLayout>

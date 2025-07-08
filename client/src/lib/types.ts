@@ -108,3 +108,11 @@ export interface User {
   isActive: boolean;
   createdAt: string;
 }
+
+export interface ProcedureCategory {
+  id: number;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+}

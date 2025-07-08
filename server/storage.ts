@@ -7,6 +7,7 @@ import {
   dentalChart,
   anamnese,
   financial,
+  procedureCategories,
   type User,
   type InsertUser,
   type Patient,
@@ -23,6 +24,8 @@ import {
   type InsertAnamnese,
   type Financial,
   type InsertFinancial,
+  type ProcedureCategory,
+  type InsertProcedureCategory,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, sql } from "drizzle-orm";
@@ -39,6 +42,12 @@ export interface IStorage {
   getPatient(id: number): Promise<Patient | undefined>;
   createPatient(patient: InsertPatient): Promise<Patient>;
   updatePatient(id: number, patient: Partial<InsertPatient>): Promise<Patient>;
+  
+  // Procedure Categories
+  getProcedureCategories(): Promise<ProcedureCategory[]>;
+  getProcedureCategory(id: number): Promise<ProcedureCategory | undefined>;
+  createProcedureCategory(category: InsertProcedureCategory): Promise<ProcedureCategory>;
+  updateProcedureCategory(id: number, category: Partial<InsertProcedureCategory>): Promise<ProcedureCategory>;
   
   // Procedures
   getProcedures(): Promise<Procedure[]>;
@@ -134,6 +143,26 @@ export class DatabaseStorage implements IStorage {
   async updatePatient(id: number, insertPatient: Partial<InsertPatient>): Promise<Patient> {
     const [patient] = await db.update(patients).set(insertPatient).where(eq(patients.id, id)).returning();
     return patient;
+  }
+
+  // Procedure Categories
+  async getProcedureCategories(): Promise<ProcedureCategory[]> {
+    return await db.select().from(procedureCategories).where(eq(procedureCategories.isActive, true)).orderBy(procedureCategories.name);
+  }
+
+  async getProcedureCategory(id: number): Promise<ProcedureCategory | undefined> {
+    const [category] = await db.select().from(procedureCategories).where(eq(procedureCategories.id, id));
+    return category || undefined;
+  }
+
+  async createProcedureCategory(insertProcedureCategory: InsertProcedureCategory): Promise<ProcedureCategory> {
+    const [category] = await db.insert(procedureCategories).values(insertProcedureCategory).returning();
+    return category;
+  }
+
+  async updateProcedureCategory(id: number, insertProcedureCategory: Partial<InsertProcedureCategory>): Promise<ProcedureCategory> {
+    const [category] = await db.update(procedureCategories).set(insertProcedureCategory).where(eq(procedureCategories.id, id)).returning();
+    return category;
   }
 
   // Procedures

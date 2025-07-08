@@ -1,6 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
+import { users } from "@shared/schema";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { 
@@ -11,7 +13,8 @@ import {
   insertConsultationSchema, 
   insertDentalChartSchema, 
   insertAnamneseSchema, 
-  insertFinancialSchema 
+  insertFinancialSchema,
+  insertProcedureCategorySchema
 } from "@shared/schema";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
@@ -168,6 +171,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(patient);
     } catch (error) {
       console.error("Update patient error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Users Management
+  app.get("/api/users", async (req, res) => {
+    try {
+      const usersData = await db.select({
+        id: users.id,
+        username: users.username,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+      }).from(users).orderBy(users.name);
+      res.json(usersData);
+    } catch (error) {
+      console.error("Get users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/users", async (req, res) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      
+      const user = await storage.createUser({
+        ...userData,
+        password: hashedPassword,
+      });
+
+      res.json({
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+      });
+    } catch (error) {
+      console.error("Create user error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/users/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userData = insertUserSchema.partial().parse(req.body);
+      
+      let updateData = { ...userData };
+      if (userData.password) {
+        updateData.password = await bcrypt.hash(userData.password, 10);
+      }
+      
+      const user = await storage.updateUser(id, updateData);
+      res.json({
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+      });
+    } catch (error) {
+      console.error("Update user error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Procedure Categories
+  app.get("/api/procedure-categories", async (req, res) => {
+    try {
+      const categories = await storage.getProcedureCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Get procedure categories error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/procedure-categories", async (req, res) => {
+    try {
+      const categoryData = insertProcedureCategorySchema.parse(req.body);
+      const category = await storage.createProcedureCategory(categoryData);
+      res.json(category);
+    } catch (error) {
+      console.error("Create procedure category error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/procedure-categories/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const categoryData = insertProcedureCategorySchema.partial().parse(req.body);
+      const category = await storage.updateProcedureCategory(id, categoryData);
+      res.json(category);
+    } catch (error) {
+      console.error("Update procedure category error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

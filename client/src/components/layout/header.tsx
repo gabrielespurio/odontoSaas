@@ -9,6 +9,7 @@ const pageNames: Record<string, string> = {
   "/procedures": "Procedimentos",
   "/financial": "Financeiro",
   "/reports": "Relatórios",
+  "/settings": "Configurações",
 };
 
 export default function Header() {
