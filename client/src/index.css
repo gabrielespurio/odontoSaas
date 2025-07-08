@@ -99,6 +99,16 @@ html, body {
     @apply drop-shadow-lg transform scale-105;
   }
   
+  /* Remove focus ring from select triggers */
+  [data-radix-select-trigger] {
+    @apply focus:ring-0 focus:ring-offset-0 focus:border-input;
+  }
+  
+  /* Ensure no black border on select focus */
+  [data-radix-select-trigger]:focus {
+    @apply border-input ring-0 ring-offset-0;
+  }
+  
   .dental-tooth.selected {
     @apply drop-shadow-2xl transform scale-110;
     filter: drop-shadow(0 0 15px rgba(var(--primary), 0.4));
