@@ -182,19 +182,9 @@ export default function Patients() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
                             <Link href={`/patients/${patient.id}`} className="flex items-center cursor-pointer">
-                              <Eye className="w-4 h-4 mr-2" />
-                              Visualizar
+                              <Edit className="w-4 h-4 mr-2" />
+                              Editar
                             </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => {
-                              setEditingPatient(patient);
-                              setShowForm(true);
-                            }}
-                            className="flex items-center cursor-pointer"
-                          >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             className="flex items-center cursor-pointer text-red-600"

@@ -173,6 +173,9 @@ DentalCare is a comprehensive dental clinic management SaaS system built as a fu
 - July 07, 2025. Enhanced authentication flow with proper state management and navigation handling
 - July 07, 2025. DESIGN IMPROVEMENT: Eliminated white gap at bottom of pages by implementing consistent page-container class
 - July 07, 2025. Applied full-height background to all main pages ensuring seamless visual experience
+- July 08, 2025. Successfully migrated project from Replit Agent to standard Replit environment
+- July 08, 2025. Fixed database connection issues and created new PostgreSQL database
+- July 08, 2025. Improved patient module actions: removed "Visualizar" option, "Editar" now navigates to patient detail page
 
 ## User Preferences
 
