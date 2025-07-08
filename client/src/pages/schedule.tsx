@@ -127,7 +127,13 @@ export default function Schedule() {
       
       // Force exact match - appointment at 12:30 should ONLY appear in 12:30 slot
       if (aptHour === slotHour && aptMinute === slotMinute) {
+        console.log(`MATCH FOUND: Appointment ${apt.id} at ${aptHour}:${aptMinute} matches slot ${slotHour}:${slotMinute}`);
         return apt;
+      }
+      
+      // Debug every comparison for appointment ID 1
+      if (apt.id === 1) {
+        console.log(`Checking apt ${apt.id}: ${aptHour}:${aptMinute} vs slot ${slotHour}:${slotMinute} = ${aptHour === slotHour && aptMinute === slotMinute}`);
       }
     }
     
