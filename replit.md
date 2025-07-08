@@ -173,6 +173,15 @@ DentalCare is a comprehensive dental clinic management SaaS system built as a fu
 - July 07, 2025. Enhanced authentication flow with proper state management and navigation handling
 - July 07, 2025. DESIGN IMPROVEMENT: Eliminated white gap at bottom of pages by implementing consistent page-container class
 - July 07, 2025. Applied full-height background to all main pages ensuring seamless visual experience
+- July 08, 2025. **MIGRATION COMPLETED**: Successfully migrated DentalCare project from Replit Agent to standard Replit environment
+- July 08, 2025. PATIENT MODULE IMPROVEMENT: Removed "Visualizar" option from patient actions dropdown
+- July 08, 2025. Updated patient actions to only show "Editar" and "Excluir" options
+- July 08, 2025. Modified "Editar" button to navigate to patient detail page with odontogram, history, and financial information
+- July 08, 2025. SCHEDULING MODULE ENHANCEMENT: Improved appointment booking system with multiple procedure selection
+- July 08, 2025. Added pre-filling of date and time when clicking "Reserve Time" buttons in schedule
+- July 08, 2025. Implemented multiple procedure selection with checkboxes instead of single dropdown
+- July 08, 2025. Added automatic calculation of total duration and price for selected procedures
+- July 08, 2025. Enhanced appointment summary with detailed procedure breakdown and total values
 - July 08, 2025. Successfully migrated project from Replit Agent to standard Replit environment
 - July 08, 2025. Fixed database connection issues and created new PostgreSQL database
 - July 08, 2025. Improved patient module actions: removed "Visualizar" option, "Editar" now navigates to patient detail page

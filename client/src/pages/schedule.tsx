@@ -24,6 +24,7 @@ export default function Schedule() {
   const [selectedDentist, setSelectedDentist] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
   const [view, setView] = useState<"day" | "week" | "month">("day");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -69,6 +70,12 @@ export default function Schedule() {
         {statusInfo.label}
       </Badge>
     );
+  };
+
+  const handleReserveTime = (time: string) => {
+    setSelectedTimeSlot(time);
+    setEditingAppointment(null);
+    setShowForm(true);
   };
 
   const formatTime = (dateTime: string) => {
@@ -118,6 +125,7 @@ export default function Schedule() {
   const handleFormSuccess = () => {
     setShowForm(false);
     setEditingAppointment(null);
+    setSelectedTimeSlot("");
   };
 
   const handleStatusChange = (appointmentId: number, newStatus: string) => {
@@ -155,8 +163,13 @@ export default function Schedule() {
             </DialogHeader>
             <AppointmentForm
               appointment={editingAppointment}
+              selectedDate={selectedDate.toISOString().split('T')[0]}
+              selectedTime={selectedTimeSlot}
               onSuccess={handleFormSuccess}
-              onCancel={() => setShowForm(false)}
+              onCancel={() => {
+                setShowForm(false);
+                setSelectedTimeSlot("");
+              }}
             />
           </DialogContent>
         </Dialog>
@@ -300,7 +313,7 @@ export default function Schedule() {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => setShowForm(true)}
+                      onClick={() => handleReserveTime(time)}
                     >
                       <Plus className="w-4 h-4" />
                     </Button>
@@ -385,7 +398,7 @@ export default function Schedule() {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => setShowForm(true)}
+                      onClick={() => handleReserveTime(time)}
                     >
                       <Plus className="w-4 h-4" />
                     </Button>
