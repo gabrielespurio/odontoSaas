@@ -136,8 +136,8 @@ export default function Schedule() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Agenda</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-neutral-900">Agenda</h1>
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
             <Button className="bg-teal-600 hover:bg-teal-700">
