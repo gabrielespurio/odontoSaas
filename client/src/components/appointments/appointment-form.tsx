@@ -185,7 +185,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   };
 
   return (
-    <div className="max-h-[calc(95vh-120px)] overflow-y-auto pr-2">
+    <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -197,7 +197,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
               <SelectTrigger>
                 <SelectValue placeholder="Selecionar paciente" />
               </SelectTrigger>
-              <SelectContent className="max-h-[200px]">
+              <SelectContent className="max-h-[200px]" position="popper" sideOffset={5}>
                 {patients?.map((patient) => (
                   <SelectItem key={patient.id} value={patient.id.toString()}>
                     {patient.name}
@@ -220,7 +220,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
               <SelectTrigger>
                 <SelectValue placeholder="Selecionar dentista" />
               </SelectTrigger>
-              <SelectContent className="max-h-[200px]">
+              <SelectContent className="max-h-[200px]" position="popper" sideOffset={5}>
                 {dentists?.map((dentist) => (
                   <SelectItem key={dentist.id} value={dentist.id.toString()}>
                     {dentist.name}
@@ -273,7 +273,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
                     <SelectTrigger>
                       <SelectValue placeholder="Selecionar procedimento" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[200px]">
+                    <SelectContent className="max-h-[200px]" position="popper" sideOffset={5}>
                       {procedures?.map((procedure) => (
                         <SelectItem key={procedure.id} value={procedure.id.toString()}>
                           <div className="flex flex-col">
