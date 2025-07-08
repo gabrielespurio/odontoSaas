@@ -245,6 +245,8 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
 export const insertConsultationSchema = createInsertSchema(consultations).omit({
   id: true,
   createdAt: true,
+}).extend({
+  date: z.string().transform((str) => new Date(str)),
 });
 
 export const insertDentalChartSchema = createInsertSchema(dentalChart).omit({

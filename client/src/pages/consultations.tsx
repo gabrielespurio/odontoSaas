@@ -30,7 +30,7 @@ const consultationSchema = z.object({
   patientId: z.number().min(1, "Paciente é obrigatório"),
   dentistId: z.number().min(1, "Dentista é obrigatório"),
   appointmentId: z.number().optional(),
-  date: z.string().min(1, "Data é obrigatória"),
+  date: z.string().min(1, "Data é obrigatória").transform((str) => new Date(str)),
   procedures: z.array(z.string()).optional(),
   clinicalNotes: z.string().optional(),
   observations: z.string().optional(),
@@ -59,7 +59,16 @@ export default function Consultations() {
   });
 
   const { data: dentists } = useQuery<User[]>({
-    queryKey: ["/api/users", { role: "dentist" }],
+    queryKey: ["/api/users/dentists"],
+    queryFn: async () => {
+      const response = await fetch("/api/users/dentists", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch dentists");
+      return response.json();
+    },
   });
 
   const form = useForm<ConsultationFormData>({

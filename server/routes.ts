@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
 import { users } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { 
@@ -241,6 +242,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Update user error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get dentists only
+  app.get("/api/users/dentists", async (req, res) => {
+    try {
+      const dentistsData = await db.select({
+        id: users.id,
+        username: users.username,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+      }).from(users).where(and(eq(users.role, "dentist"), eq(users.isActive, true))).orderBy(users.name);
+      res.json(dentistsData);
+    } catch (error) {
+      console.error("Get dentists error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
