@@ -374,6 +374,11 @@ export default function Schedule() {
                             </div>
                           );
                         } else if (occupiedByPrevious) {
+                          // Debug log to see where continuation is being rendered
+                          if (occupiedByPrevious.id === 1) {
+                            console.log(`RENDERING CONTINUATION of appointment ${occupiedByPrevious.id} at slot ${time}`);
+                          }
+                          
                           // This slot is occupied by a previous appointment, show as continuation
                           return (
                             <div key={dayIndex} className="schedule-day-cell">
