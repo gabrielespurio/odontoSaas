@@ -160,51 +160,53 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="patientId">Paciente *</Label>
-          <Select 
-            value={form.watch("patientId")?.toString() || ""} 
-            onValueChange={(value) => form.setValue("patientId", parseInt(value))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecionar paciente" />
-            </SelectTrigger>
-            <SelectContent>
-              {patients?.map((patient) => (
-                <SelectItem key={patient.id} value={patient.id.toString()}>
-                  {patient.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {form.formState.errors.patientId && (
-            <p className="text-sm text-red-600">{form.formState.errors.patientId.message}</p>
-          )}
-        </div>
+    <div className="max-h-[80vh] overflow-y-auto pr-2">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="patientId">Paciente *</Label>
+            <Select 
+              value={form.watch("patientId")?.toString() || ""} 
+              onValueChange={(value) => form.setValue("patientId", parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecionar paciente" />
+              </SelectTrigger>
+              <SelectContent>
+                {patients?.map((patient) => (
+                  <SelectItem key={patient.id} value={patient.id.toString()}>
+                    {patient.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {form.formState.errors.patientId && (
+              <p className="text-sm text-red-600">{form.formState.errors.patientId.message}</p>
+            )}
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="dentistId">Dentista *</Label>
-          <Select 
-            value={form.watch("dentistId")?.toString() || ""} 
-            onValueChange={(value) => form.setValue("dentistId", parseInt(value))}
-            disabled={user?.role === "dentist"}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecionar dentista" />
-            </SelectTrigger>
-            <SelectContent>
-              {dentists?.map((dentist) => (
-                <SelectItem key={dentist.id} value={dentist.id.toString()}>
-                  {dentist.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {form.formState.errors.dentistId && (
-            <p className="text-sm text-red-600">{form.formState.errors.dentistId.message}</p>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="dentistId">Dentista *</Label>
+            <Select 
+              value={form.watch("dentistId")?.toString() || ""} 
+              onValueChange={(value) => form.setValue("dentistId", parseInt(value))}
+              disabled={user?.role === "dentist"}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecionar dentista" />
+              </SelectTrigger>
+              <SelectContent>
+                {dentists?.map((dentist) => (
+                  <SelectItem key={dentist.id} value={dentist.id.toString()}>
+                    {dentist.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {form.formState.errors.dentistId && (
+              <p className="text-sm text-red-600">{form.formState.errors.dentistId.message}</p>
+            )}
+          </div>
         </div>
 
         <div className="space-y-2 md:col-span-2">
@@ -224,7 +226,7 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
             </Button>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
             {selectedProcedures.map((selectedProc, index) => (
               <div key={selectedProc.id} className="flex items-center gap-3 p-3 border rounded-lg bg-neutral-50">
                 <div className="flex-1">
@@ -328,100 +330,96 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
             </Select>
           </div>
         )}
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="notes">Observações</Label>
-        <Textarea
-          id="notes"
-          {...form.register("notes")}
-          placeholder="Observações sobre o agendamento"
-          rows={3}
-        />
-      </div>
-
-      {/* Appointment Summary */}
-      {selectedProcedures.filter(p => p.procedureId > 0).length > 0 && (
-        <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-teal-900 mb-2">Resumo do Agendamento</h4>
-          {(() => {
-            const validProcedures = selectedProcedures.filter(p => p.procedureId > 0);
-            const procedureDetails = validProcedures
-              .map(sp => procedures?.find(p => p.id === sp.procedureId))
-              .filter(Boolean) as Procedure[];
-            
-            const selectedPatient = patients?.find(p => p.id === form.watch("patientId"));
-            const selectedDentist = dentists?.find(d => d.id === form.watch("dentistId"));
-            
-            const totalDuration = procedureDetails.reduce((sum, p) => sum + p.duration, 0);
-            const totalPrice = procedureDetails.reduce((sum, p) => sum + Number(p.price), 0);
-            
-            return (
-              <div className="text-sm text-teal-800 space-y-1">
-                <p><strong>Paciente:</strong> {selectedPatient?.name || "Não selecionado"}</p>
-                <p><strong>Dentista:</strong> {selectedDentist?.name || "Não selecionado"}</p>
-                
-                <div className="mt-2">
-                  <p><strong>Procedimentos:</strong></p>
-                  <div className="ml-4 space-y-1">
-                    {procedureDetails.map((procedure) => (
-                      <div key={procedure.id} className="flex justify-between items-center">
-                        <span>• {procedure.name}</span>
-                        <span className="text-xs">
-                          {procedure.duration >= 60 
-                            ? `${Math.floor(procedure.duration / 60)}h${procedure.duration % 60 > 0 ? ` ${procedure.duration % 60}min` : ''}`
-                            : `${procedure.duration}min`} - R$ {Number(procedure.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="border-t border-teal-200 pt-2 mt-2">
-                  <div className="flex justify-between items-center font-medium">
-                    <span>Duração Total:</span>
-                    <span>{totalDuration >= 60 
-                      ? `${Math.floor(totalDuration / 60)}h${totalDuration % 60 > 0 ? ` ${totalDuration % 60}min` : ''}`
-                      : `${totalDuration}min`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center font-medium">
-                    <span>Valor Total:</span>
-                    <span>R$ {totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                </div>
-                
-                {form.watch("scheduledDate") && (
-                  <p><strong>Data/Hora:</strong> {
-                    new Date(form.watch("scheduledDate")).toLocaleDateString('pt-BR', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })
-                  }</p>
-                )}
-              </div>
-            );
-          })()}
+        <div className="space-y-2">
+          <Label htmlFor="notes">Observações</Label>
+          <Textarea
+            id="notes"
+            {...form.register("notes")}
+            placeholder="Observações sobre o agendamento"
+            rows={3}
+          />
         </div>
-      )}
 
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancelar
-        </Button>
-        <Button 
-          type="submit" 
-          disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending}
-        >
-          {createAppointmentMutation.isPending || updateAppointmentMutation.isPending 
-            ? "Salvando..." 
-            : appointment ? "Atualizar" : "Agendar"
-          }
-        </Button>
-      </div>
-    </form>
+        {/* Appointment Summary - Compact Version */}
+        {selectedProcedures.filter(p => p.procedureId > 0).length > 0 && (
+          <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
+            <h4 className="text-sm font-medium text-teal-900 mb-2">Resumo do Agendamento</h4>
+            {(() => {
+              const validProcedures = selectedProcedures.filter(p => p.procedureId > 0);
+              const procedureDetails = validProcedures
+                .map(sp => procedures?.find(p => p.id === sp.procedureId))
+                .filter(Boolean) as Procedure[];
+              
+              const selectedPatient = patients?.find(p => p.id === form.watch("patientId"));
+              const selectedDentist = dentists?.find(d => d.id === form.watch("dentistId"));
+              
+              const totalDuration = procedureDetails.reduce((sum, p) => sum + p.duration, 0);
+              const totalPrice = procedureDetails.reduce((sum, p) => sum + Number(p.price), 0);
+              
+              return (
+                <div className="text-sm text-teal-800 space-y-2">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p><strong>Paciente:</strong> {selectedPatient?.name || "Não selecionado"}</p>
+                      <p><strong>Dentista:</strong> {selectedDentist?.name || "Não selecionado"}</p>
+                    </div>
+                    <div className="text-right">
+                      <p><strong>Duração Total:</strong> {totalDuration >= 60 
+                        ? `${Math.floor(totalDuration / 60)}h${totalDuration % 60 > 0 ? ` ${totalDuration % 60}min` : ''}`
+                        : `${totalDuration}min`}
+                      </p>
+                      <p><strong>Valor Total:</strong> R$ {totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p><strong>Procedimentos:</strong></p>
+                    <div className="ml-2 text-xs">
+                      {procedureDetails.map((procedure, index) => (
+                        <span key={procedure.id}>
+                          • {procedure.name}
+                          {procedure.duration >= 60 
+                            ? ` (${Math.floor(procedure.duration / 60)}h${procedure.duration % 60 > 0 ? ` ${procedure.duration % 60}min` : ''})`
+                            : ` (${procedure.duration}min)`} - R$ {Number(procedure.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {index < procedureDetails.length - 1 && '; '}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {form.watch("scheduledDate") && (
+                    <p><strong>Data/Hora:</strong> {
+                      new Date(form.watch("scheduledDate")).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })
+                    }</p>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancelar
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending}
+          >
+            {createAppointmentMutation.isPending || updateAppointmentMutation.isPending 
+              ? "Salvando..." 
+              : appointment ? "Atualizar" : "Agendar"
+            }
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }
