@@ -110,9 +110,16 @@ export default function Schedule() {
     
     return appointments.find(apt => {
       const aptDate = new Date(apt.scheduledDate);
-      const sameDateTime = aptDate.getTime() === slotDateTime.getTime();
+      
+      // Compare date, hour, and minute separately to avoid timezone issues
+      const sameDate = aptDate.getFullYear() === slotDateTime.getFullYear() &&
+                       aptDate.getMonth() === slotDateTime.getMonth() &&
+                       aptDate.getDate() === slotDateTime.getDate();
+      const sameTime = aptDate.getHours() === slotDateTime.getHours() &&
+                       aptDate.getMinutes() === slotDateTime.getMinutes();
+      
       const sameDentist = dentistId ? apt.dentistId === dentistId : true;
-      return sameDateTime && sameDentist;
+      return sameDate && sameTime && sameDentist;
     });
   };
 
@@ -134,7 +141,12 @@ export default function Schedule() {
       const endTime = new Date(aptDate.getTime() + duration * 60 * 1000);
       
       // Check if current slot is within the appointment duration but not the starting slot
-      return aptDate.getTime() < slotDateTime.getTime() && slotDateTime.getTime() < endTime.getTime();
+      // Use local time comparison to avoid timezone issues
+      const aptDateTime = new Date(aptDate.getFullYear(), aptDate.getMonth(), aptDate.getDate(), aptDate.getHours(), aptDate.getMinutes());
+      const slotLocalTime = new Date(slotDateTime.getFullYear(), slotDateTime.getMonth(), slotDateTime.getDate(), slotDateTime.getHours(), slotDateTime.getMinutes());
+      const endLocalTime = new Date(aptDateTime.getTime() + duration * 60 * 1000);
+      
+      return aptDateTime.getTime() < slotLocalTime.getTime() && slotLocalTime.getTime() < endLocalTime.getTime();
     });
   };
 

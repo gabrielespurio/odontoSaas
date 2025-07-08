@@ -53,7 +53,13 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
 
   const getInitialScheduledDate = () => {
     if (appointment?.scheduledDate) {
-      return new Date(appointment.scheduledDate).toISOString().slice(0, 16);
+      const date = new Date(appointment.scheduledDate);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
     if (selectedDate && selectedTime) {
       return `${selectedDate}T${selectedTime}`;
