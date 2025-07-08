@@ -52,15 +52,12 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
 
   const getInitialScheduledDate = () => {
     if (appointment?.scheduledDate) {
-      // Tratar a data como local para evitar problemas de timezone
       const date = new Date(appointment.scheduledDate);
-      // Ajustar para o timezone local
-      const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-      const year = localDate.getFullYear();
-      const month = String(localDate.getMonth() + 1).padStart(2, '0');
-      const day = String(localDate.getDate()).padStart(2, '0');
-      const hours = String(localDate.getHours()).padStart(2, '0');
-      const minutes = String(localDate.getMinutes()).padStart(2, '0');
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
       return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
     if (prefilledDateTime) {
@@ -152,11 +149,15 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
 
   const onSubmit = (data: AppointmentFormData) => {
     // Para compatibilidade com o backend atual, usamos apenas o primeiro procedimento
+    
+    // Converter a data do input datetime-local para o formato correto
+    // O input retorna no formato "YYYY-MM-DDTHH:MM" e precisamos tratar como hora local
+    const localDate = new Date(data.scheduledDate);
+    
     const appointmentData = {
       ...data,
       procedureId: data.procedureIds[0] || 0, // Pega o primeiro procedimento
-      // Enviar a data como está, sem conversão adicional
-      scheduledDate: data.scheduledDate,
+      scheduledDate: localDate.toISOString(),
     };
     delete (appointmentData as any).procedureIds; // Remove o array
 

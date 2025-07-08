@@ -352,14 +352,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/appointments", async (req, res) => {
     try {
       const appointmentData = insertAppointmentSchema.parse(req.body);
-      
-      // Garantir que a data seja tratada como local, não UTC
-      if (appointmentData.scheduledDate) {
-        const date = new Date(appointmentData.scheduledDate);
-        // Ajustar para o timezone local brasileiro (-3 horas)
-        appointmentData.scheduledDate = new Date(date.getTime() + (3 * 60 * 60 * 1000));
-      }
-      
       const appointment = await storage.createAppointment(appointmentData);
       res.json(appointment);
     } catch (error) {
@@ -372,14 +364,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const appointmentData = insertAppointmentSchema.partial().parse(req.body);
-      
-      // Garantir que a data seja tratada como local, não UTC
-      if (appointmentData.scheduledDate) {
-        const date = new Date(appointmentData.scheduledDate);
-        // Ajustar para o timezone local brasileiro (-3 horas)
-        appointmentData.scheduledDate = new Date(date.getTime() + (3 * 60 * 60 * 1000));
-      }
-      
       const appointment = await storage.updateAppointment(id, appointmentData);
       res.json(appointment);
     } catch (error) {

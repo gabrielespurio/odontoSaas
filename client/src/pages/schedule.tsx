@@ -126,13 +126,11 @@ export default function Schedule() {
     // Find appointment that starts at this exact time
     for (const apt of appointments) {
       const aptDate = new Date(apt.scheduledDate);
-      // Ajustar para o timezone local para exibição correta
-      const localDate = new Date(aptDate.getTime() - aptDate.getTimezoneOffset() * 60000);
       
       // Must be same date
-      const isSameDate = localDate.getDate() === date.getDate() &&
-                         localDate.getMonth() === date.getMonth() &&
-                         localDate.getFullYear() === date.getFullYear();
+      const isSameDate = aptDate.getDate() === date.getDate() &&
+                         aptDate.getMonth() === date.getMonth() &&
+                         aptDate.getFullYear() === date.getFullYear();
       
       if (!isSameDate) continue;
       
@@ -140,8 +138,8 @@ export default function Schedule() {
       if (dentistId && apt.dentistId !== dentistId) continue;
       
       // Must start at exact time slot
-      const aptHour = localDate.getHours();
-      const aptMinute = localDate.getMinutes();
+      const aptHour = aptDate.getHours();
+      const aptMinute = aptDate.getMinutes();
       
       // Force exact match - appointment at 12:30 should ONLY appear in 12:30 slot
       if (aptHour === slotHour && aptMinute === slotMinute) {
