@@ -222,31 +222,28 @@ export default function Schedule() {
           <div className="overflow-x-auto">
             <div className="min-w-[800px] relative">
               {/* Fixed header */}
-              <div className="sticky top-0 z-30 bg-white border-b shadow-sm"
-                   style={{ marginRight: '17px' }}>
-                <div className="flex">
-                  <div className="w-[100px] p-4 bg-neutral-50 border-r text-center flex-shrink-0"></div>
-                  {weekDates.map((date, index) => (
-                    <div key={index} className="flex-1 p-4 bg-neutral-50 border-r text-center">
-                      <div className="font-medium text-sm text-neutral-700">
-                        {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
-                      </div>
-                      <div className="text-lg font-bold text-neutral-900">
-                        {date.getDate()}
-                      </div>
-                      <div className="text-xs text-neutral-600">
-                        {date.toLocaleDateString('pt-BR', { month: 'short' })}
-                      </div>
+              <div className="schedule-header">
+                <div className="schedule-day-header"></div>
+                {weekDates.map((date, index) => (
+                  <div key={index} className="schedule-day-header">
+                    <div className="font-medium text-sm text-neutral-700">
+                      {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
                     </div>
-                  ))}
-                </div>
+                    <div className="text-lg font-bold text-neutral-900">
+                      {date.getDate()}
+                    </div>
+                    <div className="text-xs text-neutral-600">
+                      {date.toLocaleDateString('pt-BR', { month: 'short' })}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Scrollable body */}
-              <div className="max-h-[70vh] overflow-y-auto">
+              <div className="schedule-body">
                 {timeSlots.map((time, timeIndex) => (
-                  <div key={time} className="flex border-b border-neutral-100">
-                    <div className="w-[100px] p-3 bg-neutral-50 border-r text-center flex-shrink-0 min-h-[60px] flex items-center justify-center">
+                  <div key={time} className="schedule-row">
+                    <div className="schedule-time-cell">
                       <span className="text-sm font-medium text-neutral-700">{time}</span>
                     </div>
                     {weekDates.map((date, dayIndex) => {
@@ -256,7 +253,7 @@ export default function Schedule() {
                       
                       if (filteredDentists.length === 0) {
                         return (
-                          <div key={dayIndex} className="flex-1 border-r bg-neutral-25 hover:bg-neutral-50 cursor-pointer p-2 relative group min-h-[60px]"
+                          <div key={dayIndex} className="schedule-day-cell schedule-empty-cell"
                                onClick={() => {
                                  const dateTime = new Date(date);
                                  const [hour, minute] = time.split(':').map(Number);
@@ -265,7 +262,7 @@ export default function Schedule() {
                                  setEditingAppointment(null);
                                  setShowForm(true);
                                }}>
-                            <div className="opacity-0 group-hover:opacity-100 absolute inset-0 flex items-center justify-center bg-teal-50 transition-opacity">
+                            <div className="schedule-hover-button">
                               <Button size="sm" variant="outline" className="text-xs">
                                 Agendar
                               </Button>
@@ -280,8 +277,8 @@ export default function Schedule() {
                         
                         if (appointment) {
                           return (
-                            <div key={dayIndex} className="flex-1 border-r p-1 relative min-h-[60px]">
-                              <div className={`rounded p-2 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
+                            <div key={dayIndex} className="schedule-day-cell">
+                              <div className={`rounded p-2 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white w-full`}
                                    onClick={() => {
                                      setEditingAppointment(appointment);
                                      setShowForm(true);
@@ -293,7 +290,7 @@ export default function Schedule() {
                           );
                         } else {
                           return (
-                            <div key={dayIndex} className="flex-1 border-r bg-neutral-25 hover:bg-neutral-50 cursor-pointer p-2 relative group min-h-[60px]"
+                            <div key={dayIndex} className="schedule-day-cell schedule-empty-cell"
                                  onClick={() => {
                                    const dateTime = new Date(date);
                                    const [hour, minute] = time.split(':').map(Number);
@@ -302,7 +299,7 @@ export default function Schedule() {
                                    setEditingAppointment(null);
                                    setShowForm(true);
                                  }}>
-                              <div className="opacity-0 group-hover:opacity-100 absolute inset-0 flex items-center justify-center bg-teal-50 transition-opacity">
+                              <div className="schedule-hover-button">
                                 <Button size="sm" variant="outline" className="text-xs">
                                   Agendar
                                 </Button>
@@ -317,28 +314,30 @@ export default function Schedule() {
                         
                         if (hasAnyAppointment) {
                           return (
-                            <div key={dayIndex} className="flex-1 border-r p-1 space-y-1 min-h-[60px]">
-                              {filteredDentists.map((dentist) => {
-                                const appointment = getAppointmentForSlot(date, time, dentist.id);
-                                if (appointment) {
-                                  return (
-                                    <div key={dentist.id} className={`rounded p-1 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
-                                         onClick={() => {
-                                           setEditingAppointment(appointment);
-                                           setShowForm(true);
-                                         }}>
-                                      <div className="font-medium truncate">{appointment.patient?.name}</div>
-                                      <div className="opacity-90 truncate">{dentist.name}</div>
-                                    </div>
-                                  );
-                                }
-                                return null;
-                              })}
+                            <div key={dayIndex} className="schedule-day-cell">
+                              <div className="w-full space-y-1">
+                                {filteredDentists.map((dentist) => {
+                                  const appointment = getAppointmentForSlot(date, time, dentist.id);
+                                  if (appointment) {
+                                    return (
+                                      <div key={dentist.id} className={`rounded p-1 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
+                                           onClick={() => {
+                                             setEditingAppointment(appointment);
+                                             setShowForm(true);
+                                           }}>
+                                        <div className="font-medium truncate">{appointment.patient?.name}</div>
+                                        <div className="opacity-90 truncate">{dentist.name}</div>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })}
+                              </div>
                             </div>
                           );
                         } else {
                           return (
-                            <div key={dayIndex} className="flex-1 border-r bg-neutral-25 hover:bg-neutral-50 cursor-pointer p-2 relative group min-h-[60px]"
+                            <div key={dayIndex} className="schedule-day-cell schedule-empty-cell"
                                  onClick={() => {
                                    const dateTime = new Date(date);
                                    const [hour, minute] = time.split(':').map(Number);
@@ -347,7 +346,7 @@ export default function Schedule() {
                                    setEditingAppointment(null);
                                    setShowForm(true);
                                  }}>
-                              <div className="opacity-0 group-hover:opacity-100 absolute inset-0 flex items-center justify-center bg-teal-50 transition-opacity">
+                              <div className="schedule-hover-button">
                                 <Button size="sm" variant="outline" className="text-xs">
                                   Agendar
                                 </Button>
