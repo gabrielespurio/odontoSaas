@@ -276,7 +276,7 @@ html, body {
   .schedule-row {
     display: grid;
     grid-template-columns: 100px repeat(7, 1fr);
-    min-height: 60px;
+    height: 60px;
     border-bottom: 1px solid #f3f4f6;
     width: 100%;
   }
@@ -295,12 +295,13 @@ html, body {
   
   .schedule-day-cell {
     border-right: 1px solid #e5e7eb;
-    min-height: 60px;
+    height: 60px;
     padding: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
+    position: relative;
   }
   
   .schedule-day-header {

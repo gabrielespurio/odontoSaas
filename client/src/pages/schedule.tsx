@@ -133,8 +133,8 @@ export default function Schedule() {
       const duration = apt.procedure?.duration || 30; // Default 30 minutes
       const endTime = new Date(aptDate.getTime() + duration * 60 * 1000);
       
-      // Check if current slot is within the appointment duration
-      return aptDate.getTime() <= slotDateTime.getTime() && slotDateTime.getTime() < endTime.getTime();
+      // Check if current slot is within the appointment duration but not the starting slot
+      return aptDate.getTime() < slotDateTime.getTime() && slotDateTime.getTime() < endTime.getTime();
     });
   };
 
@@ -332,10 +332,10 @@ export default function Schedule() {
                             </div>
                           );
                         } else if (occupiedByPrevious) {
-                          // This slot is occupied by a previous appointment, show as blocked
+                          // This slot is occupied by a previous appointment, show as continuation
                           return (
                             <div key={dayIndex} className="schedule-day-cell">
-                              <div className={`rounded p-1 text-xs ${getStatusColor(occupiedByPrevious.status)} text-white w-full opacity-60`}
+                              <div className={`rounded p-1 text-xs ${getStatusColor(occupiedByPrevious.status)} text-white w-full opacity-75`}
                                    style={{ 
                                      height: '52px',
                                      display: 'flex',
@@ -347,7 +347,7 @@ export default function Schedule() {
                                      setEditingAppointment(occupiedByPrevious);
                                      setShowForm(true);
                                    }}>
-                                <div className="text-center">
+                                <div className="text-center opacity-75">
                                   <div className="text-xs">...</div>
                                 </div>
                               </div>
