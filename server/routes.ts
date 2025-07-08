@@ -355,15 +355,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Validar se o horário está disponível
       const scheduledDate = new Date(appointmentData.scheduledDate);
-      const existingAppointments = await storage.getAppointments(scheduledDate, appointmentData.dentistId);
+      console.log("Validando agendamento:", {
+        scheduledDate: scheduledDate.toISOString(),
+        dentistId: appointmentData.dentistId
+      });
       
-      // Verificar se já existe um agendamento no mesmo horário e dentista
+      // Buscar todos os agendamentos do mesmo dia e dentista
+      const existingAppointments = await storage.getAppointments(scheduledDate, appointmentData.dentistId);
+      console.log("Agendamentos existentes:", existingAppointments.length);
+      
+      // Verificar se já existe um agendamento no mesmo horário exato
       const conflictingAppointment = existingAppointments.find(apt => {
         const aptDate = new Date(apt.scheduledDate);
-        return aptDate.getTime() === scheduledDate.getTime();
+        const aptHour = aptDate.getHours();
+        const aptMinute = aptDate.getMinutes();
+        const newHour = scheduledDate.getHours();
+        const newMinute = scheduledDate.getMinutes();
+        
+        console.log("Comparando:", {
+          existingTime: `${aptHour}:${aptMinute.toString().padStart(2, '0')}`,
+          newTime: `${newHour}:${newMinute.toString().padStart(2, '0')}`,
+          areEqual: aptHour === newHour && aptMinute === newMinute
+        });
+        
+        return aptHour === newHour && aptMinute === newMinute;
       });
       
       if (conflictingAppointment) {
+        console.log("Conflito encontrado:", conflictingAppointment);
         return res.status(409).json({ 
           message: "Horário já ocupado. Escolha outro horário para o agendamento." 
         });
@@ -387,10 +406,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const scheduledDate = new Date(appointmentData.scheduledDate);
         const existingAppointments = await storage.getAppointments(scheduledDate, appointmentData.dentistId);
         
-        // Verificar se já existe um agendamento no mesmo horário e dentista (exceto o atual)
+        // Verificar se já existe um agendamento no mesmo horário exato (exceto o atual)
         const conflictingAppointment = existingAppointments.find(apt => {
+          if (apt.id === id) return false; // Ignora o próprio agendamento
+          
           const aptDate = new Date(apt.scheduledDate);
-          return aptDate.getTime() === scheduledDate.getTime() && apt.id !== id;
+          const aptHour = aptDate.getHours();
+          const aptMinute = aptDate.getMinutes();
+          const newHour = scheduledDate.getHours();
+          const newMinute = scheduledDate.getMinutes();
+          
+          return aptHour === newHour && aptMinute === newMinute;
         });
         
         if (conflictingAppointment) {
