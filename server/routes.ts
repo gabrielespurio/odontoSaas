@@ -355,14 +355,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Validar se o horário está disponível
       const scheduledDate = new Date(appointmentData.scheduledDate);
-      console.log("Validando agendamento:", {
-        scheduledDate: scheduledDate.toISOString(),
-        dentistId: appointmentData.dentistId
-      });
       
       // Buscar todos os agendamentos do mesmo dia e dentista
       const existingAppointments = await storage.getAppointments(scheduledDate, appointmentData.dentistId);
-      console.log("Agendamentos existentes:", existingAppointments.length);
       
       // Verificar se já existe um agendamento no mesmo horário exato
       const conflictingAppointment = existingAppointments.find(apt => {
@@ -372,17 +367,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const newHour = scheduledDate.getHours();
         const newMinute = scheduledDate.getMinutes();
         
-        console.log("Comparando:", {
-          existingTime: `${aptHour}:${aptMinute.toString().padStart(2, '0')}`,
-          newTime: `${newHour}:${newMinute.toString().padStart(2, '0')}`,
-          areEqual: aptHour === newHour && aptMinute === newMinute
-        });
-        
         return aptHour === newHour && aptMinute === newMinute;
       });
       
       if (conflictingAppointment) {
-        console.log("Conflito encontrado:", conflictingAppointment);
         return res.status(409).json({ 
           message: "Horário já ocupado. Escolha outro horário para o agendamento." 
         });

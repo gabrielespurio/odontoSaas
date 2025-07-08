@@ -36,6 +36,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const [timeConflictError, setTimeConflictError] = useState<string | null>(null);
   const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
 
   const { data: patients } = useQuery<Patient[]>({
@@ -49,6 +50,38 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const { data: procedures } = useQuery<Procedure[]>({
     queryKey: ["/api/procedures"],
   });
+
+  const { data: appointments } = useQuery<(Appointment & { patient: Patient; dentist: User; procedure: Procedure })[]>({
+    queryKey: ["/api/appointments"],
+  });
+
+  // Função para verificar conflitos de horário
+  const checkTimeConflict = (scheduledDate: string, dentistId: number, excludeId?: number) => {
+    if (!appointments || !scheduledDate || !dentistId) return false;
+    
+    const newDate = new Date(scheduledDate);
+    const newHour = newDate.getHours();
+    const newMinute = newDate.getMinutes();
+    
+    return appointments.some(apt => {
+      if (excludeId && apt.id === excludeId) return false;
+      
+      const aptDate = new Date(apt.scheduledDate);
+      const aptHour = aptDate.getHours();
+      const aptMinute = aptDate.getMinutes();
+      
+      // Verifica se é o mesmo dia
+      const isSameDay = aptDate.getDate() === newDate.getDate() &&
+                       aptDate.getMonth() === newDate.getMonth() &&
+                       aptDate.getFullYear() === newDate.getFullYear();
+      
+      // Verifica se é o mesmo dentista e horário
+      return isSameDay && 
+             apt.dentistId === dentistId && 
+             aptHour === newHour && 
+             aptMinute === newMinute;
+    });
+  };
 
   const getInitialScheduledDate = () => {
     if (appointment?.scheduledDate) {
@@ -77,6 +110,21 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
       notes: appointment?.notes || "",
     },
   });
+
+  // Validação em tempo real do horário
+  const watchedDate = form.watch("scheduledDate");
+  const watchedDentist = form.watch("dentistId");
+
+  useEffect(() => {
+    if (watchedDate && watchedDentist) {
+      const hasConflict = checkTimeConflict(watchedDate, watchedDentist, appointment?.id);
+      if (hasConflict) {
+        setTimeConflictError("Este horário já está ocupado para o dentista selecionado");
+      } else {
+        setTimeConflictError(null);
+      }
+    }
+  }, [watchedDate, watchedDentist, appointments, appointment?.id]);
 
   // Initialize procedures when editing or creating
   useEffect(() => {
@@ -150,6 +198,16 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   });
 
   const onSubmit = (data: AppointmentFormData) => {
+    // Verificar conflito antes de submeter
+    if (timeConflictError) {
+      toast({
+        title: "Erro",
+        description: "Não é possível agendar no horário selecionado. Escolha outro horário.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Para compatibilidade com o backend atual, usamos apenas o primeiro procedimento
     
     // Converter a data do input datetime-local para o formato correto
@@ -337,9 +395,13 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
             type="datetime-local"
             {...form.register("scheduledDate")}
             min={new Date().toISOString().slice(0, 16)}
+            className={`${timeConflictError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
           />
           {form.formState.errors.scheduledDate && (
             <p className="text-sm text-red-600">{form.formState.errors.scheduledDate.message}</p>
+          )}
+          {timeConflictError && (
+            <p className="text-red-500 text-sm font-medium">{timeConflictError}</p>
           )}
         </div>
 
@@ -444,7 +506,8 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
           </Button>
           <Button 
             type="submit" 
-            disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending}
+            disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending || !!timeConflictError}
+            className={`${timeConflictError ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {createAppointmentMutation.isPending || updateAppointmentMutation.isPending 
               ? "Salvando..." 
