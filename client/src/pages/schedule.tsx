@@ -220,27 +220,33 @@ export default function Schedule() {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <div className="min-w-[800px]">
+            <div className="min-w-[800px] relative">
               {/* Header with Days - Fixed position */}
-              <div className="grid grid-cols-8 border-b sticky top-0 z-30 bg-white shadow-sm">
-                <div className="p-4 bg-neutral-50 border-r"></div>
-                {weekDates.map((date, index) => (
-                  <div key={index} className="p-4 bg-neutral-50 border-r text-center">
-                    <div className="font-medium text-sm">
-                      {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
+              <div className="sticky top-0 z-30 bg-white shadow-sm border-b">
+                <div className="grid grid-cols-8" style={{ paddingRight: '17px' }}>
+                  <div className="p-4 bg-neutral-50 border-r"></div>
+                  {weekDates.map((date, index) => (
+                    <div key={index} className="p-4 bg-neutral-50 border-r text-center">
+                      <div className="font-medium text-sm">
+                        {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
+                      </div>
+                      <div className="text-lg font-bold">
+                        {date.getDate()}
+                      </div>
+                      <div className="text-xs text-neutral-600">
+                        {date.toLocaleDateString('pt-BR', { month: 'short' })}
+                      </div>
                     </div>
-                    <div className="text-lg font-bold">
-                      {date.getDate()}
-                    </div>
-                    <div className="text-xs text-neutral-600">
-                      {date.toLocaleDateString('pt-BR', { month: 'short' })}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
               {/* Schedule Grid Body */}
-              <div className="relative max-h-[70vh] overflow-y-auto">
+              <div className="relative max-h-[70vh] overflow-y-auto"
+                   style={{ 
+                     scrollbarWidth: 'thin',
+                     scrollbarColor: '#d1d5db #f3f4f6'
+                   }}>
                 {/* Time slots row */}
                 {timeSlots.map((time, timeIndex) => (
                   <div key={time} className="grid grid-cols-8 border-b border-neutral-100 min-h-[60px]">
