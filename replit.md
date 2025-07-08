@@ -201,6 +201,9 @@ DentalCare is a comprehensive dental clinic management SaaS system built as a fu
 - July 08, 2025. Fixed sticky header alignment issue permanently using table structure with matching column definitions
 - July 08, 2025. FINAL ALIGNMENT FIX: Replaced table structure with flexbox layout using fixed width time column and flex-1 day columns
 - July 08, 2025. Added scrollbar compensation with marginRight to header for perfect visual alignment
+- July 08, 2025. SCHEDULE DURATION FIX: Implemented proper appointment duration display based on procedure duration
+- July 08, 2025. Added logic to show appointments spanning multiple time slots (30-minute intervals)
+- July 08, 2025. Appointments now visually occupy the correct amount of time with height scaling and continuation indicators
 - July 08, 2025. **AUTHENTICATION FIXES**: Fixed login redirection issue - users now automatically redirect to dashboard after successful login
 - July 08, 2025. **LOGOUT IMPROVEMENT**: Fixed logout functionality to properly clear session and redirect to login page
 - July 08, 2025. Enhanced authentication flow with robust state management and proper redirections

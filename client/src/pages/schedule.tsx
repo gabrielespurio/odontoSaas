@@ -116,6 +116,34 @@ export default function Schedule() {
     });
   };
 
+  // Check if current slot is occupied by an appointment that started earlier
+  const isSlotOccupiedByPreviousAppointment = (date: Date, time: string, dentistId?: number) => {
+    if (!appointments) return null;
+    
+    const [hour, minute] = time.split(':').map(Number);
+    const slotDateTime = new Date(date);
+    slotDateTime.setHours(hour, minute, 0, 0);
+    
+    return appointments.find(apt => {
+      const aptDate = new Date(apt.scheduledDate);
+      const sameDentist = dentistId ? apt.dentistId === dentistId : true;
+      
+      if (!sameDentist) return false;
+      
+      const duration = apt.procedure?.duration || 30; // Default 30 minutes
+      const endTime = new Date(aptDate.getTime() + duration * 60 * 1000);
+      
+      // Check if current slot is within the appointment duration
+      return aptDate.getTime() <= slotDateTime.getTime() && slotDateTime.getTime() < endTime.getTime();
+    });
+  };
+
+  // Calculate how many slots an appointment should span
+  const getAppointmentSlotSpan = (appointment: Appointment) => {
+    const duration = appointment.procedure?.duration || 30;
+    return Math.ceil(duration / 30); // Each slot is 30 minutes
+  };
+
   const handleFormSuccess = () => {
     setShowForm(false);
     setEditingAppointment(null);
@@ -274,17 +302,54 @@ export default function Schedule() {
                       if (filteredDentists.length === 1) {
                         const dentist = filteredDentists[0];
                         const appointment = getAppointmentForSlot(date, time, dentist.id);
+                        const occupiedByPrevious = isSlotOccupiedByPreviousAppointment(date, time, dentist.id);
                         
                         if (appointment) {
+                          // This is the starting slot of the appointment
+                          const duration = appointment.procedure?.duration || 30;
+                          const slotSpan = getAppointmentSlotSpan(appointment);
+                          
                           return (
                             <div key={dayIndex} className="schedule-day-cell">
                               <div className={`rounded p-2 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white w-full`}
+                                   style={{ 
+                                     height: `${slotSpan * 60 - 8}px`, // 60px per slot minus padding
+                                     position: 'relative',
+                                     zIndex: 10
+                                   }}
                                    onClick={() => {
                                      setEditingAppointment(appointment);
                                      setShowForm(true);
                                    }}>
                                 <div className="font-medium truncate">{appointment.patient?.name}</div>
                                 <div className="opacity-90 truncate">{appointment.procedure?.name}</div>
+                                <div className="opacity-75 text-xs mt-1">
+                                  {duration >= 60 
+                                    ? `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ''}`
+                                    : `${duration}min`}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        } else if (occupiedByPrevious) {
+                          // This slot is occupied by a previous appointment, show as blocked
+                          return (
+                            <div key={dayIndex} className="schedule-day-cell">
+                              <div className={`rounded p-1 text-xs ${getStatusColor(occupiedByPrevious.status)} text-white w-full opacity-60`}
+                                   style={{ 
+                                     height: '52px',
+                                     display: 'flex',
+                                     alignItems: 'center',
+                                     justifyContent: 'center',
+                                     cursor: 'pointer'
+                                   }}
+                                   onClick={() => {
+                                     setEditingAppointment(occupiedByPrevious);
+                                     setShowForm(true);
+                                   }}>
+                                <div className="text-center">
+                                  <div className="text-xs">...</div>
+                                </div>
                               </div>
                             </div>
                           );
@@ -318,15 +383,47 @@ export default function Schedule() {
                               <div className="w-full space-y-1">
                                 {filteredDentists.map((dentist) => {
                                   const appointment = getAppointmentForSlot(date, time, dentist.id);
+                                  const occupiedByPrevious = isSlotOccupiedByPreviousAppointment(date, time, dentist.id);
+                                  
                                   if (appointment) {
+                                    const duration = appointment.procedure?.duration || 30;
+                                    const slotSpan = getAppointmentSlotSpan(appointment);
+                                    
                                     return (
                                       <div key={dentist.id} className={`rounded p-1 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
+                                           style={{ 
+                                             height: `${Math.min(slotSpan * 28, 52)}px`, // Adjusted for multi-dentist view
+                                             position: 'relative',
+                                             zIndex: 10
+                                           }}
                                            onClick={() => {
                                              setEditingAppointment(appointment);
                                              setShowForm(true);
                                            }}>
                                         <div className="font-medium truncate">{appointment.patient?.name}</div>
                                         <div className="opacity-90 truncate">{dentist.name}</div>
+                                        <div className="opacity-75 text-xs">
+                                          {duration >= 60 
+                                            ? `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ''}`
+                                            : `${duration}min`}
+                                        </div>
+                                      </div>
+                                    );
+                                  } else if (occupiedByPrevious) {
+                                    return (
+                                      <div key={dentist.id} className={`rounded p-1 text-xs ${getStatusColor(occupiedByPrevious.status)} text-white opacity-60`}
+                                           style={{ 
+                                             height: '24px',
+                                             display: 'flex',
+                                             alignItems: 'center',
+                                             justifyContent: 'center',
+                                             cursor: 'pointer'
+                                           }}
+                                           onClick={() => {
+                                             setEditingAppointment(occupiedByPrevious);
+                                             setShowForm(true);
+                                           }}>
+                                        <div className="text-xs">...</div>
                                       </div>
                                     );
                                   }
