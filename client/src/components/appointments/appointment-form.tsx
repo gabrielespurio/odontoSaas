@@ -44,7 +44,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   });
 
   const { data: dentists } = useQuery<User[]>({
-    queryKey: ["/api/users", { role: "dentist" }],
+    queryKey: ["/api/users/dentists"],
   });
 
   const { data: procedures } = useQuery<Procedure[]>({
