@@ -162,7 +162,13 @@ export default function Schedule() {
       // This slot is occupied by a previous appointment if:
       // 1. The appointment started before this slot
       // 2. The appointment ends after this slot starts
+      // 3. The slot is exactly 30 minutes after the appointment start (for continuation slots)
       const isWithinDuration = aptTimeInMinutes < slotTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
+      
+      // Debug for appointment ID 1
+      if (apt.id === 1) {
+        console.log(`Checking continuation for apt ${apt.id} at slot ${time}: aptTime=${aptTimeInMinutes}, slotTime=${slotTimeInMinutes}, endTime=${endTimeInMinutes}, isWithin=${isWithinDuration}`);
+      }
       
       if (isWithinDuration) {
         return apt;
