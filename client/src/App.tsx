@@ -32,6 +32,7 @@ function Router() {
   // Redirecionar automaticamente para dashboard se autenticado e na página de login
   useEffect(() => {
     if (isAuthenticated && (location === "/login" || location === "/")) {
+      console.log("Redirecionando para dashboard...");
       setLocation("/dashboard");
     }
   }, [isAuthenticated, location, setLocation]);

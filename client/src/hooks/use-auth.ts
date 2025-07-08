@@ -24,6 +24,7 @@ export function useAuth() {
       authApi.setAuth(response.token, response.user);
       setUser(response.user);
       setIsAuthenticated(true);
+      console.log("Login bem-sucedido, isAuthenticated:", true);
       return response;
     } catch (error) {
       throw error;

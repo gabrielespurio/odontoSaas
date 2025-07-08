@@ -25,8 +25,10 @@ export default function Login() {
         title: "Login realizado com sucesso",
         description: "Bem-vindo ao DentalCare!",
       });
-      // O redirecionamento será feito automaticamente pelo App.tsx
-      // quando o estado isAuthenticated for atualizado
+      // Redirecionamento manual garantido
+      setTimeout(() => {
+        setLocation("/dashboard");
+      }, 100);
     } catch (error) {
       toast({
         title: "Erro no login",
