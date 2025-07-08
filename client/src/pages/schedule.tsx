@@ -104,7 +104,7 @@ export default function Schedule() {
   const getAppointmentForSlot = (date: Date, time: string, dentistId?: number) => {
     if (!appointments) return null;
     
-    const [hour, minute] = time.split(':').map(Number);
+    const [slotHour, slotMinute] = time.split(':').map(Number);
     
     return appointments.find(apt => {
       const aptDate = new Date(apt.scheduledDate);
@@ -116,17 +116,29 @@ export default function Schedule() {
       
       if (!sameDate) return false;
       
-      // Check if appointment starts at exactly this time slot
+      // Get appointment time components
       const aptHour = aptDate.getHours();
       const aptMinute = aptDate.getMinutes();
-      const slotHour = hour;
-      const slotMinute = minute;
       
-      // Direct time comparison - appointment must start exactly at this slot time
-      const exactTimeMatch = aptHour === slotHour && aptMinute === slotMinute;
+      // Check if appointment starts exactly at this time slot
+      const isExactStartTime = aptHour === slotHour && aptMinute === slotMinute;
       
       const sameDentist = dentistId ? apt.dentistId === dentistId : true;
-      return exactTimeMatch && sameDentist;
+      
+      // Debug for appointment ID 1
+      if (apt.id === 1 && sameDate) {
+        console.log(`Checking appointment ${apt.id} for slot ${time}:`, {
+          scheduledDate: apt.scheduledDate,
+          aptHour,
+          aptMinute,
+          slotHour,
+          slotMinute,
+          isExactStartTime,
+          sameDentist
+        });
+      }
+      
+      return isExactStartTime && sameDentist;
     });
   };
 
@@ -134,9 +146,8 @@ export default function Schedule() {
   const isSlotOccupiedByPreviousAppointment = (date: Date, time: string, dentistId?: number) => {
     if (!appointments) return null;
     
-    const [hour, minute] = time.split(':').map(Number);
-    const slotDateTime = new Date(date);
-    slotDateTime.setHours(hour, minute, 0, 0);
+    const [slotHour, slotMinute] = time.split(':').map(Number);
+    const slotTimeInMinutes = slotHour * 60 + slotMinute;
     
     return appointments.find(apt => {
       const aptDate = new Date(apt.scheduledDate);
@@ -145,20 +156,20 @@ export default function Schedule() {
       if (!sameDentist) return false;
       
       // Same date check
-      const sameDate = aptDate.getFullYear() === slotDateTime.getFullYear() &&
-                       aptDate.getMonth() === slotDateTime.getMonth() &&
-                       aptDate.getDate() === slotDateTime.getDate();
+      const sameDate = aptDate.getFullYear() === date.getFullYear() &&
+                       aptDate.getMonth() === date.getMonth() &&
+                       aptDate.getDate() === date.getDate();
       
       if (!sameDate) return false;
       
       const duration = apt.procedure?.duration || 30;
       const aptTimeInMinutes = aptDate.getHours() * 60 + aptDate.getMinutes();
-      const slotTimeInMinutes = slotDateTime.getHours() * 60 + slotDateTime.getMinutes();
       const endTimeInMinutes = aptTimeInMinutes + duration;
       
       // Check if current slot is within the appointment duration but not the starting slot
-      // The slot is occupied if it's after the start time and before the end time
-      return aptTimeInMinutes < slotTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
+      const isWithinDuration = aptTimeInMinutes < slotTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
+      
+      return isWithinDuration;
     });
   };
 
