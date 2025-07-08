@@ -350,13 +350,13 @@ export default function Schedule() {
                           
                           return (
                             <div key={dayIndex} className="schedule-day-cell">
-                              <div className={`rounded p-2 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white w-full`}
+                              <div className={`rounded p-2 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
                                    style={{ 
-                                     height: `${slotSpan * 60 - 8}px`, // 60px per slot minus padding
+                                     height: `${slotSpan * 60 - 16}px`, // 60px per slot minus padding
+                                     width: 'calc(100% - 1rem)',
                                      position: 'absolute',
                                      top: '0.5rem',
                                      left: '0.5rem',
-                                     right: '0.5rem',
                                      zIndex: 10
                                    }}
                                    onClick={() => {

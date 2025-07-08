@@ -300,7 +300,7 @@ html, body {
   .schedule-day-cell {
     border-right: 1px solid #e5e7eb;
     height: 60px;
-    padding: 0.5rem;
+    padding: 0;
     display: flex;
     align-items: flex-start;
     justify-content: center;
@@ -347,6 +347,7 @@ html, body {
     cursor: pointer;
     position: relative;
     transition: background-color 0.2s;
+    padding: 0.5rem;
   }
   
   .schedule-empty-cell:hover {
