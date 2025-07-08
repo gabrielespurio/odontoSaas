@@ -352,12 +352,13 @@ export default function Schedule() {
                             <div key={dayIndex} className="schedule-day-cell">
                               <div className={`rounded p-2 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
                                    style={{ 
-                                     height: `${slotSpan * 60 - 16}px`, // 60px per slot minus padding
-                                     width: 'calc(100% - 1rem)',
+                                     height: `${slotSpan * 60}px`, // Full slot height
+                                     width: '100%',
                                      position: 'absolute',
-                                     top: '0.5rem',
-                                     left: '0.5rem',
-                                     zIndex: 10
+                                     top: '0',
+                                     left: '0',
+                                     zIndex: 10,
+                                     border: '1px solid rgba(255,255,255,0.2)'
                                    }}
                                    onClick={() => {
                                      setEditingAppointment(appointment);
@@ -382,9 +383,13 @@ export default function Schedule() {
                           // This slot is occupied by a previous appointment, show as continuation
                           return (
                             <div key={dayIndex} className="schedule-day-cell">
-                              <div className={`rounded p-1 text-xs ${getStatusColor(occupiedByPrevious.status)} text-white w-full opacity-75`}
+                              <div className={`rounded p-1 text-xs ${getStatusColor(occupiedByPrevious.status)} text-white opacity-75`}
                                    style={{ 
-                                     height: '52px',
+                                     height: '60px',
+                                     width: '100%',
+                                     position: 'absolute',
+                                     top: '0',
+                                     left: '0',
                                      display: 'flex',
                                      alignItems: 'center',
                                      justifyContent: 'center',
