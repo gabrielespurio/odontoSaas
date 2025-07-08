@@ -84,10 +84,13 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
   }, [appointment]);
 
   const createAppointmentMutation = useMutation({
-    mutationFn: (data: AppointmentFormData) => apiRequest("POST", "/api/appointments", {
-      ...data,
-      procedureId: data.procedureIds[0], // For now, use the first procedure
-      scheduledDate: new Date(data.scheduledDate).toISOString(),
+    mutationFn: (data: any) => apiRequest("POST", "/api/appointments", {
+      patientId: data.patientId,
+      dentistId: data.dentistId,
+      procedureId: data.procedureId,
+      scheduledDate: data.scheduledDate,
+      status: data.status,
+      notes: data.notes,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
@@ -107,10 +110,13 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
   });
 
   const updateAppointmentMutation = useMutation({
-    mutationFn: (data: AppointmentFormData) => apiRequest("PUT", `/api/appointments/${appointment?.id}`, {
-      ...data,
-      procedureId: data.procedureIds[0], // For now, use the first procedure
-      scheduledDate: new Date(data.scheduledDate).toISOString(),
+    mutationFn: (data: any) => apiRequest("PUT", `/api/appointments/${appointment?.id}`, {
+      patientId: data.patientId,
+      dentistId: data.dentistId,
+      procedureId: data.procedureId,
+      scheduledDate: data.scheduledDate,
+      status: data.status,
+      notes: data.notes,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
@@ -130,10 +136,17 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
   });
 
   const onSubmit = (data: AppointmentFormData) => {
+    // Para compatibilidade com o backend atual, usamos apenas o primeiro procedimento
+    const appointmentData = {
+      ...data,
+      procedureId: data.procedureIds[0] || 0, // Pega o primeiro procedimento
+    };
+    delete (appointmentData as any).procedureIds; // Remove o array
+
     if (appointment) {
-      updateAppointmentMutation.mutate(data);
+      updateAppointmentMutation.mutate(appointmentData as any);
     } else {
-      createAppointmentMutation.mutate(data);
+      createAppointmentMutation.mutate(appointmentData as any);
     }
   };
 

@@ -241,7 +241,7 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
   createdAt: true,
   updatedAt: true,
 }).extend({
-  scheduledDate: z.string().datetime(),
+  scheduledDate: z.string().transform((str) => new Date(str)),
 });
 
 export const insertConsultationSchema = createInsertSchema(consultations).omit({
