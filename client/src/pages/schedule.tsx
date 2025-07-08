@@ -221,251 +221,178 @@ export default function Schedule() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <div className="min-w-[800px] relative">
-              <div className="schedule-container">
-                {/* Fixed header */}
-                <div className="schedule-header">
-                  <div className="schedule-time-header"></div>
-                  {weekDates.map((date, index) => (
-                    <div key={index} className="schedule-day-header">
-                      <div className="font-medium text-sm text-neutral-700">
-                        {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
-                      </div>
-                      <div className="text-lg font-bold text-neutral-900">
-                        {date.getDate()}
-                      </div>
-                      <div className="text-xs text-neutral-600">
-                        {date.toLocaleDateString('pt-BR', { month: 'short' })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {/* Fixed header */}
+              <div className="sticky top-0 z-30 bg-white border-b shadow-sm">
+                <table className="w-full table-fixed">
+                  <colgroup>
+                    <col style={{ width: '100px' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th className="p-4 bg-neutral-50 border-r text-center"></th>
+                      {weekDates.map((date, index) => (
+                        <th key={index} className="p-4 bg-neutral-50 border-r text-center">
+                          <div className="font-medium text-sm text-neutral-700">
+                            {date.toLocaleDateString('pt-BR', { weekday: 'short' })}
+                          </div>
+                          <div className="text-lg font-bold text-neutral-900">
+                            {date.getDate()}
+                          </div>
+                          <div className="text-xs text-neutral-600">
+                            {date.toLocaleDateString('pt-BR', { month: 'short' })}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                </table>
+              </div>
 
-                {/* Scrollable body */}
-                <div className="schedule-body">
-                  {timeSlots.map((time, timeIndex) => (
-                    <div key={time} className="schedule-row">
-                      <div className="schedule-time-cell">
-                        <span className="text-sm font-medium text-neutral-700">{time}</span>
-                      </div>
-                      {weekDates.map((date, dayIndex) => {
-                        const filteredDentists = selectedDentist === "all" 
-                          ? dentists || [] 
-                          : dentists?.filter(d => d.id.toString() === selectedDentist) || [];
-                        
-                        if (filteredDentists.length === 0) {
-                          return (
-                            <div key={dayIndex} className="schedule-day-cell schedule-empty-cell"
-                                 onClick={() => {
-                                   const dateTime = new Date(date);
-                                   const [hour, minute] = time.split(':').map(Number);
-                                   dateTime.setHours(hour, minute, 0, 0);
-                                   setSelectedTimeSlot(dateTime.toISOString().slice(0, 16));
-                                   setEditingAppointment(null);
-                                   setShowForm(true);
-                                 }}>
-                              <div className="schedule-hover-button">
-                                <Button size="sm" variant="outline" className="text-xs">
-                                  Agendar
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        }
-                        
-                        if (filteredDentists.length === 1) {
-                          const dentist = filteredDentists[0];
-                          const appointment = getAppointmentForSlot(date, time, dentist.id);
+              {/* Scrollable body */}
+              <div className="max-h-[70vh] overflow-y-auto">
+                <table className="w-full table-fixed">
+                  <colgroup>
+                    <col style={{ width: '100px' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                    <col style={{ width: 'calc((100% - 100px) / 7)' }} />
+                  </colgroup>
+                  <tbody>
+                    {timeSlots.map((time, timeIndex) => (
+                      <tr key={time} className="border-b border-neutral-100">
+                        <td className="p-3 bg-neutral-50 border-r text-center min-h-[60px]">
+                          <span className="text-sm font-medium text-neutral-700">{time}</span>
+                        </td>
+                        {weekDates.map((date, dayIndex) => {
+                          const filteredDentists = selectedDentist === "all" 
+                            ? dentists || [] 
+                            : dentists?.filter(d => d.id.toString() === selectedDentist) || [];
                           
-                          if (appointment) {
+                          if (filteredDentists.length === 0) {
                             return (
-                              <div key={dayIndex} className="schedule-day-cell p-1 relative">
-                                <div className={`rounded p-2 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
+                              <td key={dayIndex} className="border-r bg-neutral-25 hover:bg-neutral-50 cursor-pointer p-2 relative group min-h-[60px]"
+                                   onClick={() => {
+                                     const dateTime = new Date(date);
+                                     const [hour, minute] = time.split(':').map(Number);
+                                     dateTime.setHours(hour, minute, 0, 0);
+                                     setSelectedTimeSlot(dateTime.toISOString().slice(0, 16));
+                                     setEditingAppointment(null);
+                                     setShowForm(true);
+                                   }}>
+                                <div className="opacity-0 group-hover:opacity-100 absolute inset-0 flex items-center justify-center bg-teal-50 transition-opacity">
+                                  <Button size="sm" variant="outline" className="text-xs">
+                                    Agendar
+                                  </Button>
+                                </div>
+                              </td>
+                            );
+                          }
+                          
+                          if (filteredDentists.length === 1) {
+                            const dentist = filteredDentists[0];
+                            const appointment = getAppointmentForSlot(date, time, dentist.id);
+                            
+                            if (appointment) {
+                              return (
+                                <td key={dayIndex} className="border-r p-1 relative min-h-[60px]">
+                                  <div className={`rounded p-2 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
+                                       onClick={() => {
+                                         setEditingAppointment(appointment);
+                                         setShowForm(true);
+                                       }}>
+                                    <div className="font-medium truncate">{appointment.patient?.name}</div>
+                                    <div className="opacity-90 truncate">{appointment.procedure?.name}</div>
+                                  </div>
+                                </td>
+                              );
+                            } else {
+                              return (
+                                <td key={dayIndex} className="border-r bg-neutral-25 hover:bg-neutral-50 cursor-pointer p-2 relative group min-h-[60px]"
                                      onClick={() => {
-                                       setEditingAppointment(appointment);
+                                       const dateTime = new Date(date);
+                                       const [hour, minute] = time.split(':').map(Number);
+                                       dateTime.setHours(hour, minute, 0, 0);
+                                       setSelectedTimeSlot(dateTime.toISOString().slice(0, 16));
+                                       setEditingAppointment(null);
                                        setShowForm(true);
                                      }}>
-                                  <div className="font-medium truncate">{appointment.patient?.name}</div>
-                                  <div className="opacity-90 truncate">{appointment.procedure?.name}</div>
-                                </div>
-                              </div>
-                            );
+                                  <div className="opacity-0 group-hover:opacity-100 absolute inset-0 flex items-center justify-center bg-teal-50 transition-opacity">
+                                    <Button size="sm" variant="outline" className="text-xs">
+                                      Agendar
+                                    </Button>
+                                  </div>
+                                </td>
+                              );
+                            }
                           } else {
-                            return (
-                              <div key={dayIndex} className="schedule-day-cell schedule-empty-cell"
-                                   onClick={() => {
-                                     const dateTime = new Date(date);
-                                     const [hour, minute] = time.split(':').map(Number);
-                                     dateTime.setHours(hour, minute, 0, 0);
-                                     setSelectedTimeSlot(dateTime.toISOString().slice(0, 16));
-                                     setEditingAppointment(null);
-                                     setShowForm(true);
-                                   }}>
-                                <div className="schedule-hover-button">
-                                  <Button size="sm" variant="outline" className="text-xs">
-                                    Agendar
-                                  </Button>
-                                </div>
-                              </div>
+                            const hasAnyAppointment = filteredDentists.some(dentist => 
+                              getAppointmentForSlot(date, time, dentist.id)
                             );
+                            
+                            if (hasAnyAppointment) {
+                              return (
+                                <td key={dayIndex} className="border-r p-1 space-y-1 min-h-[60px]">
+                                  {filteredDentists.map((dentist) => {
+                                    const appointment = getAppointmentForSlot(date, time, dentist.id);
+                                    if (appointment) {
+                                      return (
+                                        <div key={dentist.id} className={`rounded p-1 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
+                                             onClick={() => {
+                                               setEditingAppointment(appointment);
+                                               setShowForm(true);
+                                             }}>
+                                          <div className="font-medium truncate">{appointment.patient?.name}</div>
+                                          <div className="opacity-90 truncate">{dentist.name}</div>
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  })}
+                                </td>
+                              );
+                            } else {
+                              return (
+                                <td key={dayIndex} className="border-r bg-neutral-25 hover:bg-neutral-50 cursor-pointer p-2 relative group min-h-[60px]"
+                                     onClick={() => {
+                                       const dateTime = new Date(date);
+                                       const [hour, minute] = time.split(':').map(Number);
+                                       dateTime.setHours(hour, minute, 0, 0);
+                                       setSelectedTimeSlot(dateTime.toISOString().slice(0, 16));
+                                       setEditingAppointment(null);
+                                       setShowForm(true);
+                                     }}>
+                                  <div className="opacity-0 group-hover:opacity-100 absolute inset-0 flex items-center justify-center bg-teal-50 transition-opacity">
+                                    <Button size="sm" variant="outline" className="text-xs">
+                                      Agendar
+                                    </Button>
+                                  </div>
+                                </td>
+                              );
+                            }
                           }
-                        } else {
-                          const hasAnyAppointment = filteredDentists.some(dentist => 
-                            getAppointmentForSlot(date, time, dentist.id)
-                          );
-                          
-                          if (hasAnyAppointment) {
-                            return (
-                              <div key={dayIndex} className="schedule-day-cell p-1 space-y-1">
-                                {filteredDentists.map((dentist) => {
-                                  const appointment = getAppointmentForSlot(date, time, dentist.id);
-                                  if (appointment) {
-                                    return (
-                                      <div key={dentist.id} className={`rounded p-1 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
-                                           onClick={() => {
-                                             setEditingAppointment(appointment);
-                                             setShowForm(true);
-                                           }}>
-                                        <div className="font-medium truncate">{appointment.patient?.name}</div>
-                                        <div className="opacity-90 truncate">{dentist.name}</div>
-                                      </div>
-                                    );
-                                  }
-                                  return null;
-                                })}
-                              </div>
-                            );
-                          } else {
-                            return (
-                              <div key={dayIndex} className="schedule-day-cell schedule-empty-cell"
-                                   onClick={() => {
-                                     const dateTime = new Date(date);
-                                     const [hour, minute] = time.split(':').map(Number);
-                                     dateTime.setHours(hour, minute, 0, 0);
-                                     setSelectedTimeSlot(dateTime.toISOString().slice(0, 16));
-                                     setEditingAppointment(null);
-                                     setShowForm(true);
-                                   }}>
-                                <div className="schedule-hover-button">
-                                  <Button size="sm" variant="outline" className="text-xs">
-                                    Agendar
-                                  </Button>
-                                </div>
-                              </div>
-                            );
-                          }
-                        }
-                      })}
-                    </div>
-                  ))}
-                </div>
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <style jsx>{`
-        .schedule-container {
-          display: grid;
-          grid-template-rows: auto 1fr;
-          max-height: 70vh;
-        }
 
-        .schedule-header {
-          display: grid;
-          grid-template-columns: 100px repeat(7, 1fr);
-          position: sticky;
-          top: 0;
-          z-index: 30;
-          background: white;
-          border-bottom: 1px solid #e5e7eb;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .schedule-time-header {
-          padding: 1rem;
-          background: #f9fafb;
-          border-right: 1px solid #e5e7eb;
-        }
-
-        .schedule-day-header {
-          padding: 1rem;
-          background: #f9fafb;
-          border-right: 1px solid #e5e7eb;
-          text-align: center;
-        }
-
-        .schedule-body {
-          overflow-y: auto;
-          max-height: calc(70vh - 80px);
-        }
-
-        .schedule-row {
-          display: grid;
-          grid-template-columns: 100px repeat(7, 1fr);
-          min-height: 60px;
-          border-bottom: 1px solid #f3f4f6;
-        }
-
-        .schedule-time-cell {
-          padding: 0.75rem;
-          background: #f9fafb;
-          border-right: 1px solid #e5e7eb;
-          text-align: center;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .schedule-day-cell {
-          border-right: 1px solid #e5e7eb;
-          min-height: 60px;
-        }
-
-        .schedule-empty-cell {
-          background: #fafafa;
-          cursor: pointer;
-          position: relative;
-          transition: background-color 0.2s;
-        }
-
-        .schedule-empty-cell:hover {
-          background: #f5f5f5;
-        }
-
-        .schedule-hover-button {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          opacity: 0;
-          background: rgba(20, 184, 166, 0.05);
-          transition: opacity 0.2s;
-        }
-
-        .schedule-empty-cell:hover .schedule-hover-button {
-          opacity: 1;
-        }
-
-        /* Scrollbar styling */
-        .schedule-body::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        .schedule-body::-webkit-scrollbar-track {
-          background: #f1f1f1;
-        }
-
-        .schedule-body::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 4px;
-        }
-
-        .schedule-body::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
-        }
-      `}</style>
     </div>
   );
 }
