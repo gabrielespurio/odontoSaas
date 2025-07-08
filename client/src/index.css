@@ -277,8 +277,12 @@ html, body {
     display: grid;
     grid-template-columns: 100px repeat(7, 1fr);
     height: 60px;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
     width: 100%;
+  }
+  
+  .schedule-row:nth-child(even) {
+    border-bottom: 1px solid #d1d5db;
   }
   
   .schedule-time-cell {
@@ -302,6 +306,28 @@ html, body {
     justify-content: center;
     box-sizing: border-box;
     position: relative;
+  }
+  
+  .schedule-day-cell::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e5e7eb;
+    pointer-events: none;
+  }
+  
+  .schedule-time-cell::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e5e7eb;
+    pointer-events: none;
   }
   
   .schedule-day-header {

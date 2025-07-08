@@ -111,15 +111,28 @@ export default function Schedule() {
     return appointments.find(apt => {
       const aptDate = new Date(apt.scheduledDate);
       
-      // Compare date, hour, and minute separately to avoid timezone issues
+      // Compare date first
       const sameDate = aptDate.getFullYear() === slotDateTime.getFullYear() &&
                        aptDate.getMonth() === slotDateTime.getMonth() &&
                        aptDate.getDate() === slotDateTime.getDate();
-      const sameTime = aptDate.getHours() === slotDateTime.getHours() &&
-                       aptDate.getMinutes() === slotDateTime.getMinutes();
+      
+      if (!sameDate) return false;
+      
+      // Check if appointment starts within this 30-minute slot
+      const aptHour = aptDate.getHours();
+      const aptMinute = aptDate.getMinutes();
+      const slotHour = slotDateTime.getHours();
+      const slotMinute = slotDateTime.getMinutes();
+      
+      // Convert both times to minutes for easier comparison
+      const aptTimeInMinutes = aptHour * 60 + aptMinute;
+      const slotTimeInMinutes = slotHour * 60 + slotMinute;
+      
+      // Appointment starts in this slot if it's within the 30-minute window
+      const isInSlot = aptTimeInMinutes >= slotTimeInMinutes && aptTimeInMinutes < slotTimeInMinutes + 30;
       
       const sameDentist = dentistId ? apt.dentistId === dentistId : true;
-      return sameDate && sameTime && sameDentist;
+      return isInSlot && sameDentist;
     });
   };
 
@@ -137,16 +150,20 @@ export default function Schedule() {
       
       if (!sameDentist) return false;
       
-      const duration = apt.procedure?.duration || 30; // Default 30 minutes
-      const endTime = new Date(aptDate.getTime() + duration * 60 * 1000);
+      // Same date check
+      const sameDate = aptDate.getFullYear() === slotDateTime.getFullYear() &&
+                       aptDate.getMonth() === slotDateTime.getMonth() &&
+                       aptDate.getDate() === slotDateTime.getDate();
+      
+      if (!sameDate) return false;
+      
+      const duration = apt.procedure?.duration || 30;
+      const aptTimeInMinutes = aptDate.getHours() * 60 + aptDate.getMinutes();
+      const slotTimeInMinutes = slotDateTime.getHours() * 60 + slotDateTime.getMinutes();
+      const endTimeInMinutes = aptTimeInMinutes + duration;
       
       // Check if current slot is within the appointment duration but not the starting slot
-      // Use local time comparison to avoid timezone issues
-      const aptDateTime = new Date(aptDate.getFullYear(), aptDate.getMonth(), aptDate.getDate(), aptDate.getHours(), aptDate.getMinutes());
-      const slotLocalTime = new Date(slotDateTime.getFullYear(), slotDateTime.getMonth(), slotDateTime.getDate(), slotDateTime.getHours(), slotDateTime.getMinutes());
-      const endLocalTime = new Date(aptDateTime.getTime() + duration * 60 * 1000);
-      
-      return aptDateTime.getTime() < slotLocalTime.getTime() && slotLocalTime.getTime() < endLocalTime.getTime();
+      return aptTimeInMinutes < slotTimeInMinutes && slotTimeInMinutes < endTimeInMinutes;
     });
   };
 
@@ -336,6 +353,9 @@ export default function Schedule() {
                                 <div className="font-medium truncate">{appointment.patient?.name}</div>
                                 <div className="opacity-90 truncate">{appointment.procedure?.name}</div>
                                 <div className="opacity-75 text-xs mt-1">
+                                  {new Date(appointment.scheduledDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                                <div className="opacity-75 text-xs">
                                   {duration >= 60 
                                     ? `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ''}`
                                     : `${duration}min`}
