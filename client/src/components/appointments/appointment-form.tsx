@@ -27,13 +27,12 @@ type AppointmentFormData = z.infer<typeof appointmentSchema>;
 
 interface AppointmentFormProps {
   appointment?: Appointment | null;
-  selectedDate?: string;
-  selectedTime?: string;
+  prefilledDateTime?: string;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export default function AppointmentForm({ appointment, selectedDate, selectedTime, onSuccess, onCancel }: AppointmentFormProps) {
+export default function AppointmentForm({ appointment, prefilledDateTime, onSuccess, onCancel }: AppointmentFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -61,8 +60,8 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
       const minutes = String(date.getMinutes()).padStart(2, '0');
       return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
-    if (selectedDate && selectedTime) {
-      return `${selectedDate}T${selectedTime}`;
+    if (prefilledDateTime) {
+      return prefilledDateTime;
     }
     return "";
   };
@@ -88,6 +87,13 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
       setSelectedProcedures([{ id: Date.now(), procedureId: 0 }]);
     }
   }, [appointment]);
+
+  // Update form values when prefilledDateTime changes
+  useEffect(() => {
+    if (prefilledDateTime && !appointment) {
+      form.setValue("scheduledDate", prefilledDateTime);
+    }
+  }, [prefilledDateTime, appointment, form]);
 
   const createAppointmentMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/appointments", {
