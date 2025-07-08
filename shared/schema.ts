@@ -240,6 +240,8 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  scheduledDate: z.string().datetime(),
 });
 
 export const insertConsultationSchema = createInsertSchema(consultations).omit({

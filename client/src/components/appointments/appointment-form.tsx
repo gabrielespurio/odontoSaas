@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { X, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -38,6 +37,7 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
 
   const { data: patients } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
@@ -72,6 +72,16 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
       notes: appointment?.notes || "",
     },
   });
+
+  // Initialize procedures when editing or creating
+  useEffect(() => {
+    if (appointment?.procedureId) {
+      setSelectedProcedures([{ id: Date.now(), procedureId: appointment.procedureId }]);
+    } else {
+      // Add one procedure field for new appointments
+      setSelectedProcedures([{ id: Date.now(), procedureId: 0 }]);
+    }
+  }, [appointment]);
 
   const createAppointmentMutation = useMutation({
     mutationFn: (data: AppointmentFormData) => apiRequest("POST", "/api/appointments", {
@@ -198,35 +208,88 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <Label>Procedimentos *</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-            {procedures?.map((procedure) => (
-              <div key={procedure.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`procedure-${procedure.id}`}
-                  checked={form.watch("procedureIds").includes(procedure.id)}
-                  onCheckedChange={(checked) => {
-                    const currentIds = form.watch("procedureIds");
-                    if (checked) {
-                      form.setValue("procedureIds", [...currentIds, procedure.id]);
-                    } else {
-                      form.setValue("procedureIds", currentIds.filter(id => id !== procedure.id));
-                    }
+          <div className="flex items-center justify-between">
+            <Label>Procedimentos *</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const newId = Date.now();
+                setSelectedProcedures([...selectedProcedures, { id: newId, procedureId: 0 }]);
+              }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Procedimento
+            </Button>
+          </div>
+          
+          <div className="space-y-3">
+            {selectedProcedures.map((selectedProc, index) => (
+              <div key={selectedProc.id} className="flex items-center gap-3 p-3 border rounded-lg bg-neutral-50">
+                <div className="flex-1">
+                  <Select
+                    value={selectedProc.procedureId?.toString() || ""}
+                    onValueChange={(value) => {
+                      const updatedProcedures = selectedProcedures.map((proc, i) =>
+                        i === index ? { ...proc, procedureId: parseInt(value) } : proc
+                      );
+                      setSelectedProcedures(updatedProcedures);
+                      
+                      // Update form with procedure IDs
+                      const procedureIds = updatedProcedures
+                        .filter(p => p.procedureId > 0)
+                        .map(p => p.procedureId);
+                      form.setValue("procedureIds", procedureIds);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecionar procedimento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {procedures?.map((procedure) => (
+                        <SelectItem key={procedure.id} value={procedure.id.toString()}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{procedure.name}</span>
+                            <span className="text-xs text-neutral-600">
+                              {procedure.duration >= 60 
+                                ? `${Math.floor(procedure.duration / 60)}h${procedure.duration % 60 > 0 ? ` ${procedure.duration % 60}min` : ''}`
+                                : `${procedure.duration}min`} - R$ {Number(procedure.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const updatedProcedures = selectedProcedures.filter((_, i) => i !== index);
+                    setSelectedProcedures(updatedProcedures);
+                    
+                    // Update form with procedure IDs
+                    const procedureIds = updatedProcedures
+                      .filter(p => p.procedureId > 0)
+                      .map(p => p.procedureId);
+                    form.setValue("procedureIds", procedureIds);
                   }}
-                />
-                <Label htmlFor={`procedure-${procedure.id}`} className="text-sm cursor-pointer">
-                  <div>
-                    <div className="font-medium">{procedure.name}</div>
-                    <div className="text-xs text-neutral-600">
-                      {procedure.duration >= 60 
-                        ? `${Math.floor(procedure.duration / 60)}h${procedure.duration % 60 > 0 ? ` ${procedure.duration % 60}min` : ''}`
-                        : `${procedure.duration}min`} - R$ {Number(procedure.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </div>
-                  </div>
-                </Label>
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
             ))}
+            
+            {selectedProcedures.length === 0 && (
+              <div className="text-center py-4 text-neutral-500 text-sm">
+                Clique em "Adicionar Procedimento" para incluir procedimentos ao agendamento
+              </div>
+            )}
           </div>
+          
           {form.formState.errors.procedureIds && (
             <p className="text-sm text-red-600">{form.formState.errors.procedureIds.message}</p>
           )}
@@ -278,17 +341,20 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
       </div>
 
       {/* Appointment Summary */}
-      {form.watch("procedureIds").length > 0 && (
+      {selectedProcedures.filter(p => p.procedureId > 0).length > 0 && (
         <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
           <h4 className="text-sm font-medium text-teal-900 mb-2">Resumo do Agendamento</h4>
           {(() => {
-            const selectedProcedureIds = form.watch("procedureIds");
-            const selectedProcedures = procedures?.filter(p => selectedProcedureIds.includes(p.id)) || [];
+            const validProcedures = selectedProcedures.filter(p => p.procedureId > 0);
+            const procedureDetails = validProcedures
+              .map(sp => procedures?.find(p => p.id === sp.procedureId))
+              .filter(Boolean) as Procedure[];
+            
             const selectedPatient = patients?.find(p => p.id === form.watch("patientId"));
             const selectedDentist = dentists?.find(d => d.id === form.watch("dentistId"));
             
-            const totalDuration = selectedProcedures.reduce((sum, p) => sum + p.duration, 0);
-            const totalPrice = selectedProcedures.reduce((sum, p) => sum + Number(p.price), 0);
+            const totalDuration = procedureDetails.reduce((sum, p) => sum + p.duration, 0);
+            const totalPrice = procedureDetails.reduce((sum, p) => sum + Number(p.price), 0);
             
             return (
               <div className="text-sm text-teal-800 space-y-1">
@@ -298,7 +364,7 @@ export default function AppointmentForm({ appointment, selectedDate, selectedTim
                 <div className="mt-2">
                   <p><strong>Procedimentos:</strong></p>
                   <div className="ml-4 space-y-1">
-                    {selectedProcedures.map((procedure) => (
+                    {procedureDetails.map((procedure) => (
                       <div key={procedure.id} className="flex justify-between items-center">
                         <span>• {procedure.name}</span>
                         <span className="text-xs">
