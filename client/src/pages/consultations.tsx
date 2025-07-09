@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,8 @@ import {
   Calendar,
   Stethoscope,
   Eye,
-  Edit
+  Edit,
+  X
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,14 +25,14 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import type { Consultation, Patient, User } from "@/lib/types";
+import type { Consultation, Patient, User, Procedure } from "@/lib/types";
 
 const consultationSchema = z.object({
   patientId: z.number().min(1, "Paciente é obrigatório"),
   dentistId: z.number().min(1, "Dentista é obrigatório"),
   appointmentId: z.number().optional(),
   date: z.string().min(1, "Data é obrigatória").transform((str) => new Date(str)),
-  procedures: z.array(z.string()).optional(),
+  procedureIds: z.array(z.number()).optional(),
   clinicalNotes: z.string().optional(),
   observations: z.string().optional(),
 });
@@ -43,6 +44,7 @@ export default function Consultations() {
   const [selectedPatient, setSelectedPatient] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
+  const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -71,23 +73,31 @@ export default function Consultations() {
     },
   });
 
+  const { data: procedures } = useQuery<Procedure[]>({
+    queryKey: ["/api/procedures"],
+  });
+
   const form = useForm<ConsultationFormData>({
     resolver: zodResolver(consultationSchema),
     defaultValues: {
       patientId: 0,
       dentistId: user?.id || 0,
       date: new Date().toISOString().split('T')[0],
-      procedures: [],
+      procedureIds: [],
       clinicalNotes: "",
       observations: "",
     },
   });
 
+  // Initialize procedures when form opens
+  useEffect(() => {
+    if (showForm) {
+      setSelectedProcedures([{ id: Date.now(), procedureId: 0 }]);
+    }
+  }, [showForm]);
+
   const createConsultationMutation = useMutation({
-    mutationFn: (data: ConsultationFormData) => apiRequest("POST", "/api/consultations", {
-      ...data,
-      date: new Date(data.date).toISOString(),
-    }),
+    mutationFn: (data: any) => apiRequest("POST", "/api/consultations", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
       toast({
@@ -96,6 +106,7 @@ export default function Consultations() {
       });
       setShowForm(false);
       form.reset();
+      setSelectedProcedures([]);
     },
     onError: () => {
       toast({
@@ -107,7 +118,22 @@ export default function Consultations() {
   });
 
   const onSubmit = (data: ConsultationFormData) => {
-    createConsultationMutation.mutate(data);
+    // Converte os procedimentos selecionados para nomes para compatibilidade com o backend
+    const procedureNames = selectedProcedures
+      .filter(sp => sp.procedureId > 0)
+      .map(sp => procedures?.find(p => p.id === sp.procedureId)?.name)
+      .filter(Boolean);
+
+    const consultationData = {
+      ...data,
+      date: new Date(data.date).toISOString(),
+      procedures: procedureNames,
+    };
+
+    // Remove procedureIds já que não é usado no backend
+    delete (consultationData as any).procedureIds;
+
+    createConsultationMutation.mutate(consultationData);
   };
 
   const formatDate = (date: string) => {
@@ -154,11 +180,12 @@ export default function Consultations() {
               Nova Consulta
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>Registrar Nova Consulta</DialogTitle>
             </DialogHeader>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="patientId">Paciente *</Label>
@@ -218,6 +245,93 @@ export default function Consultations() {
                 </div>
               </div>
 
+              {/* Procedures Selection */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Procedimentos Realizados</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newId = Date.now();
+                      setSelectedProcedures([...selectedProcedures, { id: newId, procedureId: 0 }]);
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Adicionar Procedimento
+                  </Button>
+                </div>
+                
+                <div className="space-y-3 max-h-48 overflow-y-auto pr-2">
+                  {selectedProcedures.map((selectedProc, index) => (
+                    <div key={selectedProc.id} className="flex items-center gap-3 p-3 border rounded-lg bg-neutral-50">
+                      <div className="flex-1">
+                        <Select
+                          value={selectedProc.procedureId?.toString() || ""}
+                          onValueChange={(value) => {
+                            const updatedProcedures = selectedProcedures.map((proc, i) =>
+                              i === index ? { ...proc, procedureId: parseInt(value) } : proc
+                            );
+                            setSelectedProcedures(updatedProcedures);
+                            
+                            // Update form with procedure IDs
+                            const procedureIds = updatedProcedures
+                              .filter(p => p.procedureId > 0)
+                              .map(p => p.procedureId);
+                            form.setValue("procedureIds", procedureIds);
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar procedimento" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[200px] z-50" position="popper" sideOffset={5} align="start">
+                            {procedures?.filter(p => p.isActive).map((procedure) => (
+                              <SelectItem key={procedure.id} value={procedure.id.toString()}>
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{procedure.name}</span>
+                                  <span className="text-xs text-neutral-600">
+                                    {procedure.duration >= 60 
+                                      ? `${Math.floor(procedure.duration / 60)}h${procedure.duration % 60 > 0 ? ` ${procedure.duration % 60}min` : ''}`
+                                      : `${procedure.duration}min`} - R$ {Number(procedure.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {selectedProcedures.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const updatedProcedures = selectedProcedures.filter((_, i) => i !== index);
+                            setSelectedProcedures(updatedProcedures);
+                            
+                            // Update form with procedure IDs
+                            const procedureIds = updatedProcedures
+                              .filter(p => p.procedureId > 0)
+                              .map(p => p.procedureId);
+                            form.setValue("procedureIds", procedureIds);
+                          }}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {selectedProcedures.length === 0 && (
+                    <div className="text-center py-4 text-neutral-500 text-sm">
+                      Clique em "Adicionar Procedimento" para incluir procedimentos realizados
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="clinicalNotes">Observações Clínicas</Label>
                 <Textarea
@@ -247,6 +361,7 @@ export default function Consultations() {
                 </Button>
               </div>
             </form>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
