@@ -235,9 +235,13 @@ DentalCare is a comprehensive dental clinic management SaaS system built as a fu
 - July 08, 2025. Schedule page now only shows dentists in filter dropdown, removing admin and reception users
 - July 08, 2025. **MIGRATION COMPLETED**: Successfully migrated DentalCare project from Replit Agent to standard Replit environment
 - July 08, 2025. **APPOINTMENT FORM IMPROVEMENTS**: Fixed dropdown cutting issue in appointment form - increased dialog height, added dropdown height limits, improved overflow handling
+- July 08, 2025. **DATABASE CONNECTION FIXED**: Successfully ensured only the specified Neon database connection is used
+- July 08, 2025. **PROCEDURE CATEGORIES ISSUE RESOLVED**: Fixed missing procedure_categories table by creating all required database tables
+- July 08, 2025. **CATEGORY MANAGEMENT WORKING**: Procedure categories can now be created and managed successfully through the configuration interface
 - July 08, 2025. **EXCLUSIVE DATABASE CONNECTION**: Configured system to use only the specified Neon database connection
 - July 08, 2025. Removed all alternative database connections to ensure data consistency
 - July 08, 2025. Forced connection to: postgresql://neondb_owner:npg_uCjQlFSAK78T@ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech/neondb
+- July 08, 2025. **MIGRATION COMPLETED**: Successfully migrated DentalCare project from Replit Agent to standard Replit environment with exclusive Neon database connection
 
 ## User Preferences
 
