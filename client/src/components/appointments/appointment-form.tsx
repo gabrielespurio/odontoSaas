@@ -235,14 +235,14 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
 
   const getStatusOptions = () => {
     const options = [
-      { value: "scheduled", label: "Agendado" },
-      { value: "confirmed", label: "Confirmado" },
-      { value: "attended", label: "Atendido" },
-      { value: "cancelled", label: "Cancelado" },
+      { value: "agendado", label: "Agendado" },
+      { value: "em_atendimento", label: "Em Atendimento" },
+      { value: "concluido", label: "Concluído" },
+      { value: "cancelado", label: "Cancelado" },
     ];
 
-    // If editing, allow all statuses, if creating, only allow scheduled and confirmed
-    return appointment ? options : options.filter(opt => ["scheduled", "confirmed"].includes(opt.value));
+    // If editing, allow all statuses, if creating, only allow agendado
+    return appointment ? options : options.filter(opt => ["agendado"].includes(opt.value));
   };
 
   const formatProcedureOption = (procedure: Procedure) => {
