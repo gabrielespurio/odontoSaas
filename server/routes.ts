@@ -446,6 +446,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const consultationData = insertConsultationSchema.parse(req.body);
       
+      // Validar se a data não está no passado
+      const consultationDate = new Date(consultationData.date);
+      const now = new Date();
+      
+      if (consultationDate < now) {
+        return res.status(400).json({ 
+          message: "Não é possível criar consultas com data e horário no passado." 
+        });
+      }
+      
       // Criar a consulta primeiro
       const consultation = await storage.createConsultation(consultationData);
       
@@ -505,6 +515,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const consultationData = insertConsultationSchema.partial().parse(req.body);
+      
+      // Validar se a data não está no passado (apenas se a data estiver sendo alterada)
+      if (consultationData.date) {
+        const consultationDate = new Date(consultationData.date);
+        const now = new Date();
+        
+        if (consultationDate < now) {
+          return res.status(400).json({ 
+            message: "Não é possível alterar consultas para data e horário no passado." 
+          });
+        }
+      }
       
       const consultation = await storage.updateConsultation(id, consultationData);
       res.json(consultation);

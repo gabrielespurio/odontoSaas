@@ -39,8 +39,21 @@ const consultationSchema = z.object({
   patientId: z.number().min(1, "Paciente é obrigatório"),
   dentistId: z.number().min(1, "Dentista é obrigatório"),
   appointmentId: z.number().optional(),
-  date: z.string().min(1, "Data é obrigatória"),
-  time: z.string().min(1, "Horário é obrigatório"),
+  date: z.string().min(1, "Data é obrigatória").refine((date) => {
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selectedDate >= today;
+  }, "Não é possível agendar consultas em datas passadas"),
+  time: z.string().min(1, "Horário é obrigatório").refine((time, ctx) => {
+    const date = ctx.parent.date;
+    if (!date) return true;
+    
+    const selectedDateTime = new Date(`${date}T${time}`);
+    const now = new Date();
+    
+    return selectedDateTime > now;
+  }, "Não é possível agendar consultas em horários passados"),
   procedureIds: z.array(z.number()).optional(),
   clinicalNotes: z.string().optional(),
   observations: z.string().optional(),
@@ -502,10 +515,14 @@ export default function Consultations() {
                   <Input
                     id="date"
                     type="date"
+                    min={new Date().toISOString().split('T')[0]}
                     {...form.register("date")}
+                    className={form.formState.errors.date ? "border-red-500" : ""}
                   />
                   {form.formState.errors.date && (
-                    <p className="text-sm text-red-600">{form.formState.errors.date.message}</p>
+                    <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                      {form.formState.errors.date.message}
+                    </p>
                   )}
                 </div>
 
@@ -515,10 +532,12 @@ export default function Consultations() {
                     id="time"
                     type="time"
                     {...form.register("time")}
-                    className={timeConflictError ? "border-red-500" : ""}
+                    className={timeConflictError || form.formState.errors.time ? "border-red-500" : ""}
                   />
                   {form.formState.errors.time && (
-                    <p className="text-sm text-red-600">{form.formState.errors.time.message}</p>
+                    <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                      {form.formState.errors.time.message}
+                    </p>
                   )}
                   {timeConflictError && (
                     <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
@@ -1025,10 +1044,14 @@ export default function Consultations() {
                 <Input
                   id="date"
                   type="date"
+                  min={new Date().toISOString().split('T')[0]}
                   {...form.register("date")}
+                  className={form.formState.errors.date ? "border-red-500" : ""}
                 />
                 {form.formState.errors.date && (
-                  <p className="text-sm text-red-600">{form.formState.errors.date.message}</p>
+                  <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                    {form.formState.errors.date.message}
+                  </p>
                 )}
               </div>
 
@@ -1038,10 +1061,12 @@ export default function Consultations() {
                   id="time"
                   type="time"
                   {...form.register("time")}
-                  className={timeConflictError ? "border-red-500" : ""}
+                  className={timeConflictError || form.formState.errors.time ? "border-red-500" : ""}
                 />
                 {form.formState.errors.time && (
-                  <p className="text-sm text-red-600">{form.formState.errors.time.message}</p>
+                  <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                    {form.formState.errors.time.message}
+                  </p>
                 )}
                 {timeConflictError && (
                   <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
