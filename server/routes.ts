@@ -450,7 +450,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const consultationDate = new Date(consultationData.date);
       const now = new Date();
       
-      if (consultationDate < now) {
+      // Adiciona uma margem de 1 minuto para evitar problemas de timing
+      const nowWithMargin = new Date(now.getTime() + 60000);
+      
+      if (consultationDate < nowWithMargin) {
         return res.status(400).json({ 
           message: "Não é possível criar consultas com data e horário no passado." 
         });
@@ -521,7 +524,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const consultationDate = new Date(consultationData.date);
         const now = new Date();
         
-        if (consultationDate < now) {
+        // Adiciona uma margem de 1 minuto para evitar problemas de timing
+        const nowWithMargin = new Date(now.getTime() + 60000);
+        
+        if (consultationDate < nowWithMargin) {
           return res.status(400).json({ 
             message: "Não é possível alterar consultas para data e horário no passado." 
           });

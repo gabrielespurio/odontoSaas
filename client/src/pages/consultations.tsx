@@ -43,6 +43,7 @@ const consultationSchema = z.object({
     const selectedDate = new Date(date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
     return selectedDate >= today;
   }, "Não é possível agendar consultas em datas passadas"),
   time: z.string().min(1, "Horário é obrigatório"),
@@ -55,7 +56,11 @@ const consultationSchema = z.object({
   if (data.date && data.time) {
     const selectedDateTime = new Date(`${data.date}T${data.time}`);
     const now = new Date();
-    return selectedDateTime > now;
+    
+    // Adiciona uma margem de 1 minuto para evitar problemas de timing
+    const nowWithMargin = new Date(now.getTime() + 60000);
+    
+    return selectedDateTime >= nowWithMargin;
   }
   return true;
 }, {
@@ -321,7 +326,10 @@ export default function Consultations() {
     const selectedDateTime = new Date(`${data.date}T${data.time}`);
     const now = new Date();
     
-    if (selectedDateTime <= now) {
+    // Adiciona uma margem de 1 minuto para evitar problemas de timing
+    const nowWithMargin = new Date(now.getTime() + 60000);
+    
+    if (selectedDateTime < nowWithMargin) {
       toast({
         title: "Horário inválido",
         description: "Não é possível agendar consultas em horários passados. Por favor, selecione uma data e horário futuros.",
