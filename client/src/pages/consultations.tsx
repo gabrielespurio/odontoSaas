@@ -200,6 +200,7 @@ export default function Consultations() {
       apiRequest("PUT", `/api/consultations/${data.id}`, { status: data.status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
       toast({
         title: "Sucesso",
         description: "Status do atendimento atualizado",

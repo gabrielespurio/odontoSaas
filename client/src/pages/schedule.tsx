@@ -134,6 +134,7 @@ export default function Schedule() {
       apiRequest("PUT", `/api/appointments/${data.id}`, { status: data.status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
       toast({
         title: "Sucesso",
         description: "Status do agendamento atualizado",

@@ -392,6 +392,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const appointmentData = insertAppointmentSchema.partial().parse(req.body);
       
+      // Buscar o agendamento atual para comparar status
+      const currentAppointment = await storage.getAppointment(id);
+      
       // Validar se o horário está disponível (apenas se a data estiver sendo alterada)
       if (appointmentData.scheduledDate) {
         const scheduledDate = new Date(appointmentData.scheduledDate);
@@ -421,6 +424,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const appointment = await storage.updateAppointment(id, appointmentData);
+      
+      // Se o status foi alterado, sincronizar com consultas relacionadas
+      if (appointmentData.status && currentAppointment && appointmentData.status !== currentAppointment.status) {
+        try {
+          // Buscar consultas do mesmo paciente, dentista e data
+          const appointmentDate = new Date(currentAppointment.scheduledDate);
+          const consultations = await storage.getConsultations(currentAppointment.patientId, currentAppointment.dentistId);
+          
+          // Filtrar consultas da mesma data
+          const relatedConsultations = consultations.filter(cons => {
+            const consDate = new Date(cons.date);
+            return consDate.toDateString() === appointmentDate.toDateString();
+          });
+          
+          // Atualizar status das consultas relacionadas
+          for (const consultation of relatedConsultations) {
+            await storage.updateConsultation(consultation.id, { status: appointmentData.status });
+          }
+          
+          console.log(`Synchronized status "${appointmentData.status}" for ${relatedConsultations.length} related consultations`);
+        } catch (syncError) {
+          console.error("Error synchronizing consultation status:", syncError);
+          // Não falhar a requisição principal por causa do erro de sincronização
+        }
+      }
+      
       res.json(appointment);
     } catch (error) {
       console.error("Update appointment error:", error);
@@ -534,7 +563,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Buscar a consulta atual
+      const currentConsultation = await storage.getConsultation(id);
+      
+      // Atualizar a consulta
       const consultation = await storage.updateConsultation(id, consultationData);
+      
+      // Se o status foi alterado, sincronizar com agendamentos relacionados
+      if (consultationData.status && currentConsultation && consultationData.status !== currentConsultation.status) {
+        try {
+          // Buscar agendamentos do mesmo paciente, dentista e data
+          const consultationDate = new Date(currentConsultation.date);
+          const appointments = await storage.getAppointments(consultationDate, currentConsultation.dentistId);
+          
+          // Filtrar agendamentos do mesmo paciente na mesma data
+          const relatedAppointments = appointments.filter(apt => {
+            const aptDate = new Date(apt.scheduledDate);
+            return apt.patientId === currentConsultation.patientId &&
+                   aptDate.toDateString() === consultationDate.toDateString();
+          });
+          
+          // Atualizar status dos agendamentos relacionados
+          for (const appointment of relatedAppointments) {
+            await storage.updateAppointment(appointment.id, { status: consultationData.status });
+          }
+          
+          console.log(`Synchronized status "${consultationData.status}" for ${relatedAppointments.length} related appointments`);
+        } catch (syncError) {
+          console.error("Error synchronizing appointment status:", syncError);
+          // Não falhar a requisição principal por causa do erro de sincronização
+        }
+      }
+      
       res.json(consultation);
     } catch (error) {
       console.error("Update consultation error:", error);

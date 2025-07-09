@@ -272,6 +272,10 @@ DentalCare is a comprehensive dental clinic management SaaS system built as a fu
 - July 09, 2025. **STATUS SYNCHRONIZATION FIX**: Fixed appointment status inconsistency between different modules
 - July 09, 2025. **REPORTS MODULE CORRECTION**: Updated reports page to use correct Portuguese status values (agendado, em_atendimento, concluido, cancelado)
 - July 09, 2025. **UNIFIED STATUS DISPLAY**: Synchronized all status displays across schedule, consultations, and reports modules
+- July 09, 2025. **BIDIRECTIONAL STATUS SYNC**: Implemented bidirectional status synchronization between appointments and consultations
+- July 09, 2025. **AUTOMATIC STATUS UPDATE**: When consultation status changes, related appointments are automatically updated
+- July 09, 2025. **APPOINTMENT-CONSULTATION SYNC**: When appointment status changes, related consultations are automatically updated
+- July 09, 2025. **CACHE INVALIDATION**: Both modules now invalidate each other's cache when status changes for real-time updates
 
 ## User Preferences
 
