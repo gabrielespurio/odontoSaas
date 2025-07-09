@@ -23,7 +23,9 @@ import {
   ChevronDown,
   ChevronUp,
   MoreHorizontal,
-  Trash2
+  Trash2,
+  Play,
+  CheckCircle
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,6 +44,7 @@ const consultationSchema = z.object({
   procedureIds: z.array(z.number()).optional(),
   clinicalNotes: z.string().optional(),
   observations: z.string().optional(),
+  status: z.enum(["agendado", "em_atendimento", "concluido", "cancelado"]).default("agendado"),
 });
 
 type ConsultationFormData = z.infer<typeof consultationSchema>;
@@ -59,6 +62,60 @@ export default function Consultations() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Status management functions
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "agendado": return "bg-blue-500";
+      case "em_atendimento": return "bg-yellow-500";
+      case "concluido": return "bg-green-500";
+      case "cancelado": return "bg-red-500";
+      default: return "bg-gray-500";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "agendado": return "Agendado";
+      case "em_atendimento": return "Em Atendimento";
+      case "concluido": return "Concluído";
+      case "cancelado": return "Cancelado";
+      default: return "Desconhecido";
+    }
+  };
+
+  const getStatusActions = (currentStatus: string) => {
+    const actions = [];
+    
+    if (currentStatus === "agendado") {
+      actions.push({
+        label: "Iniciar Atendimento",
+        icon: Play,
+        value: "em_atendimento",
+        color: "text-yellow-600"
+      });
+    }
+    
+    if (currentStatus === "em_atendimento") {
+      actions.push({
+        label: "Concluir Atendimento",
+        icon: CheckCircle,
+        value: "concluido",
+        color: "text-green-600"
+      });
+    }
+    
+    if (currentStatus !== "cancelado" && currentStatus !== "concluido") {
+      actions.push({
+        label: "Cancelar",
+        icon: X,
+        value: "cancelado",
+        color: "text-red-600"
+      });
+    }
+    
+    return actions;
+  };
 
   const { data: consultations, isLoading: consultationsLoading } = useQuery<Consultation[]>({
     queryKey: ["/api/consultations", { 
@@ -112,8 +169,33 @@ export default function Consultations() {
       procedureIds: [],
       clinicalNotes: "",
       observations: "",
+      status: "agendado",
     },
   });
+
+  // Status update mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: (data: { id: number; status: string }) =>
+      apiRequest("PUT", `/api/consultations/${data.id}`, { status: data.status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
+      toast({
+        title: "Sucesso",
+        description: "Status do atendimento atualizado",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleStatusChange = (consultationId: number, newStatus: string) => {
+    updateStatusMutation.mutate({ id: consultationId, status: newStatus });
+  };
 
   // Função para validar conflito de horários
   const validateTimeConflict = (date: string, time: string, dentistId: number, excludeConsultationId?: number) => {
@@ -288,6 +370,7 @@ export default function Consultations() {
       procedureIds: [],
       clinicalNotes: consultation.clinicalNotes || "",
       observations: consultation.observations || "",
+      status: consultation.status || "agendado",
     });
 
     setShowEditForm(true);
@@ -592,6 +675,24 @@ export default function Consultations() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="status">Status da Consulta</Label>
+                <Select
+                  value={form.watch("status")}
+                  onValueChange={(value) => form.setValue("status", value as any)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="agendado">Agendado</SelectItem>
+                    <SelectItem value="em_atendimento">Em Atendimento</SelectItem>
+                    <SelectItem value="concluido">Concluído</SelectItem>
+                    <SelectItem value="cancelado">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex justify-end space-x-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
                   Cancelar
@@ -648,6 +749,7 @@ export default function Consultations() {
                   <TableHead>Data/Hora</TableHead>
                   <TableHead>Dentista</TableHead>
                   <TableHead>Procedimentos</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -718,6 +820,16 @@ export default function Consultations() {
                           )}
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Badge 
+                            variant="secondary" 
+                            className={`${getStatusColor(consultation.status || 'agendado')} text-white border-0`}
+                          >
+                            {getStatusLabel(consultation.status || 'agendado')}
+                          </Badge>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -726,6 +838,16 @@ export default function Consultations() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            {getStatusActions(consultation.status || 'agendado').map((action) => (
+                              <DropdownMenuItem 
+                                key={action.value}
+                                onClick={() => handleStatusChange(consultation.id, action.value)}
+                                className={`${action.color} cursor-pointer`}
+                              >
+                                <action.icon className="w-4 h-4 mr-2" />
+                                {action.label}
+                              </DropdownMenuItem>
+                            ))}
                             <DropdownMenuItem onClick={() => setSelectedConsultation(consultation)}>
                               <Eye className="w-4 h-4 mr-2" />
                               Visualizar
@@ -752,7 +874,7 @@ export default function Consultations() {
                     </TableRow>
                     {expandedRows.has(consultation.id) && (
                       <TableRow className="bg-neutral-50">
-                        <TableCell colSpan={6}>
+                        <TableCell colSpan={7}>
                           <div className="py-4 px-6 space-y-3">
                             {consultation.clinicalNotes && (
                               <div>
@@ -1034,6 +1156,24 @@ export default function Consultations() {
                 placeholder="Observações gerais sobre a consulta"
                 rows={3}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Status da Consulta</Label>
+              <Select
+                value={form.watch("status")}
+                onValueChange={(value) => form.setValue("status", value as any)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="agendado">Agendado</SelectItem>
+                  <SelectItem value="em_atendimento">Em Atendimento</SelectItem>
+                  <SelectItem value="concluido">Concluído</SelectItem>
+                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">

@@ -8,6 +8,13 @@
       "when": 1752019248827,
       "tag": "0000_fluffy_pete_wisdom",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1752074329705,
+      "tag": "0001_dark_blue_blade",
+      "breakpoints": true
     }
   ]
 }

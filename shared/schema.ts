@@ -91,7 +91,9 @@ export const consultations = pgTable("consultations", {
   procedures: text("procedures").array(),
   clinicalNotes: text("clinical_notes"),
   observations: text("observations"),
+  status: appointmentStatusEnum("status").notNull().default("agendado"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Dental Chart table

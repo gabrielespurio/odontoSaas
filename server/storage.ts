@@ -280,7 +280,9 @@ export class DatabaseStorage implements IStorage {
       procedures: consultations.procedures,
       clinicalNotes: consultations.clinicalNotes,
       observations: consultations.observations,
+      status: consultations.status,
       createdAt: consultations.createdAt,
+      updatedAt: consultations.updatedAt,
       patient: patients,
       dentist: users,
     })
