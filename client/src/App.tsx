@@ -13,7 +13,7 @@ import Dashboard from "@/pages/dashboard";
 import Patients from "@/pages/patients";
 import PatientDetail from "@/pages/patient-detail";
 import Schedule from "@/pages/schedule";
-import Consultations from "@/pages/consultations-simple";
+import Consultations from "@/pages/consultations";
 import Procedures from "@/pages/procedures";
 import Financial from "@/pages/financial";
 import Reports from "@/pages/reports";
