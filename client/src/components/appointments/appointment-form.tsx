@@ -19,7 +19,7 @@ const appointmentSchema = z.object({
   dentistId: z.number().min(1, "Dentista é obrigatório"),
   procedureIds: z.array(z.number()).min(1, "Pelo menos um procedimento é obrigatório"),
   scheduledDate: z.string().min(1, "Data e hora são obrigatórias"),
-  status: z.enum(["scheduled", "confirmed", "attended", "cancelled"]).default("scheduled"),
+  status: z.enum(["agendado", "em_atendimento", "concluido", "cancelado"]).default("agendado"),
   notes: z.string().optional(),
 });
 
@@ -111,7 +111,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
       dentistId: appointment?.dentistId || (user?.role === "dentist" ? user.id : 0),
       procedureIds: appointment?.procedureId ? [appointment.procedureId] : [],
       scheduledDate: getInitialScheduledDate(),
-      status: appointment?.status || "scheduled",
+      status: appointment?.status || "agendado",
       notes: appointment?.notes || "",
     },
   });

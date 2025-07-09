@@ -16,7 +16,7 @@ import { z } from "zod";
 
 // Enums
 export const userRoleEnum = pgEnum("user_role", ["admin", "dentist", "reception"]);
-export const appointmentStatusEnum = pgEnum("appointment_status", ["scheduled", "confirmed", "attended", "cancelled"]);
+export const appointmentStatusEnum = pgEnum("appointment_status", ["agendado", "em_atendimento", "concluido", "cancelado"]);
 export const paymentStatusEnum = pgEnum("payment_status", ["pending", "paid", "overdue"]);
 export const toothConditionEnum = pgEnum("tooth_condition", ["healthy", "carie", "restoration", "extraction", "planned_treatment", "completed_treatment"]);
 
@@ -75,7 +75,7 @@ export const appointments = pgTable("appointments", {
   dentistId: integer("dentist_id").notNull(),
   procedureId: integer("procedure_id").notNull(),
   scheduledDate: timestamp("scheduled_date").notNull(),
-  status: appointmentStatusEnum("status").notNull().default("scheduled"),
+  status: appointmentStatusEnum("status").notNull().default("agendado"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

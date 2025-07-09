@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { 
   Plus, 
   ChevronLeft, 
@@ -12,7 +13,11 @@ import {
   Calendar as CalendarIcon,
   Clock,
   User as UserIcon,
-  Edit2
+  Edit2,
+  MoreHorizontal,
+  Play,
+  CheckCircle,
+  X
 } from "lucide-react";
 import AppointmentForm from "@/components/appointments/appointment-form";
 import { useToast } from "@/hooks/use-toast";
@@ -61,12 +66,55 @@ export default function Schedule() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "scheduled": return "bg-blue-500";
-      case "confirmed": return "bg-green-500";
-      case "attended": return "bg-purple-500";
-      case "cancelled": return "bg-red-500";
+      case "agendado": return "bg-blue-500";
+      case "em_atendimento": return "bg-yellow-500";
+      case "concluido": return "bg-green-500";
+      case "cancelado": return "bg-red-500";
       default: return "bg-gray-500";
     }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "agendado": return "Agendado";
+      case "em_atendimento": return "Em Atendimento";
+      case "concluido": return "Concluído";
+      case "cancelado": return "Cancelado";
+      default: return "Desconhecido";
+    }
+  };
+
+  const getStatusActions = (currentStatus: string) => {
+    const actions = [];
+    
+    if (currentStatus === "agendado") {
+      actions.push({
+        label: "Iniciar Atendimento",
+        icon: Play,
+        value: "em_atendimento",
+        color: "text-yellow-600"
+      });
+    }
+    
+    if (currentStatus === "em_atendimento") {
+      actions.push({
+        label: "Concluir Atendimento",
+        icon: CheckCircle,
+        value: "concluido",
+        color: "text-green-600"
+      });
+    }
+    
+    if (currentStatus !== "cancelado" && currentStatus !== "concluido") {
+      actions.push({
+        label: "Cancelar",
+        icon: X,
+        value: "cancelado",
+        color: "text-red-600"
+      });
+    }
+    
+    return actions;
   };
 
   const { data: appointments, isLoading: appointmentsLoading } = useQuery<Appointment[]>({
@@ -365,7 +413,7 @@ export default function Schedule() {
                           
                           return (
                             <div key={dayIndex} className="schedule-day-cell">
-                              <div className={`rounded p-2 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
+                              <div className={`rounded p-2 text-xs relative group ${getStatusColor(appointment.status)} text-white`}
                                    style={{ 
                                      height: `${slotSpan * 60}px`, // Full slot height
                                      width: '100%',
@@ -374,20 +422,59 @@ export default function Schedule() {
                                      left: '0',
                                      zIndex: 10,
                                      border: '1px solid rgba(255,255,255,0.2)'
-                                   }}
-                                   onClick={() => {
-                                     setEditingAppointment(appointment);
-                                     setShowForm(true);
                                    }}>
-                                <div className="font-medium truncate">{appointment.patient?.name}</div>
-                                <div className="opacity-90 truncate">{appointment.procedure?.name}</div>
-                                <div className="opacity-75 text-xs mt-1">
-                                  {new Date(appointment.scheduledDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1 cursor-pointer" onClick={() => {
+                                    setEditingAppointment(appointment);
+                                    setShowForm(true);
+                                  }}>
+                                    <div className="font-medium truncate">{appointment.patient?.name}</div>
+                                    <div className="opacity-90 truncate">{appointment.procedure?.name}</div>
+                                    <div className="opacity-75 text-xs mt-1">
+                                      {new Date(appointment.scheduledDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                    </div>
+                                    <div className="opacity-75 text-xs">
+                                      {duration >= 60 
+                                        ? `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ''}`
+                                        : `${duration}min`}
+                                    </div>
+                                  </div>
+                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-white/20">
+                                          <MoreHorizontal className="h-3 w-3" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" className="w-48">
+                                        {getStatusActions(appointment.status).map((action) => (
+                                          <DropdownMenuItem 
+                                            key={action.value}
+                                            onClick={() => handleStatusChange(appointment.id, action.value)}
+                                            className={`${action.color} cursor-pointer`}
+                                          >
+                                            <action.icon className="w-4 h-4 mr-2" />
+                                            {action.label}
+                                          </DropdownMenuItem>
+                                        ))}
+                                        <DropdownMenuItem 
+                                          onClick={() => {
+                                            setEditingAppointment(appointment);
+                                            setShowForm(true);
+                                          }}
+                                          className="cursor-pointer"
+                                        >
+                                          <Edit2 className="w-4 h-4 mr-2" />
+                                          Editar
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
                                 </div>
-                                <div className="opacity-75 text-xs">
-                                  {duration >= 60 
-                                    ? `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ''}`
-                                    : `${duration}min`}
+                                <div className="mt-1">
+                                  <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
+                                    {getStatusLabel(appointment.status)}
+                                  </Badge>
                                 </div>
                               </div>
                             </div>
@@ -454,22 +541,56 @@ export default function Schedule() {
                                     const slotSpan = getAppointmentSlotSpan(appointment);
                                     
                                     return (
-                                      <div key={dentist.id} className={`rounded p-1 text-xs cursor-pointer ${getStatusColor(appointment.status)} text-white`}
+                                      <div key={dentist.id} className={`rounded p-1 text-xs relative group ${getStatusColor(appointment.status)} text-white`}
                                            style={{ 
                                              height: `${Math.min(slotSpan * 28, 52)}px`, // Adjusted for multi-dentist view
                                              position: 'relative',
                                              zIndex: 10
-                                           }}
-                                           onClick={() => {
-                                             setEditingAppointment(appointment);
-                                             setShowForm(true);
                                            }}>
-                                        <div className="font-medium truncate">{appointment.patient?.name}</div>
-                                        <div className="opacity-90 truncate">{dentist.name}</div>
-                                        <div className="opacity-75 text-xs">
-                                          {duration >= 60 
-                                            ? `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ''}`
-                                            : `${duration}min`}
+                                        <div className="flex justify-between items-start">
+                                          <div className="flex-1 cursor-pointer" onClick={() => {
+                                            setEditingAppointment(appointment);
+                                            setShowForm(true);
+                                          }}>
+                                            <div className="font-medium truncate">{appointment.patient?.name}</div>
+                                            <div className="opacity-90 truncate">{dentist.name}</div>
+                                            <div className="opacity-75 text-xs">
+                                              {duration >= 60 
+                                                ? `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ''}`
+                                                : `${duration}min`}
+                                            </div>
+                                          </div>
+                                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <DropdownMenu>
+                                              <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="sm" className="h-4 w-4 p-0 hover:bg-white/20">
+                                                  <MoreHorizontal className="h-2 w-2" />
+                                                </Button>
+                                              </DropdownMenuTrigger>
+                                              <DropdownMenuContent align="end" className="w-48">
+                                                {getStatusActions(appointment.status).map((action) => (
+                                                  <DropdownMenuItem 
+                                                    key={action.value}
+                                                    onClick={() => handleStatusChange(appointment.id, action.value)}
+                                                    className={`${action.color} cursor-pointer`}
+                                                  >
+                                                    <action.icon className="w-4 h-4 mr-2" />
+                                                    {action.label}
+                                                  </DropdownMenuItem>
+                                                ))}
+                                                <DropdownMenuItem 
+                                                  onClick={() => {
+                                                    setEditingAppointment(appointment);
+                                                    setShowForm(true);
+                                                  }}
+                                                  className="cursor-pointer"
+                                                >
+                                                  <Edit2 className="w-4 h-4 mr-2" />
+                                                  Editar
+                                                </DropdownMenuItem>
+                                              </DropdownMenuContent>
+                                            </DropdownMenu>
+                                          </div>
                                         </div>
                                       </div>
                                     );
