@@ -145,6 +145,20 @@ export default function Consultations() {
     }],
   });
 
+  // Buscar agendamentos que não têm consulta correspondente
+  const { data: appointmentsWithoutConsultation } = useQuery({
+    queryKey: ["/api/appointments-without-consultation"],
+    queryFn: async () => {
+      const response = await fetch("/api/appointments-without-consultation", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch appointments");
+      return response.json();
+    },
+  });
+
   const { data: patients } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
   });
@@ -280,6 +294,7 @@ export default function Consultations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
       toast({
         title: "Sucesso",
         description: "Consulta registrada e agendamentos criados automaticamente na agenda",
@@ -297,6 +312,38 @@ export default function Consultations() {
       });
     },
   });
+
+  // Função para criar consulta a partir de um agendamento
+  const createConsultationFromAppointment = (appointment: any) => {
+    const appointmentDate = new Date(appointment.scheduledDate);
+    const dateStr = appointmentDate.toISOString().split('T')[0];
+    const timeStr = appointmentDate.toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    });
+
+    form.reset({
+      patientId: appointment.patientId,
+      dentistId: appointment.dentistId,
+      appointmentId: appointment.id,
+      date: dateStr,
+      time: timeStr,
+      procedureIds: appointment.procedureId ? [appointment.procedureId] : [],
+      clinicalNotes: "",
+      observations: appointment.notes || "",
+      status: appointment.status || "agendado",
+    });
+
+    // Definir procedimentos selecionados
+    if (appointment.procedureId) {
+      setSelectedProcedures([{ id: 1, procedureId: appointment.procedureId }]);
+    } else {
+      setSelectedProcedures([{ id: 1, procedureId: 0 }]);
+    }
+
+    setShowForm(true);
+  };
 
   const updateConsultationMutation = useMutation({
     mutationFn: (data: any) => apiRequest("PUT", `/api/consultations/${editingConsultation?.id}`, data),
@@ -455,12 +502,28 @@ export default function Consultations() {
     return () => subscription.unsubscribe();
   }, [form, appointments, editingConsultation]);
 
-  const filteredConsultations = consultations?.filter(consultation => 
-    !search || 
-    consultation.patient?.name.toLowerCase().includes(search.toLowerCase()) ||
-    consultation.dentist?.name.toLowerCase().includes(search.toLowerCase()) ||
-    consultation.procedures?.some(proc => proc.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredConsultations = consultations?.filter(consultation => {
+    const matchesSearch = !search || 
+      consultation.patient?.name.toLowerCase().includes(search.toLowerCase()) ||
+      consultation.dentist?.name.toLowerCase().includes(search.toLowerCase()) ||
+      consultation.procedures?.some(proc => proc.toLowerCase().includes(search.toLowerCase()));
+    
+    const matchesPatient = selectedPatient === "all" || consultation.patientId === parseInt(selectedPatient);
+    
+    return matchesSearch && matchesPatient;
+  });
+
+  // Filtrar agendamentos sem consulta
+  const filteredAppointmentsWithoutConsultation = appointmentsWithoutConsultation?.filter(appointment => {
+    const matchesSearch = !search || 
+      appointment.patient?.name.toLowerCase().includes(search.toLowerCase()) ||
+      appointment.dentist?.name.toLowerCase().includes(search.toLowerCase()) ||
+      appointment.procedure?.name.toLowerCase().includes(search.toLowerCase());
+    
+    const matchesPatient = selectedPatient === "all" || appointment.patientId === parseInt(selectedPatient);
+    
+    return matchesSearch && matchesPatient;
+  });
 
   if (consultationsLoading) {
     return (
@@ -800,6 +863,77 @@ export default function Consultations() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {/* Agendamentos sem consulta (consultas pendentes) */}
+                {filteredAppointmentsWithoutConsultation?.map((appointment) => (
+                  <TableRow key={`appointment-${appointment.id}`} className="hover:bg-neutral-50 bg-yellow-50 border-l-4 border-yellow-400">
+                    <TableCell>
+                      <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        {getInitials(appointment.patient?.name || "")}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-neutral-900">
+                          {appointment.patient?.name}
+                        </span>
+                        <span className="text-sm text-neutral-600">
+                          {appointment.patient?.cpf}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-neutral-900">
+                          {new Date(appointment.scheduledDate).toLocaleDateString('pt-BR')}
+                        </span>
+                        <span className="text-sm text-neutral-600">
+                          {new Date(appointment.scheduledDate).toLocaleTimeString('pt-BR', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Stethoscope className="w-4 h-4 text-neutral-500" />
+                        <span className="text-neutral-900">{appointment.dentist?.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="text-neutral-900">
+                          {appointment.procedure?.name || "Consulta geral"}
+                        </span>
+                        <span className="text-xs text-yellow-600 font-medium">
+                          🔔 Agendamento sem consulta
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Badge 
+                          variant="secondary" 
+                          className="bg-yellow-100 text-yellow-800 border-yellow-300"
+                        >
+                          Pendente
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        onClick={() => createConsultationFromAppointment(appointment)}
+                        size="sm"
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Criar Consulta
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                
+                {/* Consultas existentes */}
                 {filteredConsultations?.map((consultation) => (
                   <>
                     <TableRow key={consultation.id} className="hover:bg-neutral-50">
@@ -952,7 +1086,8 @@ export default function Consultations() {
             </Table>
           </div>
           
-          {(!filteredConsultations || filteredConsultations.length === 0) && (
+          {(!filteredConsultations || filteredConsultations.length === 0) && 
+           (!filteredAppointmentsWithoutConsultation || filteredAppointmentsWithoutConsultation.length === 0) && (
             <div className="text-center py-12">
               <FileText className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
               <p className="text-neutral-600">Nenhuma consulta encontrada</p>

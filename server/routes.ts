@@ -2,8 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { users } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql, isNull, desc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { 
@@ -15,7 +14,16 @@ import {
   insertDentalChartSchema, 
   insertAnamneseSchema, 
   insertFinancialSchema,
-  insertProcedureCategorySchema
+  insertProcedureCategorySchema,
+  users,
+  patients,
+  appointments,
+  consultations,
+  procedures,
+  procedureCategories,
+  dentalChart,
+  anamnese,
+  financial
 } from "@shared/schema";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
@@ -414,6 +422,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Sync status error:", error);
       res.status(500).json({ message: "Error synchronizing status" });
+    }
+  });
+
+  // Endpoint para buscar agendamentos que não têm consulta correspondente
+  app.get("/api/appointments-without-consultation", authenticateToken, async (req, res) => {
+    try {
+      const appointmentsWithoutConsultation = await db.select({
+        id: appointments.id,
+        patientId: appointments.patientId,
+        dentistId: appointments.dentistId,
+        procedureId: appointments.procedureId,
+        scheduledDate: appointments.scheduledDate,
+        status: appointments.status,
+        notes: appointments.notes,
+        patient: {
+          id: patients.id,
+          name: patients.name,
+          cpf: patients.cpf,
+          email: patients.email,
+          phone: patients.phone,
+        },
+        dentist: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+          email: users.email,
+          role: users.role,
+        },
+        procedure: {
+          id: procedures.id,
+          name: procedures.name,
+          description: procedures.description,
+          price: procedures.price,
+          duration: procedures.duration,
+          category: procedures.category,
+        }
+      })
+      .from(appointments)
+      .leftJoin(patients, eq(appointments.patientId, patients.id))
+      .leftJoin(users, eq(appointments.dentistId, users.id))
+      .leftJoin(procedures, eq(appointments.procedureId, procedures.id))
+      .leftJoin(consultations, and(
+        eq(appointments.patientId, consultations.patientId),
+        eq(appointments.dentistId, consultations.dentistId),
+        sql`DATE(${appointments.scheduledDate}) = DATE(${consultations.date})`
+      ))
+      .where(isNull(consultations.id))
+      .orderBy(desc(appointments.scheduledDate));
+
+      res.json(appointmentsWithoutConsultation);
+    } catch (error) {
+      console.error("Get appointments without consultation error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
