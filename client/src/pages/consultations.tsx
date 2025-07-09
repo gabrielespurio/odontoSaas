@@ -31,7 +31,8 @@ const consultationSchema = z.object({
   patientId: z.number().min(1, "Paciente é obrigatório"),
   dentistId: z.number().min(1, "Dentista é obrigatório"),
   appointmentId: z.number().optional(),
-  date: z.string().min(1, "Data é obrigatória").transform((str) => new Date(str)),
+  date: z.string().min(1, "Data é obrigatória"),
+  time: z.string().min(1, "Horário é obrigatório"),
   procedureIds: z.array(z.number()).optional(),
   clinicalNotes: z.string().optional(),
   observations: z.string().optional(),
@@ -83,6 +84,7 @@ export default function Consultations() {
       patientId: 0,
       dentistId: user?.id || 0,
       date: new Date().toISOString().split('T')[0],
+      time: "09:00",
       procedureIds: [],
       clinicalNotes: "",
       observations: "",
@@ -100,18 +102,19 @@ export default function Consultations() {
     mutationFn: (data: any) => apiRequest("POST", "/api/consultations", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
       toast({
         title: "Sucesso",
-        description: "Consulta registrada com sucesso",
+        description: "Consulta registrada e agendamentos criados automaticamente na agenda",
       });
       setShowForm(false);
       form.reset();
       setSelectedProcedures([]);
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Erro",
-        description: "Erro ao registrar consulta",
+        description: error?.message || "Erro ao registrar consulta",
         variant: "destructive",
       });
     },
@@ -124,14 +127,18 @@ export default function Consultations() {
       .map(sp => procedures?.find(p => p.id === sp.procedureId)?.name)
       .filter(Boolean);
 
+    // Combinar data e horário
+    const dateTime = new Date(`${data.date}T${data.time}:00`);
+
     const consultationData = {
       ...data,
-      date: new Date(data.date).toISOString(),
+      date: dateTime.toISOString(),
       procedures: procedureNames,
     };
 
-    // Remove procedureIds já que não é usado no backend
+    // Remove campos não usados no backend
     delete (consultationData as any).procedureIds;
+    delete (consultationData as any).time;
 
     createConsultationMutation.mutate(consultationData);
   };
@@ -233,14 +240,26 @@ export default function Consultations() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="date">Data e Hora *</Label>
+                  <Label htmlFor="date">Data *</Label>
                   <Input
                     id="date"
-                    type="datetime-local"
+                    type="date"
                     {...form.register("date")}
                   />
                   {form.formState.errors.date && (
                     <p className="text-sm text-red-600">{form.formState.errors.date.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="time">Horário *</Label>
+                  <Input
+                    id="time"
+                    type="time"
+                    {...form.register("time")}
+                  />
+                  {form.formState.errors.time && (
+                    <p className="text-sm text-red-600">{form.formState.errors.time.message}</p>
                   )}
                 </div>
               </div>
@@ -330,6 +349,46 @@ export default function Consultations() {
                     </div>
                   )}
                 </div>
+                
+                {/* Resumo dos Procedimentos */}
+                {selectedProcedures.some(p => p.procedureId > 0) && (
+                  <div className="mt-4 p-4 bg-teal-50 border border-teal-200 rounded-lg">
+                    <h4 className="font-medium text-teal-800 mb-2">Resumo dos Procedimentos</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-teal-700">Duração Total:</span>
+                        <div className="font-medium text-teal-800">
+                          {(() => {
+                            const totalDuration = selectedProcedures
+                              .filter(sp => sp.procedureId > 0)
+                              .reduce((total, sp) => {
+                                const procedure = procedures?.find(p => p.id === sp.procedureId);
+                                return total + (procedure?.duration || 0);
+                              }, 0);
+                            return totalDuration >= 60 
+                              ? `${Math.floor(totalDuration / 60)}h${totalDuration % 60 > 0 ? ` ${totalDuration % 60}min` : ''}`
+                              : `${totalDuration}min`;
+                          })()}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-teal-700">Valor Total:</span>
+                        <div className="font-medium text-teal-800">
+                          R$ {selectedProcedures
+                            .filter(sp => sp.procedureId > 0)
+                            .reduce((total, sp) => {
+                              const procedure = procedures?.find(p => p.id === sp.procedureId);
+                              return total + Number(procedure?.price || 0);
+                            }, 0)
+                            .toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-teal-600">
+                      ℹ️ Os agendamentos serão criados automaticamente na agenda com base nos horários e duração dos procedimentos
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
