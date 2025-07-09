@@ -5,7 +5,7 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
-// Force connection to the specific Neon database
+// EXCLUSIVE connection to the specific Neon database - NO OTHER CONNECTIONS ALLOWED
 const DATABASE_URL = "postgresql://neondb_owner:npg_uCjQlFSAK78T@ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
 
 if (!DATABASE_URL) {

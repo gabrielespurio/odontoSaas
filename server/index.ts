@@ -1,5 +1,5 @@
 import "dotenv/config";
-// Force the correct database URL
+// Force the exclusive Neon database connection - NO OTHER CONNECTIONS ALLOWED
 process.env.DATABASE_URL = "postgresql://neondb_owner:npg_uCjQlFSAK78T@ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
 
 import express, { type Request, Response, NextFunction } from "express";
