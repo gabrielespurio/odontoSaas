@@ -55,6 +55,7 @@ export default function Consultations() {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [timeConflictError, setTimeConflictError] = useState<string>("");
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -87,6 +88,20 @@ export default function Consultations() {
     queryKey: ["/api/procedures"],
   });
 
+  // Query para buscar agendamentos
+  const { data: appointments } = useQuery({
+    queryKey: ["/api/appointments"],
+    queryFn: async () => {
+      const response = await fetch("/api/appointments", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch appointments");
+      return response.json();
+    },
+  });
+
   const form = useForm<ConsultationFormData>({
     resolver: zodResolver(consultationSchema),
     defaultValues: {
@@ -100,10 +115,51 @@ export default function Consultations() {
     },
   });
 
+  // Função para validar conflito de horários
+  const validateTimeConflict = (date: string, time: string, dentistId: number, excludeConsultationId?: number) => {
+    if (!appointments || !date || !time || !dentistId) {
+      setTimeConflictError("");
+      return false;
+    }
+
+    const selectedDateTime = new Date(`${date}T${time}`);
+    const selectedTime = selectedDateTime.getTime();
+
+    // Verifica se existe conflito com agendamentos existentes
+    const conflictingAppointment = appointments.find((apt: any) => {
+      const aptDate = new Date(apt.scheduledDate);
+      const aptStartTime = aptDate.getTime();
+      const aptEndTime = aptStartTime + (apt.procedure.duration * 60 * 1000);
+      
+      // Verifica se é o mesmo dentista
+      if (apt.dentistId !== dentistId) return false;
+      
+      // Se estamos editando, ignora a consulta atual
+      if (excludeConsultationId && apt.consultationId === excludeConsultationId) return false;
+      
+      // Verifica se o horário selecionado está dentro do período do agendamento
+      return selectedTime >= aptStartTime && selectedTime < aptEndTime;
+    });
+
+    if (conflictingAppointment) {
+      const conflictStart = new Date(conflictingAppointment.scheduledDate);
+      const conflictEnd = new Date(conflictStart.getTime() + (conflictingAppointment.procedure.duration * 60 * 1000));
+      
+      setTimeConflictError(
+        `Horário ocupado pelo procedimento "${conflictingAppointment.procedure.name}" que vai das ${conflictStart.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} às ${conflictEnd.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}.`
+      );
+      return true;
+    }
+
+    setTimeConflictError("");
+    return false;
+  };
+
   // Initialize procedures when form opens
   useEffect(() => {
     if (showForm) {
       setSelectedProcedures([{ id: Date.now(), procedureId: 0 }]);
+      setTimeConflictError(""); // Limpar erros de conflito ao abrir o formulário
     }
   }, [showForm]);
 
@@ -111,6 +167,7 @@ export default function Consultations() {
   useEffect(() => {
     if (showEditForm) {
       setSelectedProcedures([{ id: Date.now(), procedureId: 0 }]);
+      setTimeConflictError(""); // Limpar erros de conflito ao abrir o formulário de edição
     }
   }, [showEditForm]);
 
@@ -160,6 +217,12 @@ export default function Consultations() {
   });
 
   const onSubmit = (data: ConsultationFormData) => {
+    // Validar conflito de horários antes de enviar
+    const hasConflict = validateTimeConflict(data.date, data.time, data.dentistId, editingConsultation?.id);
+    if (hasConflict) {
+      return; // Não permite enviar se houver conflito
+    }
+
     // Converte os procedimentos selecionados para nomes para compatibilidade com o backend
     const procedureNames = selectedProcedures
       .filter(sp => sp.procedureId > 0)
@@ -251,6 +314,23 @@ export default function Consultations() {
       }
     }
   }, [showEditForm, editingConsultation, procedures, form]);
+
+  // Efeito para validar conflito de horários em tempo real
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "date" || name === "time" || name === "dentistId") {
+        const date = value.date;
+        const time = value.time;
+        const dentistId = value.dentistId;
+        
+        if (date && time && dentistId) {
+          validateTimeConflict(date, time, dentistId, editingConsultation?.id);
+        }
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form, appointments, editingConsultation]);
 
   const filteredConsultations = consultations?.filter(consultation => 
     !search || 
@@ -352,9 +432,15 @@ export default function Consultations() {
                     id="time"
                     type="time"
                     {...form.register("time")}
+                    className={timeConflictError ? "border-red-500" : ""}
                   />
                   {form.formState.errors.time && (
                     <p className="text-sm text-red-600">{form.formState.errors.time.message}</p>
+                  )}
+                  {timeConflictError && (
+                    <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                      {timeConflictError}
+                    </p>
                   )}
                 </div>
               </div>
@@ -830,9 +916,15 @@ export default function Consultations() {
                   id="time"
                   type="time"
                   {...form.register("time")}
+                  className={timeConflictError ? "border-red-500" : ""}
                 />
                 {form.formState.errors.time && (
                   <p className="text-sm text-red-600">{form.formState.errors.time.message}</p>
+                )}
+                {timeConflictError && (
+                  <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                    {timeConflictError}
+                  </p>
                 )}
               </div>
             </div>
