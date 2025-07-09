@@ -45,19 +45,22 @@ const consultationSchema = z.object({
     today.setHours(0, 0, 0, 0);
     return selectedDate >= today;
   }, "Não é possível agendar consultas em datas passadas"),
-  time: z.string().min(1, "Horário é obrigatório").refine((time, ctx) => {
-    const date = ctx.parent.date;
-    if (!date) return true;
-    
-    const selectedDateTime = new Date(`${date}T${time}`);
-    const now = new Date();
-    
-    return selectedDateTime > now;
-  }, "Não é possível agendar consultas em horários passados"),
+  time: z.string().min(1, "Horário é obrigatório"),
   procedureIds: z.array(z.number()).optional(),
   clinicalNotes: z.string().optional(),
   observations: z.string().optional(),
   status: z.enum(["agendado", "em_atendimento", "concluido", "cancelado"]).default("agendado"),
+}).refine((data) => {
+  // Validação adicional para verificar se a data e hora não estão no passado
+  if (data.date && data.time) {
+    const selectedDateTime = new Date(`${data.date}T${data.time}`);
+    const now = new Date();
+    return selectedDateTime > now;
+  }
+  return true;
+}, {
+  message: "Não é possível agendar consultas em horários passados",
+  path: ["time"] // Associa o erro ao campo time
 });
 
 type ConsultationFormData = z.infer<typeof consultationSchema>;
@@ -280,9 +283,10 @@ export default function Consultations() {
       setSelectedProcedures([]);
     },
     onError: (error: any) => {
+      const errorMessage = error?.message || "Erro ao registrar consulta";
       toast({
-        title: "Erro",
-        description: error?.message || "Erro ao registrar consulta",
+        title: "Erro ao registrar consulta",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -303,15 +307,29 @@ export default function Consultations() {
       setSelectedProcedures([]);
     },
     onError: (error: any) => {
+      const errorMessage = error?.message || "Erro ao atualizar consulta";
       toast({
-        title: "Erro",
-        description: error?.message || "Erro ao atualizar consulta",
+        title: "Erro ao atualizar consulta",
+        description: errorMessage,
         variant: "destructive",
       });
     },
   });
 
   const onSubmit = (data: ConsultationFormData) => {
+    // Validar se a data e hora não estão no passado
+    const selectedDateTime = new Date(`${data.date}T${data.time}`);
+    const now = new Date();
+    
+    if (selectedDateTime <= now) {
+      toast({
+        title: "Horário inválido",
+        description: "Não é possível agendar consultas em horários passados. Por favor, selecione uma data e horário futuros.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Validar conflito de horários antes de enviar
     const hasConflict = validateTimeConflict(data.date, data.time, data.dentistId, editingConsultation?.id);
     if (hasConflict) {
