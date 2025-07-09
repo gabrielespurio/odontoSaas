@@ -501,6 +501,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/consultations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const consultationData = insertConsultationSchema.partial().parse(req.body);
+      
+      const consultation = await storage.updateConsultation(id, consultationData);
+      res.json(consultation);
+    } catch (error) {
+      console.error("Update consultation error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Dental Chart
   app.get("/api/dental-chart/:patientId", async (req, res) => {
     try {

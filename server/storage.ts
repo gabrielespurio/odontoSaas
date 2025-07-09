@@ -65,6 +65,7 @@ export interface IStorage {
   getConsultations(patientId?: number, dentistId?: number): Promise<(Consultation & { patient: Patient; dentist: User })[]>;
   getConsultation(id: number): Promise<Consultation | undefined>;
   createConsultation(consultation: InsertConsultation): Promise<Consultation>;
+  updateConsultation(id: number, consultation: Partial<InsertConsultation>): Promise<Consultation>;
   
   // Dental Chart
   getDentalChart(patientId: number): Promise<DentalChart[]>;
@@ -301,6 +302,11 @@ export class DatabaseStorage implements IStorage {
 
   async createConsultation(insertConsultation: InsertConsultation): Promise<Consultation> {
     const [consultation] = await db.insert(consultations).values(insertConsultation).returning();
+    return consultation;
+  }
+
+  async updateConsultation(id: number, insertConsultation: Partial<InsertConsultation>): Promise<Consultation> {
+    const [consultation] = await db.update(consultations).set(insertConsultation).where(eq(consultations.id, id)).returning();
     return consultation;
   }
 
