@@ -73,8 +73,8 @@ export default function Reports() {
   // Calculate statistics
   const stats = {
     totalAppointments: filteredAppointments.length,
-    completedAppointments: filteredAppointments.filter(apt => apt.status === "attended").length,
-    cancelledAppointments: filteredAppointments.filter(apt => apt.status === "cancelled").length,
+    completedAppointments: filteredAppointments.filter(apt => apt.status === "concluido").length,
+    cancelledAppointments: filteredAppointments.filter(apt => apt.status === "cancelado").length,
     totalRevenue: filteredFinancial
       .filter(fin => fin.status === "paid")
       .reduce((sum, fin) => sum + Number(fin.amount), 0),
@@ -101,10 +101,10 @@ export default function Reports() {
 
   // Appointment status distribution
   const appointmentStats = {
-    scheduled: filteredAppointments.filter(apt => apt.status === "scheduled").length,
-    confirmed: filteredAppointments.filter(apt => apt.status === "confirmed").length,
-    attended: filteredAppointments.filter(apt => apt.status === "attended").length,
-    cancelled: filteredAppointments.filter(apt => apt.status === "cancelled").length,
+    scheduled: filteredAppointments.filter(apt => apt.status === "agendado").length,
+    confirmed: filteredAppointments.filter(apt => apt.status === "em_atendimento").length,
+    attended: filteredAppointments.filter(apt => apt.status === "concluido").length,
+    cancelled: filteredAppointments.filter(apt => apt.status === "cancelado").length,
   };
 
   const exportReport = () => {
@@ -268,22 +268,22 @@ export default function Reports() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="w-4 h-4 bg-yellow-500 rounded mr-3"></div>
+                  <div className="w-4 h-4 bg-blue-500 rounded mr-3"></div>
                   <span className="text-sm text-neutral-700">Agendados</span>
                 </div>
                 <span className="font-semibold">{appointmentStats.scheduled}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="w-4 h-4 bg-green-500 rounded mr-3"></div>
-                  <span className="text-sm text-neutral-700">Confirmados</span>
+                  <div className="w-4 h-4 bg-yellow-500 rounded mr-3"></div>
+                  <span className="text-sm text-neutral-700">Em Atendimento</span>
                 </div>
                 <span className="font-semibold">{appointmentStats.confirmed}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="w-4 h-4 bg-blue-500 rounded mr-3"></div>
-                  <span className="text-sm text-neutral-700">Atendidos</span>
+                  <div className="w-4 h-4 bg-green-500 rounded mr-3"></div>
+                  <span className="text-sm text-neutral-700">Concluídos</span>
                 </div>
                 <span className="font-semibold">{appointmentStats.attended}</span>
               </div>
