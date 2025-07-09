@@ -23,7 +23,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { Procedure } from "@/lib/types";
+import type { Procedure, ProcedureCategory } from "@/lib/types";
 
 const procedureSchema = z.object({
   name: z.string().min(2, "Nome é obrigatório"),
@@ -35,19 +35,6 @@ const procedureSchema = z.object({
 
 type ProcedureFormData = z.infer<typeof procedureSchema>;
 
-const CATEGORIES = [
-  "Clínica Geral",
-  "Ortodontia",
-  "Endodontia",
-  "Periodontia",
-  "Cirurgia",
-  "Implantodontia",
-  "Prótese",
-  "Odontopediatria",
-  "Estética",
-  "Urgência",
-];
-
 export default function Procedures() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -58,6 +45,10 @@ export default function Procedures() {
 
   const { data: procedures, isLoading } = useQuery<Procedure[]>({
     queryKey: ["/api/procedures"],
+  });
+
+  const { data: categories } = useQuery<ProcedureCategory[]>({
+    queryKey: ["/api/procedure-categories"],
   });
 
   const form = useForm<ProcedureFormData>({
@@ -173,19 +164,23 @@ export default function Procedures() {
   };
 
   const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      "Clínica Geral": "bg-blue-100 text-blue-800",
-      "Ortodontia": "bg-green-100 text-green-800",
-      "Endodontia": "bg-red-100 text-red-800",
-      "Periodontia": "bg-yellow-100 text-yellow-800",
-      "Cirurgia": "bg-purple-100 text-purple-800",
-      "Implantodontia": "bg-indigo-100 text-indigo-800",
-      "Prótese": "bg-pink-100 text-pink-800",
-      "Odontopediatria": "bg-orange-100 text-orange-800",
-      "Estética": "bg-teal-100 text-teal-800",
-      "Urgência": "bg-red-100 text-red-800",
-    };
-    return colors[category] || "bg-gray-100 text-gray-800";
+    const colors = [
+      "bg-blue-100 text-blue-800",
+      "bg-green-100 text-green-800",
+      "bg-red-100 text-red-800",
+      "bg-yellow-100 text-yellow-800",
+      "bg-purple-100 text-purple-800",
+      "bg-indigo-100 text-indigo-800",
+      "bg-pink-100 text-pink-800",
+      "bg-orange-100 text-orange-800",
+      "bg-teal-100 text-teal-800",
+      "bg-cyan-100 text-cyan-800",
+    ];
+    
+    // Generate a consistent color index based on category name
+    const hash = category.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const colorIndex = hash % colors.length;
+    return colors[colorIndex];
   };
 
   const filteredProcedures = procedures?.filter(procedure => 
@@ -251,9 +246,9 @@ export default function Procedures() {
                       <SelectValue placeholder="Selecionar categoria" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CATEGORIES.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
+                      {categories?.filter(cat => cat.isActive).map((category) => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -336,9 +331,9 @@ export default function Procedures() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as Categorias</SelectItem>
-                {CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
+                {categories?.filter(cat => cat.isActive).map((category) => (
+                  <SelectItem key={category.id} value={category.name}>
+                    {category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
