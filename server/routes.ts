@@ -15,8 +15,7 @@ import {
   insertDentalChartSchema, 
   insertAnamneseSchema, 
   insertFinancialSchema,
-  insertProcedureCategorySchema,
-  consultations
+  insertProcedureCategorySchema
 } from "@shared/schema";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
@@ -498,26 +497,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(consultation);
     } catch (error) {
       console.error("Create consultation error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.delete("/api/consultations/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      
-      // Verificar se a consulta existe
-      const consultation = await storage.getConsultation(id);
-      if (!consultation) {
-        return res.status(404).json({ message: "Consulta não encontrada" });
-      }
-      
-      // Deletar a consulta
-      await db.delete(consultations).where(eq(consultations.id, id));
-      
-      res.json({ message: "Consulta excluída com sucesso" });
-    } catch (error) {
-      console.error("Delete consultation error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

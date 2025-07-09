@@ -8,8 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { 
   Plus, 
   Search, 
@@ -19,9 +17,7 @@ import {
   Stethoscope,
   Eye,
   Edit,
-  X,
-  MoreHorizontal,
-  Trash2
+  X
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,7 +46,6 @@ export default function Consultations() {
   const [showForm, setShowForm] = useState(false);
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
   const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
-  const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -113,7 +108,6 @@ export default function Consultations() {
         description: "Consulta registrada e agendamentos criados automaticamente na agenda",
       });
       setShowForm(false);
-      setEditingConsultation(null);
       form.reset();
       setSelectedProcedures([]);
     },
@@ -121,24 +115,6 @@ export default function Consultations() {
       toast({
         title: "Erro",
         description: error?.message || "Erro ao registrar consulta",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteConsultationMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("DELETE", `/api/consultations/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
-      toast({
-        title: "Sucesso",
-        description: "Consulta excluída com sucesso",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro",
-        description: error?.message || "Erro ao excluir consulta",
         variant: "destructive",
       });
     },
@@ -181,41 +157,6 @@ export default function Consultations() {
     return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
   };
 
-  const handleDeleteConsultation = (consultation: Consultation) => {
-    if (window.confirm(`Tem certeza que deseja excluir a consulta de ${consultation.patient?.name}?`)) {
-      deleteConsultationMutation.mutate(consultation.id);
-    }
-  };
-
-  const handleEditConsultation = (consultation: Consultation) => {
-    setEditingConsultation(consultation);
-    // Popular form com dados da consulta
-    form.setValue("patientId", consultation.patientId);
-    form.setValue("dentistId", consultation.dentistId);
-    
-    // Converter a data para formato ISO
-    const consultationDate = new Date(consultation.date);
-    form.setValue("date", consultationDate.toISOString().split('T')[0]);
-    form.setValue("time", consultationDate.toTimeString().slice(0, 5));
-    
-    form.setValue("clinicalNotes", consultation.clinicalNotes || "");
-    form.setValue("observations", consultation.observations || "");
-    
-    // Popular procedimentos se existirem
-    if (consultation.procedures && consultation.procedures.length > 0) {
-      const procedureItems = consultation.procedures.map((procName, index) => {
-        const procedure = procedures?.find(p => p.name === procName);
-        return {
-          id: Date.now() + index,
-          procedureId: procedure?.id || 0
-        };
-      });
-      setSelectedProcedures(procedureItems);
-    }
-    
-    setShowForm(true);
-  };
-
   const filteredConsultations = consultations?.filter(consultation => 
     !search || 
     consultation.patient?.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -248,9 +189,7 @@ export default function Consultations() {
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
             <DialogHeader>
-              <DialogTitle>
-                {editingConsultation ? "Editar Consulta" : "Registrar Nova Consulta"}
-              </DialogTitle>
+              <DialogTitle>Registrar Nova Consulta</DialogTitle>
             </DialogHeader>
             <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -473,21 +412,11 @@ export default function Consultations() {
               </div>
 
               <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => {
-                  setShowForm(false);
-                  setEditingConsultation(null);
-                  form.reset();
-                  setSelectedProcedures([]);
-                }}>
+                <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={createConsultationMutation.isPending}>
-                  {createConsultationMutation.isPending 
-                    ? "Salvando..." 
-                    : editingConsultation 
-                      ? "Atualizar" 
-                      : "Salvar"
-                  }
+                  {createConsultationMutation.isPending ? "Salvando..." : "Salvar"}
                 </Button>
               </div>
             </form>
@@ -526,145 +455,91 @@ export default function Consultations() {
         </CardContent>
       </Card>
 
-      {/* Consultations DataTable */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Atendimentos</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-neutral-50">
-                  <TableHead className="font-medium text-neutral-700">Paciente</TableHead>
-                  <TableHead className="font-medium text-neutral-700">Data/Hora</TableHead>
-                  <TableHead className="font-medium text-neutral-700">Dentista</TableHead>
-                  <TableHead className="font-medium text-neutral-700">Procedimentos</TableHead>
-                  <TableHead className="font-medium text-neutral-700">Observações</TableHead>
-                  <TableHead className="text-center font-medium text-neutral-700">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredConsultations?.map((consultation) => (
-                  <TableRow key={consultation.id} className="hover:bg-neutral-50/50 transition-colors">
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium shrink-0">
-                          {getInitials(consultation.patient?.name || "")}
-                        </div>
-                        <div>
-                          <div className="font-medium text-neutral-900">
-                            {consultation.patient?.name}
-                          </div>
-                          <div className="text-sm text-neutral-500">
-                            ID: #{consultation.id}
-                          </div>
-                        </div>
+      {/* Consultations List */}
+      <div className="space-y-4">
+        {filteredConsultations?.map((consultation) => (
+          <Card key={consultation.id} className="hover:shadow-md transition-shadow">
+            <CardContent className="pt-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    {getInitials(consultation.patient?.name || "")}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <h3 className="text-lg font-semibold text-neutral-900">
+                        {consultation.patient?.name}
+                      </h3>
+                      <Badge variant="outline" className="text-xs">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        {formatDate(consultation.date)}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-neutral-600 mb-2">
+                      <Stethoscope className="w-4 h-4 inline mr-1" />
+                      Atendido por: {consultation.dentist?.name}
+                    </p>
+                    {consultation.procedures && consultation.procedures.length > 0 && (
+                      <div className="mb-2">
+                        <p className="text-sm font-medium text-neutral-700">Procedimentos:</p>
+                        <p className="text-sm text-neutral-600">{consultation.procedures.join(", ")}</p>
                       </div>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <div className="text-sm">
-                        <div className="font-medium text-neutral-900">
-                          {new Date(consultation.date).toLocaleDateString('pt-BR')}
-                        </div>
-                        <div className="text-neutral-600">
-                          {new Date(consultation.date).toLocaleTimeString('pt-BR', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </div>
+                    )}
+                    {consultation.clinicalNotes && (
+                      <div className="mb-2">
+                        <p className="text-sm font-medium text-neutral-700">Observações Clínicas:</p>
+                        <p className="text-sm text-neutral-600">{consultation.clinicalNotes}</p>
                       </div>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Stethoscope className="w-4 h-4 text-teal-600" />
-                        <span className="text-sm font-medium text-neutral-900">
-                          {consultation.dentist?.name}
-                        </span>
+                    )}
+                    {consultation.observations && (
+                      <div>
+                        <p className="text-sm font-medium text-neutral-700">Observações Gerais:</p>
+                        <p className="text-sm text-neutral-600">{consultation.observations}</p>
                       </div>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <div className="max-w-xs">
-                        {consultation.procedures && consultation.procedures.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {consultation.procedures.map((procedure, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                {procedure}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-neutral-500">Nenhum procedimento</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <div className="max-w-xs">
-                        {consultation.clinicalNotes ? (
-                          <div className="text-sm text-neutral-700 truncate" title={consultation.clinicalNotes}>
-                            {consultation.clinicalNotes}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-neutral-500">Sem observações</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <div className="flex items-center justify-center">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem
-                              className="flex items-center cursor-pointer"
-                              onClick={() => setSelectedConsultation(consultation)}
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              Visualizar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="flex items-center cursor-pointer"
-                              onClick={() => handleEditConsultation(consultation)}
-                            >
-                              <Edit className="w-4 h-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="flex items-center cursor-pointer text-red-600"
-                              onClick={() => handleDeleteConsultation(consultation)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          
-          {(!filteredConsultations || filteredConsultations.length === 0) && (
-            <div className="text-center py-12">
-              <FileText className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
-              <p className="text-neutral-600 font-medium">Nenhuma consulta encontrada</p>
-              <p className="text-sm text-neutral-500 mt-1">
-                {search ? "Tente ajustar os filtros de busca" : "Registre a primeira consulta"}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedConsultation(consultation)}
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Edit functionality would go here
+                      toast({
+                        title: "Em desenvolvimento",
+                        description: "Funcionalidade de edição em desenvolvimento",
+                      });
+                    }}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+
+        {(!filteredConsultations || filteredConsultations.length === 0) && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <FileText className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
+                <p className="text-neutral-600">Nenhuma consulta encontrada</p>
+                <p className="text-sm text-neutral-500 mt-2">
+                  {search ? "Tente ajustar os filtros de busca" : "Registre a primeira consulta"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Consultation Detail Modal */}
       <Dialog open={!!selectedConsultation} onOpenChange={() => setSelectedConsultation(null)}>

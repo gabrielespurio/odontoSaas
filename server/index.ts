@@ -5,7 +5,6 @@ process.env.DATABASE_URL = "postgresql://neondb_owner:npg_uCjQlFSAK78T@ep-round-
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { setupHealthcheck } from "./healthcheck";
 
 const app = express();
 app.use(express.json());
@@ -42,9 +41,6 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Setup health check endpoints first
-  setupHealthcheck(app);
-  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
