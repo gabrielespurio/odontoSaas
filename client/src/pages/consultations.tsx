@@ -227,19 +227,30 @@ export default function Consultations() {
       observations: consultation.observations || "",
     });
 
-    // Configura os procedimentos selecionados
-    if (consultation.procedures && consultation.procedures.length > 0) {
-      const proceduresWithIds = consultation.procedures.map((procName, index) => {
-        const procedure = procedures?.find(p => p.name === procName);
-        return { id: Date.now() + index, procedureId: procedure?.id || 0 };
-      });
-      setSelectedProcedures(proceduresWithIds);
-    } else {
-      setSelectedProcedures([{ id: Date.now(), procedureId: 0 }]);
-    }
-
     setShowEditForm(true);
   };
+
+  // Efeito para configurar os procedimentos quando o modal de edição abre e os dados estão disponíveis
+  useEffect(() => {
+    if (showEditForm && editingConsultation && procedures) {
+      // Configura os procedimentos selecionados
+      if (editingConsultation.procedures && editingConsultation.procedures.length > 0) {
+        const proceduresWithIds = editingConsultation.procedures.map((procName, index) => {
+          const procedure = procedures.find(p => p.name === procName);
+          return { id: Date.now() + index, procedureId: procedure?.id || 0 };
+        });
+        setSelectedProcedures(proceduresWithIds);
+        
+        // Atualiza o formulário com os IDs dos procedimentos
+        const procedureIds = proceduresWithIds
+          .filter(p => p.procedureId > 0)
+          .map(p => p.procedureId);
+        form.setValue("procedureIds", procedureIds);
+      } else {
+        setSelectedProcedures([{ id: Date.now(), procedureId: 0 }]);
+      }
+    }
+  }, [showEditForm, editingConsultation, procedures, form]);
 
   const filteredConsultations = consultations?.filter(consultation => 
     !search || 
