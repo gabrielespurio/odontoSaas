@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +18,9 @@ import {
   Stethoscope,
   Eye,
   Edit,
-  X
+  X,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,6 +49,7 @@ export default function Consultations() {
   const [showForm, setShowForm] = useState(false);
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
   const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -155,6 +159,16 @@ export default function Consultations() {
 
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  };
+
+  const toggleRowExpansion = (consultationId: number) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(consultationId)) {
+      newExpanded.delete(consultationId);
+    } else {
+      newExpanded.add(consultationId);
+    }
+    setExpandedRows(newExpanded);
   };
 
   const filteredConsultations = consultations?.filter(consultation => 
@@ -455,91 +469,157 @@ export default function Consultations() {
         </CardContent>
       </Card>
 
-      {/* Consultations List */}
-      <div className="space-y-4">
-        {filteredConsultations?.map((consultation) => (
-          <Card key={consultation.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
-                    {getInitials(consultation.patient?.name || "")}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h3 className="text-lg font-semibold text-neutral-900">
-                        {consultation.patient?.name}
-                      </h3>
-                      <Badge variant="outline" className="text-xs">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        {formatDate(consultation.date)}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-neutral-600 mb-2">
-                      <Stethoscope className="w-4 h-4 inline mr-1" />
-                      Atendido por: {consultation.dentist?.name}
-                    </p>
-                    {consultation.procedures && consultation.procedures.length > 0 && (
-                      <div className="mb-2">
-                        <p className="text-sm font-medium text-neutral-700">Procedimentos:</p>
-                        <p className="text-sm text-neutral-600">{consultation.procedures.join(", ")}</p>
-                      </div>
+      {/* Consultations Table */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12"></TableHead>
+                  <TableHead>Paciente</TableHead>
+                  <TableHead>Data/Hora</TableHead>
+                  <TableHead>Dentista</TableHead>
+                  <TableHead>Procedimentos</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredConsultations?.map((consultation) => (
+                  <>
+                    <TableRow key={consultation.id} className="hover:bg-neutral-50">
+                      <TableCell>
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+                          {getInitials(consultation.patient?.name || "")}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-neutral-900">
+                            {consultation.patient?.name}
+                          </span>
+                          <span className="text-sm text-neutral-600">
+                            {consultation.patient?.cpf}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-neutral-900">
+                            {new Date(consultation.date).toLocaleDateString('pt-BR')}
+                          </span>
+                          <span className="text-sm text-neutral-600">
+                            {new Date(consultation.date).toLocaleTimeString('pt-BR', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Stethoscope className="w-4 h-4 text-neutral-500" />
+                          <span className="text-neutral-900">{consultation.dentist?.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="text-neutral-900">
+                            {consultation.procedures && consultation.procedures.length > 0 
+                              ? consultation.procedures.join(", ") 
+                              : "Consulta geral"}
+                          </span>
+                          {(consultation.clinicalNotes || consultation.observations) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleRowExpansion(consultation.id)}
+                              className="text-xs text-neutral-600 hover:text-neutral-900 p-0 h-auto justify-start mt-1"
+                            >
+                              {expandedRows.has(consultation.id) ? (
+                                <>
+                                  <ChevronUp className="w-3 h-3 mr-1" />
+                                  Ocultar observações
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="w-3 h-3 mr-1" />
+                                  Ver observações
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedConsultation(consultation)}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              toast({
+                                title: "Em desenvolvimento",
+                                description: "Funcionalidade de edição em desenvolvimento",
+                              });
+                            }}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    {expandedRows.has(consultation.id) && (
+                      <TableRow className="bg-neutral-50">
+                        <TableCell colSpan={6}>
+                          <div className="py-4 px-6 space-y-3">
+                            {consultation.clinicalNotes && (
+                              <div>
+                                <Label className="text-sm font-medium text-neutral-700 mb-1 block">
+                                  Observações Clínicas:
+                                </Label>
+                                <p className="text-sm text-neutral-900 bg-white p-3 rounded-lg border">
+                                  {consultation.clinicalNotes}
+                                </p>
+                              </div>
+                            )}
+                            {consultation.observations && (
+                              <div>
+                                <Label className="text-sm font-medium text-neutral-700 mb-1 block">
+                                  Observações Gerais:
+                                </Label>
+                                <p className="text-sm text-neutral-900 bg-white p-3 rounded-lg border">
+                                  {consultation.observations}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
                     )}
-                    {consultation.clinicalNotes && (
-                      <div className="mb-2">
-                        <p className="text-sm font-medium text-neutral-700">Observações Clínicas:</p>
-                        <p className="text-sm text-neutral-600">{consultation.clinicalNotes}</p>
-                      </div>
-                    )}
-                    {consultation.observations && (
-                      <div>
-                        <p className="text-sm font-medium text-neutral-700">Observações Gerais:</p>
-                        <p className="text-sm text-neutral-600">{consultation.observations}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedConsultation(consultation)}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      // Edit functionality would go here
-                      toast({
-                        title: "Em desenvolvimento",
-                        description: "Funcionalidade de edição em desenvolvimento",
-                      });
-                    }}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {(!filteredConsultations || filteredConsultations.length === 0) && (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-8">
-                <FileText className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
-                <p className="text-neutral-600">Nenhuma consulta encontrada</p>
-                <p className="text-sm text-neutral-500 mt-2">
-                  {search ? "Tente ajustar os filtros de busca" : "Registre a primeira consulta"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                  </>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          
+          {(!filteredConsultations || filteredConsultations.length === 0) && (
+            <div className="text-center py-12">
+              <FileText className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
+              <p className="text-neutral-600">Nenhuma consulta encontrada</p>
+              <p className="text-sm text-neutral-500 mt-2">
+                {search ? "Tente ajustar os filtros de busca" : "Registre a primeira consulta"}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Consultation Detail Modal */}
       <Dialog open={!!selectedConsultation} onOpenChange={() => setSelectedConsultation(null)}>
