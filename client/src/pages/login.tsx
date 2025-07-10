@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import odontoSyncLogo from "@assets/ChatGPT_Image_9_de_jul._de_2025__21_18_05-removebg-preview_1752159694139.png";
+import odontoSyncLogo from "@assets/ChatGPT_Image_10_de_jul._de_2025__12_09_27-removebg-preview_1752160369330.png";
 
 export default function Login() {
   const [username, setUsername] = useState("");
