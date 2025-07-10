@@ -93,10 +93,7 @@ export default function GenerateReceivableModal({
         customAmount: useCustomAmount ? customAmount : undefined,
       };
 
-      return apiRequest("/api/receivables/from-consultation", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      return apiRequest("POST", "/api/receivables/from-consultation", payload);
     },
     onSuccess: () => {
       toast({
