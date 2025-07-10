@@ -392,6 +392,9 @@ export default function Consultations() {
   });
 
   const onSubmit = (data: ConsultationFormData) => {
+    console.log("Form submission started", data);
+    console.log("Form errors:", form.formState.errors);
+    
     // Validar se a data e hora não estão no passado
     const selectedDateTime = new Date(`${data.date}T${data.time}`);
     const now = new Date();
@@ -400,6 +403,7 @@ export default function Consultations() {
     const nowWithMargin = new Date(now.getTime() + 60000);
     
     if (selectedDateTime < nowWithMargin) {
+      console.log("Date/time validation failed");
       toast({
         title: "Horário inválido",
         description: "Não é possível agendar consultas em horários passados. Por favor, selecione uma data e horário futuros.",
@@ -411,6 +415,7 @@ export default function Consultations() {
     // Validar conflito de horários antes de enviar
     const hasConflict = validateTimeConflict(data.date, data.time, data.dentistId, editingConsultation?.id);
     if (hasConflict) {
+      console.log("Time conflict detected");
       return; // Não permite enviar se houver conflito
     }
 
@@ -432,6 +437,8 @@ export default function Consultations() {
     // Remove campos não usados no backend
     delete (consultationData as any).procedureIds;
     delete (consultationData as any).time;
+
+    console.log("Sending consultation data:", consultationData);
 
     // Verifica se estamos editando ou criando uma nova consulta
     if (editingConsultation) {
@@ -575,7 +582,14 @@ export default function Consultations() {
               <DialogTitle>Registrar Nova Consulta</DialogTitle>
             </DialogHeader>
             <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                console.log("Form validation errors:", errors);
+                toast({
+                  title: "Erro de validação",
+                  description: "Verifique os campos obrigatórios",
+                  variant: "destructive",
+                });
+              })} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="patientId">Paciente *</Label>
