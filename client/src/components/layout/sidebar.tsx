@@ -44,8 +44,8 @@ export default function Sidebar() {
     <div className="hidden lg:flex lg:flex-shrink-0">
       <div className="flex flex-col w-64 bg-white border-r border-neutral-200">
         {/* Logo */}
-        <div className="flex items-center justify-center h-16 px-6 bg-primary">
-          <h1 className="text-xl font-bold text-white">DentalCare</h1>
+        <div className="flex items-center justify-center h-16 px-6 border-b border-neutral-200">
+          <h1 className="text-xl font-bold text-neutral-900">OdontoSync</h1>
         </div>
 
         {/* Navigation */}
