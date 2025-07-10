@@ -46,11 +46,11 @@ export default function Sidebar() {
       <div className="flex flex-col w-64 bg-white border-r border-neutral-200">
         {/* Logo */}
         <div className="flex items-center justify-center h-16 px-6 border-b border-neutral-200">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
             <img 
               src={odontoSyncLogo} 
               alt="OdontoSync" 
-              className="w-8 h-8 object-contain"
+              className="w-10 h-10 object-contain"
             />
             <h1 className="text-xl font-bold text-neutral-900">OdontoSync</h1>
           </div>
