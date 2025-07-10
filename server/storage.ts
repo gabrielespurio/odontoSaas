@@ -8,6 +8,9 @@ import {
   anamnese,
   financial,
   procedureCategories,
+  receivables,
+  payables,
+  cashFlow,
   type User,
   type InsertUser,
   type Patient,
@@ -26,6 +29,12 @@ import {
   type InsertFinancial,
   type ProcedureCategory,
   type InsertProcedureCategory,
+  type Receivable,
+  type InsertReceivable,
+  type Payable,
+  type InsertPayable,
+  type CashFlow,
+  type InsertCashFlow,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, sql } from "drizzle-orm";
@@ -76,11 +85,38 @@ export interface IStorage {
   createAnamnese(anamnese: InsertAnamnese): Promise<Anamnese>;
   updateAnamnese(id: number, anamnese: Partial<InsertAnamnese>): Promise<Anamnese>;
   
-  // Financial
+  // Financial (deprecated - mantido para compatibilidade)
   getFinancial(patientId?: number, status?: string): Promise<(Financial & { patient: Patient })[]>;
   getFinancialRecord(id: number): Promise<Financial | undefined>;
   createFinancialRecord(financial: InsertFinancial): Promise<Financial>;
   updateFinancialRecord(id: number, financial: Partial<InsertFinancial>): Promise<Financial>;
+  
+  // Receivables (Contas a Receber)
+  getReceivables(patientId?: number, status?: string, startDate?: Date, endDate?: Date): Promise<(Receivable & { patient: Patient; consultation?: Consultation; appointment?: Appointment })[]>;
+  getReceivable(id: number): Promise<Receivable | undefined>;
+  createReceivable(receivable: InsertReceivable): Promise<Receivable>;
+  updateReceivable(id: number, receivable: Partial<InsertReceivable>): Promise<Receivable>;
+  createReceivableFromConsultation(consultationId: number, procedures: number[], installments?: number): Promise<Receivable[]>;
+  
+  // Payables (Contas a Pagar)
+  getPayables(status?: string, category?: string, startDate?: Date, endDate?: Date): Promise<Payable[]>;
+  getPayable(id: number): Promise<Payable | undefined>;
+  createPayable(payable: InsertPayable): Promise<Payable>;
+  updatePayable(id: number, payable: Partial<InsertPayable>): Promise<Payable>;
+  
+  // Cash Flow (Fluxo de Caixa)
+  getCashFlow(startDate?: Date, endDate?: Date): Promise<CashFlow[]>;
+  createCashFlowEntry(cashFlow: InsertCashFlow): Promise<CashFlow>;
+  getCurrentBalance(): Promise<number>;
+  getFinancialMetrics(startDate?: Date, endDate?: Date): Promise<{
+    totalReceivables: number;
+    totalPayables: number;
+    totalReceived: number;
+    totalPaid: number;
+    pendingReceivables: number;
+    pendingPayables: number;
+    currentBalance: number;
+  }>;
   
   // Dashboard metrics
   getDashboardMetrics(): Promise<{
@@ -398,6 +434,341 @@ export class DatabaseStorage implements IStorage {
   async updateFinancialRecord(id: number, insertFinancial: Partial<InsertFinancial>): Promise<Financial> {
     const [record] = await db.update(financial).set(insertFinancial).where(eq(financial.id, id)).returning();
     return record;
+  }
+
+  // Receivables (Contas a Receber)
+  async getReceivables(patientId?: number, status?: string, startDate?: Date, endDate?: Date): Promise<(Receivable & { patient: Patient; consultation?: Consultation; appointment?: Appointment })[]> {
+    const whereConditions = [];
+    
+    if (patientId) {
+      whereConditions.push(eq(receivables.patientId, patientId));
+    }
+    if (status) {
+      whereConditions.push(eq(receivables.status, status as any));
+    }
+    if (startDate) {
+      whereConditions.push(sql`${receivables.dueDate} >= ${startDate}`);
+    }
+    if (endDate) {
+      whereConditions.push(sql`${receivables.dueDate} <= ${endDate}`);
+    }
+
+    let query = db
+      .select({
+        id: receivables.id,
+        patientId: receivables.patientId,
+        consultationId: receivables.consultationId,
+        appointmentId: receivables.appointmentId,
+        amount: receivables.amount,
+        dueDate: receivables.dueDate,
+        paymentDate: receivables.paymentDate,
+        paymentMethod: receivables.paymentMethod,
+        status: receivables.status,
+        description: receivables.description,
+        installments: receivables.installments,
+        installmentNumber: receivables.installmentNumber,
+        parentReceivableId: receivables.parentReceivableId,
+        notes: receivables.notes,
+        createdAt: receivables.createdAt,
+        updatedAt: receivables.updatedAt,
+        patient: patients,
+        consultation: consultations,
+        appointment: appointments,
+      })
+      .from(receivables)
+      .innerJoin(patients, eq(receivables.patientId, patients.id))
+      .leftJoin(consultations, eq(receivables.consultationId, consultations.id))
+      .leftJoin(appointments, eq(receivables.appointmentId, appointments.id));
+
+    if (whereConditions.length > 0) {
+      query = query.where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions)!) as any;
+    }
+
+    return await query.orderBy(desc(receivables.dueDate));
+  }
+
+  async getReceivable(id: number): Promise<Receivable | undefined> {
+    const [record] = await db.select().from(receivables).where(eq(receivables.id, id));
+    return record || undefined;
+  }
+
+  async createReceivable(insertReceivable: InsertReceivable): Promise<Receivable> {
+    const [record] = await db.insert(receivables).values(insertReceivable).returning();
+    
+    // Criar entrada no fluxo de caixa se for um recebimento
+    if (insertReceivable.status === 'paid' && insertReceivable.paymentDate) {
+      await this.createCashFlowEntry({
+        type: 'receivable',
+        referenceId: record.id,
+        amount: insertReceivable.amount,
+        date: insertReceivable.paymentDate,
+        description: `Recebimento: ${insertReceivable.description || ''}`,
+        balance: '0', // Será calculado dinamicamente
+      });
+    }
+    
+    return record;
+  }
+
+  async updateReceivable(id: number, insertReceivable: Partial<InsertReceivable>): Promise<Receivable> {
+    const currentRecord = await this.getReceivable(id);
+    const [record] = await db.update(receivables).set(insertReceivable).where(eq(receivables.id, id)).returning();
+    
+    // Se o status mudou para "pago", criar entrada no fluxo de caixa
+    if (currentRecord?.status !== 'paid' && insertReceivable.status === 'paid' && insertReceivable.paymentDate) {
+      await this.createCashFlowEntry({
+        type: 'receivable',
+        referenceId: record.id,
+        amount: record.amount,
+        date: insertReceivable.paymentDate,
+        description: `Recebimento: ${record.description || ''}`,
+        balance: '0', // Será calculado dinamicamente
+      });
+    }
+    
+    return record;
+  }
+
+  async createReceivableFromConsultation(consultationId: number, procedureIds: number[], installments: number = 1): Promise<Receivable[]> {
+    // Buscar consulta
+    const consultation = await this.getConsultation(consultationId);
+    if (!consultation) {
+      throw new Error('Consulta não encontrada');
+    }
+
+    // Buscar procedimentos e calcular total
+    let totalAmount = 0;
+    for (const procedureId of procedureIds) {
+      const procedure = await this.getProcedure(procedureId);
+      if (procedure) {
+        totalAmount += parseFloat(procedure.price);
+      }
+    }
+
+    if (totalAmount === 0) {
+      throw new Error('Nenhum procedimento válido encontrado');
+    }
+
+    const receivablesList: Receivable[] = [];
+    const installmentAmount = totalAmount / installments;
+
+    for (let i = 1; i <= installments; i++) {
+      const dueDate = new Date();
+      dueDate.setMonth(dueDate.getMonth() + (i - 1));
+
+      const receivableData: InsertReceivable = {
+        patientId: consultation.patientId,
+        consultationId: consultationId,
+        appointmentId: consultation.appointmentId || undefined,
+        amount: installmentAmount.toFixed(2),
+        dueDate: dueDate.toISOString().split('T')[0],
+        status: 'pending',
+        description: `Consulta - Parcela ${i}/${installments}`,
+        installments: installments,
+        installmentNumber: i,
+        parentReceivableId: i === 1 ? undefined : receivablesList[0]?.id,
+      };
+
+      const receivable = await this.createReceivable(receivableData);
+      receivablesList.push(receivable);
+
+      // Para parcelas subsequentes, definir o parentReceivableId
+      if (i === 1 && installments > 1) {
+        // Atualizar as próximas parcelas para referenciar a primeira
+        for (let j = 1; j < receivablesList.length; j++) {
+          await db.update(receivables)
+            .set({ parentReceivableId: receivable.id })
+            .where(eq(receivables.id, receivablesList[j].id));
+        }
+      }
+    }
+
+    return receivablesList;
+  }
+
+  // Payables (Contas a Pagar)
+  async getPayables(status?: string, category?: string, startDate?: Date, endDate?: Date): Promise<Payable[]> {
+    const whereConditions = [];
+    
+    if (status) {
+      whereConditions.push(eq(payables.status, status as any));
+    }
+    if (category) {
+      whereConditions.push(eq(payables.category, category as any));
+    }
+    if (startDate) {
+      whereConditions.push(sql`${payables.dueDate} >= ${startDate}`);
+    }
+    if (endDate) {
+      whereConditions.push(sql`${payables.dueDate} <= ${endDate}`);
+    }
+
+    let query = db.select().from(payables);
+
+    if (whereConditions.length > 0) {
+      query = query.where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions)!) as any;
+    }
+
+    return await query.orderBy(desc(payables.dueDate));
+  }
+
+  async getPayable(id: number): Promise<Payable | undefined> {
+    const [record] = await db.select().from(payables).where(eq(payables.id, id));
+    return record || undefined;
+  }
+
+  async createPayable(insertPayable: InsertPayable): Promise<Payable> {
+    const [record] = await db.insert(payables).values(insertPayable).returning();
+    
+    // Criar entrada no fluxo de caixa se for um pagamento
+    if (insertPayable.status === 'paid' && insertPayable.paymentDate) {
+      await this.createCashFlowEntry({
+        type: 'payable',
+        referenceId: record.id,
+        amount: `-${insertPayable.amount}`, // Negativo para saída
+        date: insertPayable.paymentDate,
+        description: `Pagamento: ${insertPayable.description}`,
+        balance: '0', // Será calculado dinamicamente
+      });
+    }
+    
+    return record;
+  }
+
+  async updatePayable(id: number, insertPayable: Partial<InsertPayable>): Promise<Payable> {
+    const currentRecord = await this.getPayable(id);
+    const [record] = await db.update(payables).set(insertPayable).where(eq(payables.id, id)).returning();
+    
+    // Se o status mudou para "pago", criar entrada no fluxo de caixa
+    if (currentRecord?.status !== 'paid' && insertPayable.status === 'paid' && insertPayable.paymentDate) {
+      await this.createCashFlowEntry({
+        type: 'payable',
+        referenceId: record.id,
+        amount: `-${record.amount}`, // Negativo para saída
+        date: insertPayable.paymentDate,
+        description: `Pagamento: ${record.description}`,
+        balance: '0', // Será calculado dinamicamente
+      });
+    }
+    
+    return record;
+  }
+
+  // Cash Flow (Fluxo de Caixa)
+  async getCashFlow(startDate?: Date, endDate?: Date): Promise<CashFlow[]> {
+    const whereConditions = [];
+    
+    if (startDate) {
+      whereConditions.push(sql`${cashFlow.date} >= ${startDate}`);
+    }
+    if (endDate) {
+      whereConditions.push(sql`${cashFlow.date} <= ${endDate}`);
+    }
+
+    let query = db.select().from(cashFlow);
+
+    if (whereConditions.length > 0) {
+      query = query.where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions)!) as any;
+    }
+
+    return await query.orderBy(desc(cashFlow.date), desc(cashFlow.createdAt));
+  }
+
+  async createCashFlowEntry(insertCashFlow: InsertCashFlow): Promise<CashFlow> {
+    // Calcular o saldo atual
+    const currentBalance = await this.getCurrentBalance();
+    const newBalance = currentBalance + parseFloat(insertCashFlow.amount);
+
+    const [record] = await db.insert(cashFlow).values({
+      ...insertCashFlow,
+      balance: newBalance.toFixed(2),
+    }).returning();
+    
+    return record;
+  }
+
+  async getCurrentBalance(): Promise<number> {
+    const [result] = await db
+      .select({ balance: sql<number>`coalesce(${cashFlow.balance}, 0)` })
+      .from(cashFlow)
+      .orderBy(desc(cashFlow.createdAt))
+      .limit(1);
+
+    return result?.balance || 0;
+  }
+
+  async getFinancialMetrics(startDate?: Date, endDate?: Date): Promise<{
+    totalReceivables: number;
+    totalPayables: number;
+    totalReceived: number;
+    totalPaid: number;
+    pendingReceivables: number;
+    pendingPayables: number;
+    currentBalance: number;
+  }> {
+    const whereReceivables = [];
+    const wherePayables = [];
+    
+    if (startDate) {
+      whereReceivables.push(sql`${receivables.dueDate} >= ${startDate}`);
+      wherePayables.push(sql`${payables.dueDate} >= ${startDate}`);
+    }
+    if (endDate) {
+      whereReceivables.push(sql`${receivables.dueDate} <= ${endDate}`);
+      wherePayables.push(sql`${payables.dueDate} <= ${endDate}`);
+    }
+
+    // Total a receber
+    let totalReceivablesQuery = db
+      .select({ sum: sql<number>`coalesce(sum(${receivables.amount}), 0)` })
+      .from(receivables);
+    if (whereReceivables.length > 0) {
+      totalReceivablesQuery = totalReceivablesQuery.where(and(...whereReceivables)) as any;
+    }
+
+    // Total a pagar
+    let totalPayablesQuery = db
+      .select({ sum: sql<number>`coalesce(sum(${payables.amount}), 0)` })
+      .from(payables);
+    if (wherePayables.length > 0) {
+      totalPayablesQuery = totalPayablesQuery.where(and(...wherePayables)) as any;
+    }
+
+    // Executar queries
+    const [totalReceivablesResult] = await totalReceivablesQuery;
+    const [totalPayablesResult] = await totalPayablesQuery;
+
+    const [totalReceivedResult] = await db
+      .select({ sum: sql<number>`coalesce(sum(${receivables.amount}), 0)` })
+      .from(receivables)
+      .where(eq(receivables.status, 'paid'));
+
+    const [totalPaidResult] = await db
+      .select({ sum: sql<number>`coalesce(sum(${payables.amount}), 0)` })
+      .from(payables)
+      .where(eq(payables.status, 'paid'));
+
+    const [pendingReceivablesResult] = await db
+      .select({ sum: sql<number>`coalesce(sum(${receivables.amount}), 0)` })
+      .from(receivables)
+      .where(eq(receivables.status, 'pending'));
+
+    const [pendingPayablesResult] = await db
+      .select({ sum: sql<number>`coalesce(sum(${payables.amount}), 0)` })
+      .from(payables)
+      .where(eq(payables.status, 'pending'));
+
+    const currentBalance = await this.getCurrentBalance();
+
+    return {
+      totalReceivables: totalReceivablesResult.sum,
+      totalPayables: totalPayablesResult.sum,
+      totalReceived: totalReceivedResult.sum,
+      totalPaid: totalPaidResult.sum,
+      pendingReceivables: pendingReceivablesResult.sum,
+      pendingPayables: pendingPayablesResult.sum,
+      currentBalance,
+    };
   }
 
   // Dashboard metrics

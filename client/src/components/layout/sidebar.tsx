@@ -18,7 +18,16 @@ const navigation = [
   { name: "Agenda", href: "/schedule", icon: Calendar },
   { name: "Atendimentos", href: "/consultations", icon: Stethoscope },
   { name: "Procedimentos", href: "/procedures", icon: Wrench },
-  { name: "Financeiro", href: "/financial", icon: DollarSign },
+  { 
+    name: "Financeiro", 
+    href: "/financial", 
+    icon: DollarSign,
+    submenus: [
+      { name: "Contas a Receber", href: "/financial/receivables" },
+      { name: "Contas a Pagar", href: "/financial/payables" },
+      { name: "Fluxo de Caixa", href: "/financial/cash-flow" },
+    ]
+  },
   { name: "Relatórios", href: "/reports", icon: FileText },
   { name: "Configurações", href: "/settings", icon: Settings },
 ];
@@ -43,7 +52,44 @@ export default function Sidebar() {
         <nav className="flex-1 px-4 py-6 space-y-2">
           {navigation.map((item) => {
             const Icon = item.icon;
-            const isActive = location === item.href;
+            const isActive = location === item.href || 
+              (item.submenus && item.submenus.some(sub => location === sub.href));
+            
+            // Se o item tem submenus, renderizar de forma diferente
+            if (item.submenus) {
+              return (
+                <div key={item.name} className="space-y-1">
+                  <div
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      isActive
+                        ? "text-white bg-primary"
+                        : "text-neutral-600 hover:bg-neutral-100"
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 mr-3" />
+                    {item.name}
+                  </div>
+                  <div className="ml-6 space-y-1">
+                    {item.submenus.map((submenu) => {
+                      const isSubmenuActive = location === submenu.href;
+                      return (
+                        <Link key={submenu.name} href={submenu.href}>
+                          <div
+                            className={`flex items-center px-4 py-1 text-sm rounded-lg transition-colors cursor-pointer ${
+                              isSubmenuActive
+                                ? "text-primary bg-primary/10 font-medium"
+                                : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700"
+                            }`}
+                          >
+                            {submenu.name}
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            }
             
             return (
               <Link key={item.name} href={item.href}>

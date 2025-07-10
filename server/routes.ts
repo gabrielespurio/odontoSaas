@@ -15,6 +15,9 @@ import {
   insertAnamneseSchema, 
   insertFinancialSchema,
   insertProcedureCategorySchema,
+  insertReceivableSchema,
+  insertPayableSchema,
+  insertCashFlowSchema,
   users,
   patients,
   appointments,
@@ -23,7 +26,10 @@ import {
   procedureCategories,
   dentalChart,
   anamnese,
-  financial
+  financial,
+  receivables,
+  payables,
+  cashFlow
 } from "@shared/schema";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
@@ -817,6 +823,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(financial);
     } catch (error) {
       console.error("Update financial record error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Receivables (Contas a Receber)
+  app.get("/api/receivables", async (req, res) => {
+    try {
+      const patientId = req.query.patientId ? parseInt(req.query.patientId as string) : undefined;
+      const status = req.query.status as string;
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      
+      const receivables = await storage.getReceivables(patientId, status, startDate, endDate);
+      res.json(receivables);
+    } catch (error) {
+      console.error("Get receivables error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/receivables/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const receivable = await storage.getReceivable(id);
+      
+      if (!receivable) {
+        return res.status(404).json({ message: "Receivable not found" });
+      }
+      
+      res.json(receivable);
+    } catch (error) {
+      console.error("Get receivable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/receivables", async (req, res) => {
+    try {
+      const receivableData = insertReceivableSchema.parse(req.body);
+      const receivable = await storage.createReceivable(receivableData);
+      res.json(receivable);
+    } catch (error) {
+      console.error("Create receivable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/receivables/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const receivableData = insertReceivableSchema.partial().parse(req.body);
+      const receivable = await storage.updateReceivable(id, receivableData);
+      res.json(receivable);
+    } catch (error) {
+      console.error("Update receivable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Criar contas a receber a partir de consulta
+  app.post("/api/receivables/from-consultation", async (req, res) => {
+    try {
+      const { consultationId, procedureIds, installments = 1 } = req.body;
+      const receivables = await storage.createReceivableFromConsultation(consultationId, procedureIds, installments);
+      res.json(receivables);
+    } catch (error) {
+      console.error("Create receivables from consultation error:", error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+  });
+
+  // Payables (Contas a Pagar)
+  app.get("/api/payables", async (req, res) => {
+    try {
+      const status = req.query.status as string;
+      const category = req.query.category as string;
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      
+      const payables = await storage.getPayables(status, category, startDate, endDate);
+      res.json(payables);
+    } catch (error) {
+      console.error("Get payables error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/payables/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const payable = await storage.getPayable(id);
+      
+      if (!payable) {
+        return res.status(404).json({ message: "Payable not found" });
+      }
+      
+      res.json(payable);
+    } catch (error) {
+      console.error("Get payable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/payables", async (req, res) => {
+    try {
+      const payableData = insertPayableSchema.parse(req.body);
+      const payable = await storage.createPayable(payableData);
+      res.json(payable);
+    } catch (error) {
+      console.error("Create payable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/payables/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const payableData = insertPayableSchema.partial().parse(req.body);
+      const payable = await storage.updatePayable(id, payableData);
+      res.json(payable);
+    } catch (error) {
+      console.error("Update payable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Cash Flow (Fluxo de Caixa)
+  app.get("/api/cash-flow", async (req, res) => {
+    try {
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      
+      const cashFlow = await storage.getCashFlow(startDate, endDate);
+      res.json(cashFlow);
+    } catch (error) {
+      console.error("Get cash flow error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/financial-metrics", async (req, res) => {
+    try {
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      
+      const metrics = await storage.getFinancialMetrics(startDate, endDate);
+      res.json(metrics);
+    } catch (error) {
+      console.error("Get financial metrics error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/current-balance", async (req, res) => {
+    try {
+      const balance = await storage.getCurrentBalance();
+      res.json({ balance });
+    } catch (error) {
+      console.error("Get current balance error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

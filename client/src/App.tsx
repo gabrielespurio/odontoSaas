@@ -16,6 +16,7 @@ import Schedule from "@/pages/schedule";
 import Consultations from "@/pages/consultations";
 import Procedures from "@/pages/procedures";
 import Financial from "@/pages/financial";
+import FinancialReceivables from "@/pages/financial-receivables";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import MainLayout from "@/components/layout/main-layout";
@@ -60,6 +61,7 @@ function Router() {
         <Route path="/consultations" component={Consultations} />
         <Route path="/procedures" component={Procedures} />
         <Route path="/financial" component={Financial} />
+        <Route path="/financial/receivables" component={FinancialReceivables} />
         <Route path="/reports" component={Reports} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
