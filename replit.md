@@ -295,6 +295,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
 - July 10, 2025. **HEADER CLEANUP**: Removed duplicate module titles from header, keeping only page body titles for cleaner interface
 - July 10, 2025. **PATIENT DELETION**: Added modal confirmation for patient deletion with proper error handling and backend DELETE route
 - July 10, 2025. **DATABASE CLEANUP**: Successfully cleaned test database, removed all sample data while preserving admin user and system structure
+- July 10, 2025. **PROCEDURE CATEGORIES FIX**: Resolved procedure category dropdown issue - removed old categories from database
+- July 10, 2025. **CATEGORY INTEGRATION**: Procedure form now correctly shows only categories created in Configuration module
+- July 10, 2025. **ADDRESS FORM ENHANCEMENT**: Implemented ViaCEP API integration for automatic address completion
+- July 10, 2025. **CEP AUTOMATION**: Added automatic address filling when CEP is entered with loading indicator and error handling
+- July 10, 2025. **STRUCTURED ADDRESS**: Updated patient registration with separate address fields (CEP, logradouro, número, bairro, cidade, estado)
 
 ## User Preferences
 
