@@ -27,13 +27,13 @@ export default function Dashboard() {
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      scheduled: { label: "Agendado", className: "status-scheduled" },
-      confirmed: { label: "Confirmado", className: "status-confirmed" },
-      attended: { label: "Atendido", className: "status-attended" },
-      cancelled: { label: "Cancelado", className: "status-cancelled" },
+      agendado: { label: "Agendado", className: "status-scheduled" },
+      em_atendimento: { label: "Em Atendimento", className: "status-confirmed" },
+      concluido: { label: "Concluído", className: "status-attended" },
+      cancelado: { label: "Cancelado", className: "status-cancelled" },
     };
     
-    const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.scheduled;
+    const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.agendado;
     return (
       <Badge className={`status-badge ${statusInfo.className}`}>
         {statusInfo.label}

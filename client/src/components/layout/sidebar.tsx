@@ -29,7 +29,7 @@ const navigation = [
     submenus: [
       { name: "Contas a Receber", href: "/financial/receivables" },
       { name: "Contas a Pagar", href: "/financial/payables" },
-      { name: "Fluxo de Caixa", href: "/financial/cash-flow" },
+      { name: "Fluxo de Caixa", href: "/financial/cashflow" },
     ]
   },
   { name: "Relatórios", href: "/reports", icon: FileText },
