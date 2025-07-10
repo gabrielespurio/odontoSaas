@@ -43,7 +43,14 @@ export const patients = pgTable("patients", {
   birthDate: date("birth_date").notNull(),
   phone: text("phone").notNull(),
   email: text("email"),
-  address: text("address"),
+  // Address fields
+  cep: text("cep"),
+  street: text("street"),
+  number: text("number"),
+  neighborhood: text("neighborhood"),
+  city: text("city"),
+  state: text("state"),
+  address: text("address"), // Keep for backwards compatibility
   isActive: boolean("is_active").notNull().default(true),
   clinicalNotes: text("clinical_notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

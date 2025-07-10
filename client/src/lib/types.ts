@@ -12,7 +12,14 @@ export interface Patient {
   birthDate: string;
   phone: string;
   email?: string;
-  address?: string;
+  // Structured address fields
+  cep?: string;
+  street?: string;
+  number?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  address?: string; // Keep for backwards compatibility
   isActive: boolean;
   clinicalNotes?: string;
   createdAt: string;

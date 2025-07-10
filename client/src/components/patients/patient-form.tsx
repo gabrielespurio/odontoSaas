@@ -17,6 +17,14 @@ const patientSchema = z.object({
   birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
   phone: z.string().min(10, "Telefone é obrigatório"),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
+  // Structured address fields
+  cep: z.string().optional(),
+  street: z.string().optional(),
+  number: z.string().optional(),
+  neighborhood: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  // Keep for backwards compatibility
   address: z.string().optional(),
   clinicalNotes: z.string().optional(),
 });
@@ -41,6 +49,12 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
       birthDate: patient?.birthDate || "",
       phone: patient?.phone || "",
       email: patient?.email || "",
+      cep: patient?.cep || "",
+      street: patient?.street || "",
+      number: patient?.number || "",
+      neighborhood: patient?.neighborhood || "",
+      city: patient?.city || "",
+      state: patient?.state || "",
       address: patient?.address || "",
       clinicalNotes: patient?.clinicalNotes || "",
     },
@@ -108,6 +122,13 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
       .replace(/\D/g, "")
       .replace(/(\d{2})(\d{4,5})(\d{4})/, "($1) $2-$3")
       .slice(0, 15);
+  };
+
+  const formatCEP = (value: string) => {
+    return value
+      .replace(/\D/g, "")
+      .replace(/(\d{5})(\d{3})/, "$1-$2")
+      .slice(0, 9);
   };
 
   return (
@@ -183,13 +204,89 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="address">Endereço</Label>
-        <Input
-          id="address"
-          {...form.register("address")}
-          placeholder="Rua, número, bairro, cidade/estado"
-        />
+      {/* Structured Address Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Endereço</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="cep">CEP</Label>
+            <Input
+              id="cep"
+              {...form.register("cep")}
+              placeholder="00000-000"
+              maxLength={9}
+              onChange={(e) => {
+                const formatted = formatCEP(e.target.value);
+                form.setValue("cep", formatted);
+              }}
+            />
+            {form.formState.errors.cep && (
+              <p className="text-sm text-red-600">{form.formState.errors.cep.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="street">Logradouro</Label>
+            <Input
+              id="street"
+              {...form.register("street")}
+              placeholder="Rua, Avenida, etc."
+            />
+            {form.formState.errors.street && (
+              <p className="text-sm text-red-600">{form.formState.errors.street.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="number">Número</Label>
+            <Input
+              id="number"
+              {...form.register("number")}
+              placeholder="123"
+            />
+            {form.formState.errors.number && (
+              <p className="text-sm text-red-600">{form.formState.errors.number.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="neighborhood">Bairro</Label>
+            <Input
+              id="neighborhood"
+              {...form.register("neighborhood")}
+              placeholder="Nome do bairro"
+            />
+            {form.formState.errors.neighborhood && (
+              <p className="text-sm text-red-600">{form.formState.errors.neighborhood.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="city">Cidade</Label>
+            <Input
+              id="city"
+              {...form.register("city")}
+              placeholder="Nome da cidade"
+            />
+            {form.formState.errors.city && (
+              <p className="text-sm text-red-600">{form.formState.errors.city.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="state">Estado</Label>
+            <Input
+              id="state"
+              {...form.register("state")}
+              placeholder="SP"
+              maxLength={2}
+            />
+            {form.formState.errors.state && (
+              <p className="text-sm text-red-600">{form.formState.errors.state.message}</p>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="space-y-2">
