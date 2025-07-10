@@ -1,8 +1,8 @@
-# DentalCare - Sistema de Gestão Odontológica
+# OdontoSync - Sistema de Gestão Odontológica
 
 ## Overview
 
-DentalCare is a comprehensive dental clinic management SaaS system built as a full-stack web application. The system provides complete patient management, appointment scheduling, clinical record-keeping, financial tracking, and reporting capabilities specifically tailored for dental practices.
+OdontoSync is a comprehensive dental clinic management SaaS system built as a full-stack web application. The system provides complete patient management, appointment scheduling, clinical record-keeping, financial tracking, and reporting capabilities specifically tailored for dental practices.
 
 ## System Architecture
 
@@ -287,6 +287,10 @@ DentalCare is a comprehensive dental clinic management SaaS system built as a fu
   - Caixa: Consolidated cash flow management with real-time balance tracking
 - July 10, 2025. **DATABASE SCHEMA EXPANSION**: Added new tables (receivables, payables, cash_flow) with proper relations and constraints
 - July 10, 2025. **FINANCIAL INTEGRATION**: Planned automatic integration between consultations and receivables generation
+- July 10, 2025. **BRAND MIGRATION COMPLETED**: Successfully migrated system name from DentalCare to OdontoSync
+- July 10, 2025. **LOGO INTEGRATION**: Integrated new OdontoSync logo in login page and updated all system references
+- July 10, 2025. **UI REBRAND**: Updated login page, headers, titles, and all textual references throughout the application
+- July 10, 2025. **DOCUMENTATION UPDATE**: Updated replit.md and all system documentation to reflect OdontoSync branding
 
 ## User Preferences
 

@@ -14,7 +14,7 @@ const pageNames: Record<string, string> = {
 
 export default function Header() {
   const [location] = useLocation();
-  const pageName = pageNames[location] || "DentalCare";
+  const pageName = pageNames[location] || "OdontoSync";
 
   return (
     <header className="bg-white border-b border-neutral-200">

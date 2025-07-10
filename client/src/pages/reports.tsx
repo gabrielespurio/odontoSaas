@@ -110,7 +110,7 @@ export default function Reports() {
   const exportReport = () => {
     // Simple CSV export functionality
     const csvData = [
-      ['Relatório de Atividades - DentalCare'],
+      ['Relatório de Atividades - OdontoSync'],
       ['Período:', `${formatDate(dateFrom)} a ${formatDate(dateTo)}`],
       [''],
       ['Resumo Geral'],

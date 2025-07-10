@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import odontoSyncLogo from "@assets/ChatGPT_Image_9_de_jul._de_2025__21_18_05-removebg-preview_1752159694139.png";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -23,7 +24,7 @@ export default function Login() {
       await login(username, password);
       toast({
         title: "Login realizado com sucesso",
-        description: "Bem-vindo ao DentalCare!",
+        description: "Bem-vindo ao OdontoSync!",
       });
       // Forçar redirecionamento imediato
       window.location.href = "/dashboard";
@@ -41,10 +42,14 @@ export default function Login() {
     <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-xl">DC</span>
+          <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
+            <img 
+              src={odontoSyncLogo} 
+              alt="OdontoSync" 
+              className="w-full h-full object-contain"
+            />
           </div>
-          <CardTitle className="text-2xl font-bold">DentalCare</CardTitle>
+          <CardTitle className="text-2xl font-bold">OdontoSync</CardTitle>
           <CardDescription>Sistema de Gestão Odontológica</CardDescription>
         </CardHeader>
         <CardContent>
