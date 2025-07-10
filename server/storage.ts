@@ -529,24 +529,33 @@ export class DatabaseStorage implements IStorage {
     return record;
   }
 
-  async createReceivableFromConsultation(consultationId: number, procedureIds: number[], installments: number = 1): Promise<Receivable[]> {
+  async createReceivableFromConsultation(consultationId: number, procedureIds: number[], installments: number = 1, customAmount?: string): Promise<Receivable[]> {
     // Buscar consulta
     const consultation = await this.getConsultation(consultationId);
     if (!consultation) {
       throw new Error('Consulta não encontrada');
     }
 
-    // Buscar procedimentos e calcular total
+    // Usar valor personalizado ou calcular baseado nos procedimentos
     let totalAmount = 0;
-    for (const procedureId of procedureIds) {
-      const procedure = await this.getProcedure(procedureId);
-      if (procedure) {
-        totalAmount += parseFloat(procedure.price);
+    
+    if (customAmount) {
+      totalAmount = parseFloat(customAmount);
+      if (isNaN(totalAmount) || totalAmount <= 0) {
+        throw new Error('Valor personalizado inválido');
       }
-    }
+    } else {
+      // Buscar procedimentos e calcular total
+      for (const procedureId of procedureIds) {
+        const procedure = await this.getProcedure(procedureId);
+        if (procedure) {
+          totalAmount += parseFloat(procedure.price);
+        }
+      }
 
-    if (totalAmount === 0) {
-      throw new Error('Nenhum procedimento válido encontrado');
+      if (totalAmount === 0) {
+        throw new Error('Nenhum procedimento válido encontrado ou valor personalizado não informado');
+      }
     }
 
     const receivablesList: Receivable[] = [];

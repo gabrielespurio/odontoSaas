@@ -25,7 +25,8 @@ import {
   MoreHorizontal,
   Trash2,
   Play,
-  CheckCircle
+  CheckCircle,
+  DollarSign
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,6 +34,7 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import GenerateReceivableModal from "@/components/financial/generate-receivable-modal";
 import type { Consultation, Patient, User, Procedure } from "@/lib/types";
 
 const consultationSchema = z.object({
@@ -80,6 +82,8 @@ export default function Consultations() {
   const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [timeConflictError, setTimeConflictError] = useState<string>("");
+  const [showGenerateReceivable, setShowGenerateReceivable] = useState(false);
+  const [consultationForReceivable, setConsultationForReceivable] = useState<Consultation | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -123,6 +127,15 @@ export default function Consultations() {
         icon: CheckCircle,
         value: "concluido",
         color: "text-green-600"
+      });
+    }
+    
+    if (currentStatus === "concluido") {
+      actions.push({
+        label: "Gerar Cobrança",
+        icon: DollarSign,
+        value: "generate_receivable",
+        color: "text-primary"
       });
     }
     
@@ -231,6 +244,15 @@ export default function Consultations() {
 
   const handleStatusChange = (consultationId: number, newStatus: string) => {
     updateStatusMutation.mutate({ id: consultationId, status: newStatus });
+  };
+
+  const handleActionClick = (consultation: Consultation, actionValue: string) => {
+    if (actionValue === "generate_receivable") {
+      setConsultationForReceivable(consultation);
+      setShowGenerateReceivable(true);
+    } else {
+      handleStatusChange(consultation.id, actionValue);
+    }
   };
 
   // Função para validar conflito de horários
@@ -1021,7 +1043,7 @@ export default function Consultations() {
                             {getStatusActions(consultation.status || 'agendado').map((action) => (
                               <DropdownMenuItem 
                                 key={action.value}
-                                onClick={() => handleStatusChange(consultation.id, action.value)}
+                                onClick={() => handleActionClick(consultation, action.value)}
                                 className={`${action.color} cursor-pointer`}
                               >
                                 <action.icon className="w-4 h-4 mr-2" />
@@ -1378,6 +1400,18 @@ export default function Consultations() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Generate Receivable Modal */}
+      <GenerateReceivableModal
+        consultation={consultationForReceivable}
+        open={showGenerateReceivable}
+        onOpenChange={(open) => {
+          setShowGenerateReceivable(open);
+          if (!open) {
+            setConsultationForReceivable(null);
+          }
+        }}
+      />
     </div>
   );
 }
