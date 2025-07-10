@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut 
 } from "lucide-react";
+import odontoSyncLogo from "@assets/ChatGPT_Image_10_de_jul._de_2025__12_09_27-removebg-preview_1752160369330.png";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: BarChart3 },
@@ -45,7 +46,14 @@ export default function Sidebar() {
       <div className="flex flex-col w-64 bg-white border-r border-neutral-200">
         {/* Logo */}
         <div className="flex items-center justify-center h-16 px-6 border-b border-neutral-200">
-          <h1 className="text-xl font-bold text-neutral-900">OdontoSync</h1>
+          <div className="flex items-center space-x-3">
+            <img 
+              src={odontoSyncLogo} 
+              alt="OdontoSync" 
+              className="w-8 h-8 object-contain"
+            />
+            <h1 className="text-xl font-bold text-neutral-900">OdontoSync</h1>
+          </div>
         </div>
 
         {/* Navigation */}
