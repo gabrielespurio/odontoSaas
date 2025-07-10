@@ -287,6 +287,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/patients/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Check if patient exists
+      const patient = await storage.getPatient(id);
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      // Delete patient from database
+      await db.delete(patients).where(eq(patients.id, id));
+      
+      res.json({ message: "Patient deleted successfully" });
+    } catch (error) {
+      console.error("Delete patient error:", error);
+      res.status(500).json({ message: "Failed to delete patient" });
+    }
+  });
+
   // Users Management
   app.get("/api/users", async (req, res) => {
     try {
