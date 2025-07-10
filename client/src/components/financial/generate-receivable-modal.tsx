@@ -219,27 +219,71 @@ export default function GenerateReceivableModal({
                 />
               </div>
             ) : (
-              <div className="space-y-3 max-h-48 overflow-y-auto">
-                {procedures.map((procedure) => (
-                  <div
-                    key={procedure.id}
-                    className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg hover:border-neutral-300 transition-colors"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        checked={selectedProcedures.includes(procedure.id)}
-                        onCheckedChange={() => handleProcedureToggle(procedure.id)}
-                      />
-                      <div>
-                        <p className="font-medium text-sm">{procedure.name}</p>
-                        <p className="text-xs text-neutral-600">{procedure.category}</p>
+              <div className="space-y-3">
+                {/* Mostrar apenas procedimentos realizados na consulta */}
+                {(() => {
+                  const consultationProcedures = procedures.filter(procedure => 
+                    selectedProcedures.includes(procedure.id)
+                  );
+                  
+                  if (consultationProcedures.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-neutral-500">
+                        <p>Nenhum procedimento foi realizado nesta consulta.</p>
+                        <p className="text-sm mt-1">Use "valor personalizado" para adicionar cobrança.</p>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-green-800">
+                          {consultationProcedures.length} procedimento{consultationProcedures.length > 1 ? 's' : ''} realizado{consultationProcedures.length > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {consultationProcedures.map((procedure) => (
+                          <div
+                            key={procedure.id}
+                            className="flex items-center justify-between py-2 px-3 bg-white rounded border border-green-100"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                              <div>
+                                <p className="font-medium text-sm">{procedure.name}</p>
+                                <p className="text-xs text-neutral-500">{procedure.category}</p>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="font-mono text-green-700 border-green-300">
+                              R$ {parseFloat(procedure.price).toFixed(2)}
+                            </Badge>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <Badge variant="outline" className="font-mono">
-                      R$ {parseFloat(procedure.price).toFixed(2)}
-                    </Badge>
+                  );
+                })()}
+                
+                {/* Botão para adicionar mais procedimentos se necessário */}
+                {selectedProcedures.length > 0 && (
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // Permitir adicionar procedimentos extras se necessário
+                        // Por enquanto, sugere usar valor personalizado
+                        setUseCustomAmount(true);
+                      }}
+                      className="w-full border-dashed"
+                    >
+                      + Adicionar procedimentos extras ou ajustar valor
+                    </Button>
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
