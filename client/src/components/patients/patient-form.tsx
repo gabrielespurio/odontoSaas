@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Loader2 } from "lucide-react";
 import type { Patient } from "@/lib/types";
 
 const patientSchema = z.object({
@@ -40,6 +41,7 @@ interface PatientFormProps {
 export default function PatientForm({ patient, onSuccess, onCancel }: PatientFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isSearchingCEP, setIsSearchingCEP] = useState(false);
   
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
@@ -131,6 +133,50 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
       .slice(0, 9);
   };
 
+  const searchCEP = async (cep: string) => {
+    try {
+      setIsSearchingCEP(true);
+      
+      // Remove formatação do CEP
+      const cleanCEP = cep.replace(/\D/g, "");
+      
+      // Valida se tem 8 dígitos
+      if (cleanCEP.length !== 8) return;
+      
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
+      const data = await response.json();
+      
+      // Verifica se houve erro na consulta
+      if (data.erro) {
+        toast({
+          title: "CEP não encontrado",
+          description: "O CEP informado não foi encontrado.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Preenche os campos automaticamente
+      form.setValue("street", data.logradouro || "");
+      form.setValue("neighborhood", data.bairro || "");
+      form.setValue("city", data.localidade || "");
+      form.setValue("state", data.uf || "");
+      
+      toast({
+        title: "Endereço encontrado",
+        description: "Os campos foram preenchidos automaticamente.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro na consulta",
+        description: "Não foi possível consultar o CEP. Verifique sua conexão.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearchingCEP(false);
+    }
+  };
+
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -212,18 +258,33 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
           {/* CEP - takes 3 columns */}
           <div className="col-span-12 md:col-span-3 space-y-2">
             <Label htmlFor="cep">CEP</Label>
-            <Input
-              id="cep"
-              {...form.register("cep")}
-              placeholder="00000-000"
-              maxLength={9}
-              onChange={(e) => {
-                const formatted = formatCEP(e.target.value);
-                form.setValue("cep", formatted);
-              }}
-            />
+            <div className="relative">
+              <Input
+                id="cep"
+                {...form.register("cep")}
+                placeholder="00000-000"
+                maxLength={9}
+                onChange={(e) => {
+                  const formatted = formatCEP(e.target.value);
+                  form.setValue("cep", formatted);
+                  
+                  // Busca automaticamente quando CEP está completo
+                  if (formatted.length === 9) {
+                    searchCEP(formatted);
+                  }
+                }}
+              />
+              {isSearchingCEP && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                </div>
+              )}
+            </div>
             {form.formState.errors.cep && (
               <p className="text-sm text-red-600">{form.formState.errors.cep.message}</p>
+            )}
+            {isSearchingCEP && (
+              <p className="text-sm text-blue-600">Buscando endereço...</p>
             )}
           </div>
 
