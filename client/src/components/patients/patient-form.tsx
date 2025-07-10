@@ -240,8 +240,8 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
             )}
           </div>
 
-          {/* Número - takes 2 columns (small) */}
-          <div className="col-span-4 md:col-span-2 space-y-2">
+          {/* Número - takes 1.5 columns (smaller) */}
+          <div className="col-span-3 md:col-span-1 space-y-2">
             <Label htmlFor="number">Número</Label>
             <Input
               id="number"
@@ -253,8 +253,8 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
             )}
           </div>
 
-          {/* Bairro - takes 4 columns (bigger) */}
-          <div className="col-span-8 md:col-span-4 space-y-2">
+          {/* Bairro - takes 4.5 columns */}
+          <div className="col-span-4 md:col-span-4 space-y-2">
             <Label htmlFor="neighborhood">Bairro</Label>
             <Input
               id="neighborhood"
@@ -266,8 +266,8 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
             )}
           </div>
 
-          {/* Cidade - takes 5 columns (bigger) */}
-          <div className="col-span-8 md:col-span-5 space-y-2">
+          {/* Cidade - takes 5 columns */}
+          <div className="col-span-3 md:col-span-5 space-y-2">
             <Label htmlFor="city">Cidade</Label>
             <Input
               id="city"
@@ -279,8 +279,8 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
             )}
           </div>
 
-          {/* Estado - takes 1 column (very small) */}
-          <div className="col-span-4 md:col-span-1 space-y-2">
+          {/* Estado - takes 2 columns (bigger) */}
+          <div className="col-span-2 md:col-span-2 space-y-2">
             <Label htmlFor="state">Estado</Label>
             <Input
               id="state"
