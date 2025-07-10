@@ -8,13 +8,16 @@ const pageNames: Record<string, string> = {
   "/consultations": "Atendimentos",
   "/procedures": "Procedimentos",
   "/financial": "Financeiro",
+  "/financial/receivables": "Contas a Receber",
+  "/financial/payables": "Contas a Pagar", 
+  "/financial/cash-flow": "Fluxo de Caixa",
   "/reports": "Relatórios",
   "/settings": "Configurações",
 };
 
 export default function Header() {
   const [location] = useLocation();
-  const pageName = pageNames[location] || "OdontoSync";
+  const pageName = pageNames[location] || "";
 
   return (
     <header className="bg-white border-b border-neutral-200">
