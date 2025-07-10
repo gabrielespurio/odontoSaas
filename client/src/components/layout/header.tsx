@@ -18,7 +18,7 @@ export default function Header() {
 
   return (
     <header className="bg-white border-b border-neutral-200">
-      <div className="flex items-center justify-between px-6 py-4">
+      <div className="flex items-center justify-between px-6 h-16">
         <div className="flex items-center">
           <button className="lg:hidden text-neutral-600 hover:text-neutral-900 mr-2">
             <Menu className="w-6 h-6" />
