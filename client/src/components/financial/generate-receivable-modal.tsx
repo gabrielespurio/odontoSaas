@@ -40,20 +40,31 @@ export default function GenerateReceivableModal({
 
   // Resetar estado quando modal abre/fecha
   useEffect(() => {
-    if (open && consultation) {
+    if (open && consultation && procedures.length > 0) {
       // Pre-selecionar procedimentos da consulta se existirem
-      const consultationProcedureIds = consultation.procedures || [];
+      // Mapear nomes dos procedimentos para IDs
+      const consultationProcedureIds: number[] = [];
+      
+      if (consultation.procedures && consultation.procedures.length > 0) {
+        consultation.procedures.forEach(procedureName => {
+          const procedure = procedures.find(p => p.name === procedureName);
+          if (procedure) {
+            consultationProcedureIds.push(procedure.id);
+          }
+        });
+      }
+      
       setSelectedProcedures(consultationProcedureIds);
       setInstallments(1);
       setCustomAmount("");
       setUseCustomAmount(false);
-    } else {
+    } else if (!open) {
       setSelectedProcedures([]);
       setInstallments(1);
       setCustomAmount("");
       setUseCustomAmount(false);
     }
-  }, [open, consultation]);
+  }, [open, consultation, procedures]);
 
   // Calcular valor total baseado nos procedimentos selecionados
   const calculateTotalAmount = () => {
