@@ -277,7 +277,13 @@ export default function Consultations() {
       // Se estamos editando, ignora a consulta atual
       if (excludeConsultationId && apt.consultationId === excludeConsultationId) return false;
       
+      // IMPORTANTE: Para consultas, não bloqueamos se o agendamento já existe
       // Verifica se o horário selecionado está dentro do período do agendamento
+      // Mas permite se o status do agendamento for "agendado" (pode ser convertido em consulta)
+      if (apt.status === "agendado") {
+        return false; // Permite criar consulta para agendamentos existentes
+      }
+      
       return selectedTime >= aptStartTime && selectedTime < aptEndTime;
     });
 
@@ -412,12 +418,9 @@ export default function Consultations() {
       return;
     }
 
-    // Validar conflito de horários antes de enviar
-    const hasConflict = validateTimeConflict(data.date, data.time, data.dentistId, editingConsultation?.id);
-    if (hasConflict) {
-      console.log("Time conflict detected");
-      return; // Não permite enviar se houver conflito
-    }
+    // Para consultas, não validamos conflito de horários pois elas podem coexistir com agendamentos
+    // A validação de conflito é mais relevante para agendamentos do que para consultas
+    console.log("Skipping time conflict validation for consultations");
 
     // Converte os procedimentos selecionados para nomes para compatibilidade com o backend
     const procedureNames = selectedProcedures
