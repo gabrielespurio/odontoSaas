@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useState } from "react";
 import { 
   BarChart3, 
   Users, 
@@ -9,7 +10,9 @@ import {
   DollarSign, 
   FileText,
   Settings,
-  LogOut 
+  LogOut,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 import odontoSyncLogo from "@assets/ChatGPT_Image_10_de_jul._de_2025__12_09_27-removebg-preview_1752160369330.png";
 
@@ -36,10 +39,14 @@ const navigation = [
 export default function Sidebar() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const [isFinanceOpen, setIsFinanceOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
   };
+
+  // Check if any financial submenu is active
+  const isFinanceActive = location === "/financial" || location.startsWith("/financial/");
 
   return (
     <div className="hidden lg:flex lg:flex-shrink-0">
@@ -60,41 +67,49 @@ export default function Sidebar() {
         <nav className="flex-1 px-4 py-6 space-y-2">
           {navigation.map((item) => {
             const Icon = item.icon;
-            const isActive = location === item.href || 
-              (item.submenus && item.submenus.some(sub => location === sub.href));
+            const isActive = location === item.href;
             
             // Se o item tem submenus, renderizar de forma diferente
             if (item.submenus) {
+              const ChevronIcon = isFinanceOpen ? ChevronDown : ChevronRight;
+              
               return (
                 <div key={item.name} className="space-y-1">
-                  <div
-                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      isActive
+                  <button
+                    onClick={() => setIsFinanceOpen(!isFinanceOpen)}
+                    className={`flex items-center justify-between w-full px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      isFinanceActive
                         ? "text-white bg-primary"
                         : "text-neutral-600 hover:bg-neutral-100"
                     }`}
                   >
-                    <Icon className="w-5 h-5 mr-3" />
-                    {item.name}
-                  </div>
-                  <div className="ml-6 space-y-1">
-                    {item.submenus.map((submenu) => {
-                      const isSubmenuActive = location === submenu.href;
-                      return (
-                        <Link key={submenu.name} href={submenu.href}>
-                          <div
-                            className={`flex items-center px-4 py-1 text-sm rounded-lg transition-colors cursor-pointer ${
-                              isSubmenuActive
-                                ? "text-primary bg-primary/10 font-medium"
-                                : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700"
-                            }`}
-                          >
-                            {submenu.name}
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
+                    <div className="flex items-center">
+                      <Icon className="w-5 h-5 mr-3" />
+                      {item.name}
+                    </div>
+                    <ChevronIcon className="w-4 h-4" />
+                  </button>
+                  
+                  {isFinanceOpen && (
+                    <div className="ml-6 space-y-1">
+                      {item.submenus.map((submenu) => {
+                        const isSubmenuActive = location === submenu.href;
+                        return (
+                          <Link key={submenu.name} href={submenu.href}>
+                            <div
+                              className={`flex items-center px-4 py-1 text-sm rounded-lg transition-colors cursor-pointer ${
+                                isSubmenuActive
+                                  ? "text-primary bg-primary/10 font-medium"
+                                  : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700"
+                              }`}
+                            >
+                              {submenu.name}
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             }
