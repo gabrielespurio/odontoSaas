@@ -208,8 +208,9 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Endereço</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="space-y-2">
+        <div className="grid grid-cols-12 gap-4">
+          {/* CEP - takes 3 columns */}
+          <div className="col-span-12 md:col-span-3 space-y-2">
             <Label htmlFor="cep">CEP</Label>
             <Input
               id="cep"
@@ -226,7 +227,8 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
             )}
           </div>
 
-          <div className="space-y-2 md:col-span-2">
+          {/* Logradouro - takes 9 columns */}
+          <div className="col-span-12 md:col-span-9 space-y-2">
             <Label htmlFor="street">Logradouro</Label>
             <Input
               id="street"
@@ -238,7 +240,8 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
             )}
           </div>
 
-          <div className="space-y-2">
+          {/* Número - takes 2 columns */}
+          <div className="col-span-12 md:col-span-2 space-y-2">
             <Label htmlFor="number">Número</Label>
             <Input
               id="number"
@@ -250,7 +253,8 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
             )}
           </div>
 
-          <div className="space-y-2">
+          {/* Bairro - takes 4 columns */}
+          <div className="col-span-12 md:col-span-4 space-y-2">
             <Label htmlFor="neighborhood">Bairro</Label>
             <Input
               id="neighborhood"
@@ -262,7 +266,8 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
             )}
           </div>
 
-          <div className="space-y-2">
+          {/* Cidade - takes 4 columns */}
+          <div className="col-span-12 md:col-span-4 space-y-2">
             <Label htmlFor="city">Cidade</Label>
             <Input
               id="city"
@@ -274,13 +279,19 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
             )}
           </div>
 
-          <div className="space-y-2">
+          {/* Estado - takes 2 columns */}
+          <div className="col-span-12 md:col-span-2 space-y-2">
             <Label htmlFor="state">Estado</Label>
             <Input
               id="state"
               {...form.register("state")}
               placeholder="SP"
               maxLength={2}
+              className="uppercase"
+              onChange={(e) => {
+                const uppercased = e.target.value.toUpperCase();
+                form.setValue("state", uppercased);
+              }}
             />
             {form.formState.errors.state && (
               <p className="text-sm text-red-600">{form.formState.errors.state.message}</p>
