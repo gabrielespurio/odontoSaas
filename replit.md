@@ -300,6 +300,7 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
 - July 10, 2025. **ADDRESS FORM ENHANCEMENT**: Implemented ViaCEP API integration for automatic address completion
 - July 10, 2025. **CEP AUTOMATION**: Added automatic address filling when CEP is entered with loading indicator and error handling
 - July 10, 2025. **STRUCTURED ADDRESS**: Updated patient registration with separate address fields (CEP, logradouro, número, bairro, cidade, estado)
+- July 11, 2025. **MENU LABEL UPDATE**: Changed financial module name from "Financeiro" to "Financeiros" in sidebar navigation
 
 ## User Preferences
 

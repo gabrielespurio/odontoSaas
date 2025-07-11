@@ -23,7 +23,7 @@ const navigation = [
   { name: "Atendimentos", href: "/consultations", icon: Stethoscope },
   { name: "Procedimentos", href: "/procedures", icon: Wrench },
   { 
-    name: "Financeiro", 
+    name: "Financeiros", 
     href: "/financial", 
     icon: DollarSign,
     submenus: [
