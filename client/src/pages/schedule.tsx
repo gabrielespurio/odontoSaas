@@ -275,7 +275,7 @@ export default function Schedule() {
               Novo Agendamento
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[95vh] sm:max-h-[90vh] flex flex-col">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
               <DialogTitle>
                 {editingAppointment ? "Editar Agendamento" : "Novo Agendamento"}
@@ -346,11 +346,12 @@ export default function Schedule() {
         </CardContent>
       </Card>
 
-      {/* Teams-style Schedule Grid */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <div className="min-w-[800px] relative">
+      {/* Desktop Schedule Grid */}
+      <div className="hidden lg:block">
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <div className="min-w-[800px] relative">
               {/* Fixed header */}
               <div className="schedule-header">
                 <div className="schedule-day-header"></div>
@@ -643,8 +644,141 @@ export default function Schedule() {
           </div>
         </CardContent>
       </Card>
+      </div>
 
-
+      {/* Mobile Schedule View */}
+      <div className="lg:hidden">
+        <Card>
+          <CardContent className="p-4">
+            <div className="space-y-4">
+              {weekDates.map((date, dayIndex) => (
+                <div key={dayIndex} className="border rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-3">
+                    <div>
+                      <h3 className="font-semibold text-lg">
+                        {date.toLocaleDateString('pt-BR', { weekday: 'long' })}
+                      </h3>
+                      <p className="text-sm text-neutral-600">
+                        {date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedTimeSlot(formatLocalDateTime(date, "09:00"));
+                        setEditingAppointment(null);
+                        setShowForm(true);
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Agendar
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {timeSlots.map((time) => {
+                      const filteredDentists = selectedDentist === "all" 
+                        ? dentists || [] 
+                        : dentists?.filter(d => d.id.toString() === selectedDentist) || [];
+                      
+                      const dayAppointments = filteredDentists.map(dentist => ({
+                        dentist,
+                        appointment: getAppointmentForSlot(date, time, dentist.id)
+                      })).filter(item => item.appointment);
+                      
+                      if (dayAppointments.length === 0) return null;
+                      
+                      return (
+                        <div key={time} className="border-l-2 border-neutral-200 pl-3">
+                          <div className="text-sm font-medium text-neutral-700 mb-2">{time}</div>
+                          <div className="space-y-2">
+                            {dayAppointments.map(({ dentist, appointment }) => (
+                              <div
+                                key={`${dentist.id}-${appointment?.id}`}
+                                className={`p-3 rounded-lg text-white ${getStatusColor(appointment?.status || 'agendado')}`}
+                                onClick={() => {
+                                  if (appointment) {
+                                    setEditingAppointment(appointment);
+                                    setShowForm(true);
+                                  }
+                                }}
+                              >
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1">
+                                    <div className="font-medium">{appointment?.patient?.name}</div>
+                                    <div className="text-sm opacity-90">{appointment?.procedure?.name}</div>
+                                    <div className="text-xs opacity-75 mt-1">
+                                      Dr. {dentist.name}
+                                    </div>
+                                    <div className="text-xs opacity-75">
+                                      {appointment?.procedure?.duration || 30} min
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
+                                      {getStatusLabel(appointment?.status || 'agendado')}
+                                    </Badge>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-white/20">
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        {appointment && getStatusActions(appointment.status).map((action) => (
+                                          <DropdownMenuItem
+                                            key={action.value}
+                                            onClick={() => handleStatusChange(appointment.id, action.value)}
+                                            className={`${action.color} cursor-pointer`}
+                                          >
+                                            <action.icon className="w-4 h-4 mr-2" />
+                                            {action.label}
+                                          </DropdownMenuItem>
+                                        ))}
+                                        <DropdownMenuItem
+                                          onClick={() => {
+                                            if (appointment) {
+                                              setEditingAppointment(appointment);
+                                              setShowForm(true);
+                                            }
+                                          }}
+                                          className="cursor-pointer"
+                                        >
+                                          <Edit2 className="w-4 h-4 mr-2" />
+                                          Editar
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    
+                    {timeSlots.every(time => {
+                      const filteredDentists = selectedDentist === "all" 
+                        ? dentists || [] 
+                        : dentists?.filter(d => d.id.toString() === selectedDentist) || [];
+                      
+                      return filteredDentists.every(dentist => 
+                        !getAppointmentForSlot(date, time, dentist.id)
+                      );
+                    }) && (
+                      <div className="text-center py-8 text-neutral-600">
+                        <p className="text-sm">Nenhum agendamento para este dia</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

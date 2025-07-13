@@ -71,7 +71,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         transition-transform duration-300 ease-in-out lg:transition-none
         lg:flex lg:flex-shrink-0
       `}>
-        <div className="flex flex-col w-64 bg-white border-r border-neutral-200 h-full">
+        <div className="flex flex-col w-64 bg-white border-r border-neutral-200 h-full max-h-screen overflow-y-auto">
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-neutral-200">
           <div className="flex items-center space-x-2">
@@ -85,7 +85,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           {/* Close button for mobile */}
           <button 
             onClick={onClose}
-            className="lg:hidden p-1 text-neutral-600 hover:text-neutral-900"
+            className="lg:hidden p-1 text-neutral-600 hover:text-neutral-900 rounded-md hover:bg-neutral-100"
           >
             <X className="w-6 h-6" />
           </button>
