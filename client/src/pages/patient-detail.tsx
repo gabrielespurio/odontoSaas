@@ -496,8 +496,10 @@ export default function PatientDetail() {
           <Odontogram patientId={patientId} />
         </TabsContent>
 
-        <TabsContent value="anamnese">
-          <AnamneseForm patientId={patientId} />
+        <TabsContent value="anamnese" className="space-y-4">
+          <div className="w-full max-w-none">
+            <AnamneseForm patientId={patientId} />
+          </div>
         </TabsContent>
 
         <TabsContent value="financial" className="space-y-4">
