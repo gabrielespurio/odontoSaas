@@ -139,7 +139,7 @@ export default function Patients() {
               Novo Paciente
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
+          <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] overflow-y-auto p-3 sm:p-6">
             <DialogHeader>
               <DialogTitle>
                 {editingPatient ? "Editar Paciente" : "Novo Paciente"}

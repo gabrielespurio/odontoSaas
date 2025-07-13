@@ -254,9 +254,9 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
       <div className="space-y-4 sm:space-y-6">
         <h3 className="text-base sm:text-lg font-medium border-t pt-4 sm:pt-6">Endereço</h3>
         
-        <div className="grid grid-cols-12 gap-3 sm:gap-4">
+        <div className="grid grid-cols-12 gap-2 sm:gap-3 md:gap-4">
           {/* CEP - takes 3 columns */}
-          <div className="col-span-12 sm:col-span-4 md:col-span-3 space-y-2">
+          <div className="col-span-12 sm:col-span-6 md:col-span-3 space-y-2">
             <Label htmlFor="cep">CEP</Label>
             <div className="relative">
               <Input
@@ -289,7 +289,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
           </div>
 
           {/* Logradouro - takes 9 columns */}
-          <div className="col-span-12 sm:col-span-8 md:col-span-9 space-y-2">
+          <div className="col-span-12 sm:col-span-6 md:col-span-9 space-y-2">
             <Label htmlFor="street">Logradouro</Label>
             <Input
               id="street"
@@ -302,7 +302,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
           </div>
 
           {/* Número - takes 2 columns (better size) */}
-          <div className="col-span-6 sm:col-span-4 md:col-span-2 space-y-2">
+          <div className="col-span-6 sm:col-span-6 md:col-span-2 space-y-2">
             <Label htmlFor="number">Número</Label>
             <Input
               id="number"
@@ -315,7 +315,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
           </div>
 
           {/* Bairro - takes 4 columns */}
-          <div className="col-span-6 sm:col-span-4 md:col-span-4 space-y-2">
+          <div className="col-span-6 sm:col-span-6 md:col-span-4 space-y-2">
             <Label htmlFor="neighborhood">Bairro</Label>
             <Input
               id="neighborhood"
@@ -328,7 +328,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
           </div>
 
           {/* Cidade - takes 4 columns */}
-          <div className="col-span-12 sm:col-span-8 md:col-span-4 space-y-2">
+          <div className="col-span-8 sm:col-span-8 md:col-span-4 space-y-2">
             <Label htmlFor="city">Cidade</Label>
             <Input
               id="city"
@@ -341,7 +341,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
           </div>
 
           {/* Estado - takes 2 columns */}
-          <div className="col-span-12 sm:col-span-4 md:col-span-2 space-y-2">
+          <div className="col-span-4 sm:col-span-4 md:col-span-2 space-y-2">
             <Label htmlFor="state">Estado</Label>
             <Input
               id="state"
