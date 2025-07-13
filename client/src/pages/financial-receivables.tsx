@@ -184,14 +184,14 @@ export default function FinancialReceivables() {
     <div className="page-container">
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Contas a Receber</h1>
             <p className="text-gray-600">Gerencie os recebimentos de pacientes</p>
           </div>
           <Dialog open={showForm} onOpenChange={setShowForm}>
             <DialogTrigger asChild>
-              <Button onClick={() => setEditingReceivable(null)}>
+              <Button onClick={() => setEditingReceivable(null)} className="w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Conta a Receber
               </Button>
@@ -212,7 +212,7 @@ export default function FinancialReceivables() {
         </div>
 
         {/* Métricas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
@@ -274,7 +274,7 @@ export default function FinancialReceivables() {
         <Card>
           <CardContent className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
+              <div className="relative md:col-span-1">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Buscar por paciente ou descrição..."
@@ -315,15 +315,15 @@ export default function FinancialReceivables() {
                 setSearch("");
                 setSelectedStatus("all");
                 setSelectedPatient("all");
-              }}>
+              }} className="w-full md:w-auto">
                 Limpar Filtros
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Lista de Contas a Receber */}
-        <Card>
+        {/* Lista de Contas a Receber - Desktop */}
+        <Card className="hidden md:block">
           <CardHeader>
             <CardTitle>Contas a Receber</CardTitle>
           </CardHeader>
@@ -397,6 +397,110 @@ export default function FinancialReceivables() {
             )}
           </CardContent>
         </Card>
+
+        {/* Lista de Contas a Receber - Mobile */}
+        <div className="md:hidden">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Contas a Receber</h2>
+          {receivablesLoading ? (
+            <Card>
+              <CardContent className="p-8">
+                <div className="flex justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : filteredReceivables.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <DollarSign className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Nenhuma conta encontrada
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Não há contas a receber que correspondam aos filtros aplicados.
+                </p>
+                <Button onClick={() => setShowForm(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Criar Primeira Conta
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {filteredReceivables.map((receivable) => (
+                <Card key={receivable.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+                          {getInitials(receivable.patient.name)}
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900">{receivable.patient.name}</h4>
+                          <p className="text-sm text-gray-600">{receivable.description}</p>
+                          {receivable.installments > 1 && (
+                            <p className="text-xs text-gray-500">
+                              Parcela {receivable.installmentNumber}/{receivable.installments}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {getStatusBadge(receivable.status, receivable.dueDate)}
+                    </div>
+                    
+                    <div className="space-y-2 mb-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Valor:</span>
+                        <span className="text-lg font-bold text-gray-900">{formatCurrency(receivable.amount)}</span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Vencimento:</span>
+                        <span className="text-sm font-medium text-gray-900">{formatDate(receivable.dueDate)}</span>
+                      </div>
+                      
+                      {receivable.paymentDate && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Pagamento:</span>
+                          <span className="text-sm font-medium text-green-600">{formatDate(receivable.paymentDate)}</span>
+                        </div>
+                      )}
+                      
+                      {receivable.paymentMethod && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Método:</span>
+                          <span className="text-sm font-medium text-gray-900">{receivable.paymentMethod}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(receivable)}
+                      >
+                        <Edit className="w-3 h-3 mr-1" />
+                        Editar
+                      </Button>
+                      
+                      {receivable.status === "pending" && (
+                        <Button
+                          size="sm"
+                          onClick={() => handlePayment(receivable)}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <CreditCard className="w-3 h-3 mr-1" />
+                          Receber
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modal de Pagamento */}
