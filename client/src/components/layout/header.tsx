@@ -10,21 +10,34 @@ const pageNames: Record<string, string> = {
   "/financial": "Financeiro",
   "/financial/receivables": "Contas a Receber",
   "/financial/payables": "Contas a Pagar", 
-  "/financial/cash-flow": "Fluxo de Caixa",
+  "/financial/cashflow": "Fluxo de Caixa",
   "/reports": "Relatórios",
   "/settings": "Configurações",
 };
 
-export default function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+export default function Header({ onMenuClick }: HeaderProps) {
+  const [location] = useLocation();
+  const currentPageName = pageNames[location] || "OdontoSync";
+
   return (
     <header className="bg-white border-b border-neutral-200">
-      <div className="flex items-center justify-between px-6 h-16">
+      <div className="flex items-center justify-between px-4 sm:px-6 h-16">
         <div className="flex items-center">
-          <button className="lg:hidden text-neutral-600 hover:text-neutral-900 mr-2">
+          <button 
+            onClick={onMenuClick}
+            className="lg:hidden text-neutral-600 hover:text-neutral-900 mr-3 p-2"
+          >
             <Menu className="w-6 h-6" />
           </button>
+          <h1 className="text-lg sm:text-xl font-semibold text-neutral-900 lg:hidden">
+            {currentPageName}
+          </h1>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           <button className="p-2 text-neutral-600 hover:text-neutral-900 transition-colors">
             <Bell className="w-5 h-5" />
           </button>

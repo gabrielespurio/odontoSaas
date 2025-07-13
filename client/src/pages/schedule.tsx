@@ -265,17 +265,17 @@ export default function Schedule() {
   }
 
   return (
-    <div className="page-container">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-neutral-900">Agenda</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-neutral-900">Agenda</h1>
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
-            <Button className="bg-teal-600 hover:bg-teal-700">
+            <Button className="bg-teal-600 hover:bg-teal-700 w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Novo Agendamento
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingAppointment ? "Editar Agendamento" : "Novo Agendamento"}
@@ -299,11 +299,11 @@ export default function Schedule() {
       </div>
 
       {/* Calendar Controls */}
-      <Card className="mb-6">
+      <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h3 className="text-lg font-semibold text-neutral-900">
+          <div className="flex flex-col lg:flex-row justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+              <h3 className="text-base sm:text-lg font-semibold text-neutral-900">
                 {weekDates[0].toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} - {weekDates[6].toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}
               </h3>
               <div className="flex items-center space-x-2">
@@ -318,9 +318,9 @@ export default function Schedule() {
                 </Button>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center">
               <Select value={selectedDentist} onValueChange={setSelectedDentist}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48">
                   <SelectValue placeholder="Selecionar profissional" />
                 </SelectTrigger>
                 <SelectContent>

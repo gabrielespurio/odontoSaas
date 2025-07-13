@@ -43,8 +43,8 @@ export default function Dashboard() {
 
   if (metricsLoading || appointmentsLoading) {
     return (
-      <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i}>
               <CardContent className="pt-6">
@@ -61,9 +61,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="page-container">
+    <div className="space-y-4 sm:space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -130,30 +130,32 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Activity & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Recent Appointments */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-semibold">Próximos Atendimentos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {todayAppointments?.slice(0, 5).map((appointment) => (
                 <div key={appointment.id} className="flex items-center justify-between py-3 border-b border-neutral-100 last:border-b-0">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="text-blue-600 w-4 h-4" />
+                  <div className="flex items-center min-w-0 flex-1">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+                      <User className="text-blue-600 w-3 h-3 sm:w-4 sm:h-4" />
                     </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-neutral-900">{appointment.patient?.name}</p>
-                      <p className="text-xs text-neutral-600">{appointment.procedure?.name}</p>
+                    <div className="ml-3 min-w-0 flex-1">
+                      <p className="text-sm font-medium text-neutral-900 truncate">{appointment.patient?.name}</p>
+                      <p className="text-xs text-neutral-600 truncate">{appointment.procedure?.name}</p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0 ml-3">
                     <p className="text-sm font-medium text-neutral-900">
                       {new Date(appointment.scheduledDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </p>
-                    {getStatusBadge(appointment.status)}
+                    <div className="mt-1">
+                      {getStatusBadge(appointment.status)}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -172,32 +174,32 @@ export default function Dashboard() {
             <CardTitle className="text-lg font-semibold">Ações Rápidas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <Link href="/patients">
-                <Button variant="outline" className="h-auto flex flex-col items-center p-4 bg-blue-50 hover:bg-blue-100 border-blue-200">
-                  <UserPlus className="text-blue-600 w-6 h-6 mb-2" />
-                  <span className="text-sm font-medium text-blue-900">Novo Paciente</span>
+                <Button variant="outline" className="h-auto flex flex-col items-center p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 border-blue-200">
+                  <UserPlus className="text-blue-600 w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
+                  <span className="text-xs sm:text-sm font-medium text-blue-900">Novo Paciente</span>
                 </Button>
               </Link>
               
               <Link href="/schedule">
-                <Button variant="outline" className="h-auto flex flex-col items-center p-4 bg-green-50 hover:bg-green-100 border-green-200">
-                  <CalendarPlus className="text-green-600 w-6 h-6 mb-2" />
-                  <span className="text-sm font-medium text-green-900">Agendar</span>
+                <Button variant="outline" className="h-auto flex flex-col items-center p-3 sm:p-4 bg-green-50 hover:bg-green-100 border-green-200">
+                  <CalendarPlus className="text-green-600 w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
+                  <span className="text-xs sm:text-sm font-medium text-green-900">Agendar</span>
                 </Button>
               </Link>
               
               <Link href="/consultations">
-                <Button variant="outline" className="h-auto flex flex-col items-center p-4 bg-purple-50 hover:bg-purple-100 border-purple-200">
-                  <Stethoscope className="text-purple-600 w-6 h-6 mb-2" />
-                  <span className="text-sm font-medium text-purple-900">Atendimento</span>
+                <Button variant="outline" className="h-auto flex flex-col items-center p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 border-purple-200">
+                  <Stethoscope className="text-purple-600 w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
+                  <span className="text-xs sm:text-sm font-medium text-purple-900">Atendimento</span>
                 </Button>
               </Link>
               
               <Link href="/reports">
-                <Button variant="outline" className="h-auto flex flex-col items-center p-4 bg-yellow-50 hover:bg-yellow-100 border-yellow-200">
-                  <BarChart3 className="text-yellow-600 w-6 h-6 mb-2" />
-                  <span className="text-sm font-medium text-yellow-900">Relatório</span>
+                <Button variant="outline" className="h-auto flex flex-col items-center p-3 sm:p-4 bg-yellow-50 hover:bg-yellow-100 border-yellow-200">
+                  <BarChart3 className="text-yellow-600 w-5 h-5 sm:w-6 sm:h-6 mb-1 sm:mb-2" />
+                  <span className="text-xs sm:text-sm font-medium text-yellow-900">Relatório</span>
                 </Button>
               </Link>
             </div>

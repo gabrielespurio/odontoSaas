@@ -257,8 +257,8 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
 
   return (
     <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
             <Label htmlFor="patientId">Paciente *</Label>
             <Select 

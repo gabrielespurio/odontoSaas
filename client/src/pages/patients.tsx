@@ -118,7 +118,7 @@ export default function Patients() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="space-y-4 sm:space-y-6">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-1/4 mb-6"></div>
           <div className="h-24 bg-gray-200 rounded mb-6"></div>
@@ -129,17 +129,17 @@ export default function Patients() {
   }
 
   return (
-    <div className="page-container">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-neutral-900">Pacientes</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Pacientes</h1>
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingPatient(null)}>
+            <Button onClick={() => setEditingPatient(null)} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Novo Paciente
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingPatient ? "Editar Paciente" : "Novo Paciente"}
@@ -155,9 +155,9 @@ export default function Patients() {
       </div>
 
       {/* Search and Filters */}
-      <Card className="mb-6">
+      <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
               <Input
@@ -167,7 +167,7 @@ export default function Patients() {
                 className="pl-10"
               />
             </div>
-            <Button variant="outline" className="md:w-32">
+            <Button variant="outline" className="w-full sm:w-auto sm:min-w-[120px]">
               <Filter className="w-4 h-4 mr-2" />
               Filtros
             </Button>
@@ -175,14 +175,15 @@ export default function Patients() {
         </CardContent>
       </Card>
 
-      {/* Patients Table */}
+      {/* Patients List */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <CardTitle>Lista de Pacientes</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="responsive-table-container">
-            <table className="responsive-table">
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
+            <table className="w-full">
               <thead className="bg-neutral-50">
                 <tr className="border-b">
                   <th className="text-left py-4 px-6 font-medium text-neutral-700">Paciente</th>
@@ -245,6 +246,67 @@ export default function Patients() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-3 p-4">
+            {patients?.map((patient) => (
+              <div key={patient.id} className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-3 flex-1 min-w-0">
+                    <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium shrink-0">
+                      {getInitials(patient.name)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-medium text-neutral-900 truncate">{patient.name}</h3>
+                      {patient.email && <p className="text-sm text-neutral-600 truncate">{patient.email}</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2 shrink-0">
+                    <Badge className={patient.isActive ? "status-confirmed" : "status-cancelled"} style={{ fontSize: '0.75rem' }}>
+                      {patient.isActive ? "Ativo" : "Inativo"}
+                    </Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/patients/${patient.id}`} className="flex items-center cursor-pointer">
+                            <Edit className="w-4 h-4 mr-2" />
+                            Editar
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteClick(patient)}
+                          className="text-red-600 focus:text-red-600 cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-neutral-500">CPF:</span>
+                    <span className="ml-2 text-neutral-900 font-mono">{formatCPF(patient.cpf)}</span>
+                  </div>
+                  <div>
+                    <span className="text-neutral-500">Telefone:</span>
+                    <span className="ml-2 text-neutral-900 font-mono">{formatPhone(patient.phone)}</span>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <span className="text-neutral-500">Cadastrado em:</span>
+                    <span className="ml-2 text-neutral-900">{formatDate(patient.createdAt)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
           
           {(!patients || patients.length === 0) && (

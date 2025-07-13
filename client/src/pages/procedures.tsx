@@ -206,24 +206,24 @@ export default function Procedures() {
   }
 
   return (
-    <div className="page-container">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-neutral-900">Procedimentos</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Procedimentos</h1>
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingProcedure(null)}>
+            <Button onClick={() => setEditingProcedure(null)} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-2" />
               Novo Procedimento
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingProcedure ? "Editar Procedimento" : "Novo Procedimento"}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome do Procedimento *</Label>
                   <Input
@@ -296,13 +296,14 @@ export default function Procedures() {
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={handleFormReset}>
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4 sm:pt-6 border-t">
+                <Button type="button" variant="outline" onClick={handleFormReset} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={createProcedureMutation.isPending || updateProcedureMutation.isPending}
+                  className="w-full sm:w-auto"
                 >
                   {createProcedureMutation.isPending || updateProcedureMutation.isPending ? "Salvando..." : "Salvar"}
                 </Button>

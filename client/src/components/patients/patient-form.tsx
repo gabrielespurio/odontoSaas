@@ -178,8 +178,8 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <div className="space-y-2">
           <Label htmlFor="name">Nome Completo *</Label>
           <Input
@@ -251,12 +251,12 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
       </div>
 
       {/* Structured Address Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Endereço</h3>
+      <div className="space-y-4 sm:space-y-6">
+        <h3 className="text-base sm:text-lg font-medium border-t pt-4 sm:pt-6">Endereço</h3>
         
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid grid-cols-12 gap-3 sm:gap-4">
           {/* CEP - takes 3 columns */}
-          <div className="col-span-12 md:col-span-3 space-y-2">
+          <div className="col-span-12 sm:col-span-4 md:col-span-3 space-y-2">
             <Label htmlFor="cep">CEP</Label>
             <div className="relative">
               <Input
@@ -289,7 +289,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
           </div>
 
           {/* Logradouro - takes 9 columns */}
-          <div className="col-span-12 md:col-span-9 space-y-2">
+          <div className="col-span-12 sm:col-span-8 md:col-span-9 space-y-2">
             <Label htmlFor="street">Logradouro</Label>
             <Input
               id="street"
@@ -302,7 +302,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
           </div>
 
           {/* Número - takes 2 columns (better size) */}
-          <div className="col-span-4 md:col-span-2 space-y-2">
+          <div className="col-span-6 sm:col-span-4 md:col-span-2 space-y-2">
             <Label htmlFor="number">Número</Label>
             <Input
               id="number"
@@ -315,7 +315,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
           </div>
 
           {/* Bairro - takes 4 columns */}
-          <div className="col-span-4 md:col-span-4 space-y-2">
+          <div className="col-span-6 sm:col-span-4 md:col-span-4 space-y-2">
             <Label htmlFor="neighborhood">Bairro</Label>
             <Input
               id="neighborhood"
@@ -328,7 +328,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
           </div>
 
           {/* Cidade - takes 4 columns */}
-          <div className="col-span-4 md:col-span-4 space-y-2">
+          <div className="col-span-12 sm:col-span-8 md:col-span-4 space-y-2">
             <Label htmlFor="city">Cidade</Label>
             <Input
               id="city"
@@ -341,7 +341,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
           </div>
 
           {/* Estado - takes 2 columns */}
-          <div className="col-span-12 md:col-span-2 space-y-2">
+          <div className="col-span-12 sm:col-span-4 md:col-span-2 space-y-2">
             <Label htmlFor="state">Estado</Label>
             <Input
               id="state"
@@ -371,13 +371,14 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
         />
       </div>
 
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4 sm:pt-6 border-t">
+        <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
           Cancelar
         </Button>
         <Button 
           type="submit" 
           disabled={createMutation.isPending || updateMutation.isPending}
+          className="w-full sm:w-auto"
         >
           {createMutation.isPending || updateMutation.isPending ? "Salvando..." : "Salvar"}
         </Button>

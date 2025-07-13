@@ -12,7 +12,8 @@ import {
   Settings,
   LogOut,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  X
 } from "lucide-react";
 import odontoSyncLogo from "@assets/ChatGPT_Image_10_de_jul._de_2025__12_09_27-removebg-preview_1752160369330.png";
 
@@ -36,7 +37,12 @@ const navigation = [
   { name: "Configurações", href: "/settings", icon: Settings },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [isFinanceOpen, setIsFinanceOpen] = useState(false);
@@ -49,10 +55,25 @@ export default function Sidebar() {
   const isFinanceActive = location === "/financial" || location.startsWith("/financial/");
 
   return (
-    <div className="hidden lg:flex lg:flex-shrink-0">
-      <div className="flex flex-col w-64 bg-white border-r border-neutral-200">
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 lg:static lg:z-auto
+        transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
+        transition-transform duration-300 ease-in-out lg:transition-none
+        lg:flex lg:flex-shrink-0
+      `}>
+        <div className="flex flex-col w-64 bg-white border-r border-neutral-200 h-full">
         {/* Logo */}
-        <div className="flex items-center justify-center h-16 px-6 border-b border-neutral-200">
+        <div className="flex items-center justify-between h-16 px-6 border-b border-neutral-200">
           <div className="flex items-center space-x-2">
             <img 
               src={odontoSyncLogo} 
@@ -61,6 +82,13 @@ export default function Sidebar() {
             />
             <h1 className="text-xl font-bold text-neutral-900">OdontoSync</h1>
           </div>
+          {/* Close button for mobile */}
+          <button 
+            onClick={onClose}
+            className="lg:hidden p-1 text-neutral-600 hover:text-neutral-900"
+          >
+            <X className="w-6 h-6" />
+          </button>
         </div>
 
         {/* Navigation */}
@@ -152,7 +180,8 @@ export default function Sidebar() {
             </button>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
