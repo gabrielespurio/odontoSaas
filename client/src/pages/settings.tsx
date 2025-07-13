@@ -249,13 +249,15 @@ export default function Settings() {
 
       <Tabs defaultValue="users" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="users" className="flex items-center gap-2">
+          <TabsTrigger value="users" className="flex items-center gap-2 text-sm">
             <Users className="w-4 h-4" />
-            Usuários
+            <span className="hidden sm:inline">Usuários</span>
+            <span className="sm:hidden">Users</span>
           </TabsTrigger>
-          <TabsTrigger value="categories" className="flex items-center gap-2">
+          <TabsTrigger value="categories" className="flex items-center gap-2 text-sm">
             <FolderPlus className="w-4 h-4" />
-            Categorias
+            <span className="hidden sm:inline">Categorias</span>
+            <span className="sm:hidden">Cat.</span>
           </TabsTrigger>
         </TabsList>
 
@@ -263,7 +265,7 @@ export default function Settings() {
         <TabsContent value="users" className="space-y-6">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <CardTitle>Usuários do Sistema</CardTitle>
                   <CardDescription>
@@ -273,7 +275,7 @@ export default function Settings() {
                 <Dialog open={showUserForm} onOpenChange={setShowUserForm}>
                   <DialogTrigger asChild>
                     <Button 
-                      className="bg-teal-600 hover:bg-teal-700"
+                      className="bg-teal-600 hover:bg-teal-700 w-full sm:w-auto"
                       onClick={() => {
                         setEditingUser(null);
                         userForm.reset({
@@ -401,54 +403,109 @@ export default function Settings() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
                 </div>
               ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Username</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Papel</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="w-[50px]">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users?.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.name}</TableCell>
-                          <TableCell>{user.username}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>
-                            <Badge variant={getRoleBadgeVariant(user.role)}>
-                              {getRoleLabel(user.role)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={user.isActive ? "default" : "secondary"}>
-                              {user.isActive ? "Ativo" : "Inativo"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Editar
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
+                <>
+                  {/* Desktop Table */}
+                  <div className="hidden md:block rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Username</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Papel</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="w-[50px]">Ações</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {users?.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">{user.name}</TableCell>
+                            <TableCell>{user.username}</TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                              <Badge variant={getRoleBadgeVariant(user.role)}>
+                                {getRoleLabel(user.role)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={user.isActive ? "default" : "secondary"}>
+                                {user.isActive ? "Ativo" : "Inativo"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Editar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile Cards */}
+                  <div className="md:hidden space-y-4">
+                    {users?.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          Nenhum usuário encontrado
+                        </h3>
+                        <p className="text-gray-600 mb-4">
+                          Comece criando o primeiro usuário do sistema.
+                        </p>
+                        <Button onClick={() => setShowUserForm(true)} className="bg-teal-600 hover:bg-teal-700">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Criar Primeiro Usuário
+                        </Button>
+                      </div>
+                    ) : (
+                      users?.map((user) => (
+                        <Card key={user.id} className="hover:shadow-md transition-shadow">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <h3 className="font-medium text-gray-900">{user.name}</h3>
+                                <p className="text-sm text-gray-600">@{user.username}</p>
+                                <p className="text-sm text-gray-600">{user.email}</p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditUser(user)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <Badge variant={getRoleBadgeVariant(user.role)}>
+                                  {getRoleLabel(user.role)}
+                                </Badge>
+                                <Badge variant={user.isActive ? "default" : "secondary"}>
+                                  {user.isActive ? "Ativo" : "Inativo"}
+                                </Badge>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -458,7 +515,7 @@ export default function Settings() {
         <TabsContent value="categories" className="space-y-6">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <CardTitle>Categorias de Procedimentos</CardTitle>
                   <CardDescription>
@@ -468,7 +525,7 @@ export default function Settings() {
                 <Dialog open={showCategoryForm} onOpenChange={setShowCategoryForm}>
                   <DialogTrigger asChild>
                     <Button 
-                      className="bg-teal-600 hover:bg-teal-700"
+                      className="bg-teal-600 hover:bg-teal-700 w-full sm:w-auto"
                       onClick={() => {
                         setEditingCategory(null);
                         categoryForm.reset({
@@ -543,46 +600,97 @@ export default function Settings() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
                 </div>
               ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="w-[50px]">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {categories?.map((category) => (
-                        <TableRow key={category.id}>
-                          <TableCell className="font-medium">{category.name}</TableCell>
-                          <TableCell>{category.description || "-"}</TableCell>
-                          <TableCell>
-                            <Badge variant={category.isActive ? "default" : "secondary"}>
-                              {category.isActive ? "Ativo" : "Inativo"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEditCategory(category)}>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Editar
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
+                <>
+                  {/* Desktop Table */}
+                  <div className="hidden md:block rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Descrição</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="w-[50px]">Ações</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {categories?.map((category) => (
+                          <TableRow key={category.id}>
+                            <TableCell className="font-medium">{category.name}</TableCell>
+                            <TableCell>{category.description || "-"}</TableCell>
+                            <TableCell>
+                              <Badge variant={category.isActive ? "default" : "secondary"}>
+                                {category.isActive ? "Ativo" : "Inativo"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditCategory(category)}>
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Editar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile Cards */}
+                  <div className="md:hidden space-y-4">
+                    {categories?.length === 0 ? (
+                      <div className="text-center py-8">
+                        <FolderPlus className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          Nenhuma categoria encontrada
+                        </h3>
+                        <p className="text-gray-600 mb-4">
+                          Comece criando a primeira categoria de procedimentos.
+                        </p>
+                        <Button onClick={() => setShowCategoryForm(true)} className="bg-teal-600 hover:bg-teal-700">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Criar Primeira Categoria
+                        </Button>
+                      </div>
+                    ) : (
+                      categories?.map((category) => (
+                        <Card key={category.id} className="hover:shadow-md transition-shadow">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <h3 className="font-medium text-gray-900">{category.name}</h3>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {category.description || "Sem descrição"}
+                                </p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditCategory(category)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            
+                            <div className="flex items-center justify-start">
+                              <Badge variant={category.isActive ? "default" : "secondary"}>
+                                {category.isActive ? "Ativo" : "Inativo"}
+                              </Badge>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
