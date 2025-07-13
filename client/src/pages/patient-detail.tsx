@@ -27,7 +27,7 @@ import {
   Edit
 } from "lucide-react";
 import Odontogram from "@/components/dental-chart/odontogram";
-import AnamneseForm from "@/components/patients/anamnese-form";
+import { AnamneseForm } from "@/components/patients/anamnese-form-new";
 import type { Patient, Consultation, Financial } from "@/lib/types";
 
 const patientEditSchema = z.object({
