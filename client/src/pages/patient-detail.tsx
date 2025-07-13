@@ -189,32 +189,32 @@ export default function PatientDetail() {
   }
 
   return (
-    <div className="page-container odontogram-container">
+    <div className="page-container min-h-screen">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-6">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center gap-3">
           <Link href="/patients">
             <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
           </Link>
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white text-lg font-medium shrink-0">
-              {getInitials(patient.name)}
-            </div>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-bold text-neutral-900 break-words">{patient.name}</h1>
-              <p className="text-neutral-600 truncate">{patient.email || 'Email não informado'}</p>
-            </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white text-lg font-medium shrink-0">
+            {getInitials(patient.name)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 break-words">{patient.name}</h1>
+            <p className="text-sm text-neutral-600 truncate">{patient.email || 'Email não informado'}</p>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 lg:shrink-0">
-          <Button variant="outline" className="sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" className="w-full sm:w-auto">
             <CalendarPlus className="w-4 h-4 mr-2" />
             Agendar Consulta
           </Button>
-          <Button className="sm:w-auto">
+          <Button className="w-full sm:w-auto">
             <FileText className="w-4 h-4 mr-2" />
             Nova Consulta
           </Button>
@@ -225,19 +225,21 @@ export default function PatientDetail() {
 
       {/* Tabs */}
       <Tabs defaultValue="informacoes" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="informacoes">Informações Pessoais</TabsTrigger>
-          <TabsTrigger value="consultations">Histórico</TabsTrigger>
-          <TabsTrigger value="odontogram">Odontograma</TabsTrigger>
-          <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
-          <TabsTrigger value="financial">Financeiro</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="grid w-full grid-cols-5 min-w-max">
+            <TabsTrigger value="informacoes" className="text-xs sm:text-sm whitespace-nowrap">Informações</TabsTrigger>
+            <TabsTrigger value="consultations" className="text-xs sm:text-sm whitespace-nowrap">Histórico</TabsTrigger>
+            <TabsTrigger value="odontogram" className="text-xs sm:text-sm whitespace-nowrap">Odontograma</TabsTrigger>
+            <TabsTrigger value="anamnese" className="text-xs sm:text-sm whitespace-nowrap">Anamnese</TabsTrigger>
+            <TabsTrigger value="financial" className="text-xs sm:text-sm whitespace-nowrap">Financeiro</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="informacoes" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Informações Pessoais</CardTitle>
-              <div className="flex gap-2">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <CardTitle className="text-lg sm:text-xl">Informações Pessoais</CardTitle>
+              <div className="flex gap-2 w-full sm:w-auto">
                 {isEditing ? (
                   <>
                     <Button 
@@ -247,6 +249,7 @@ export default function PatientDetail() {
                         setIsEditing(false);
                         form.reset();
                       }}
+                      className="flex-1 sm:flex-none"
                     >
                       Cancelar
                     </Button>
@@ -254,6 +257,7 @@ export default function PatientDetail() {
                       size="sm"
                       onClick={form.handleSubmit(onSubmit)}
                       disabled={updatePatientMutation.isPending}
+                      className="flex-1 sm:flex-none"
                     >
                       {updatePatientMutation.isPending ? "Salvando..." : "Salvar"}
                     </Button>
@@ -263,6 +267,7 @@ export default function PatientDetail() {
                     variant="outline" 
                     size="sm"
                     onClick={() => setIsEditing(true)}
+                    className="w-full sm:w-auto"
                   >
                     <Edit className="w-4 h-4 mr-2" />
                     Editar
@@ -273,8 +278,8 @@ export default function PatientDetail() {
             <CardContent>
               {isEditing ? (
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                       <div className="space-y-4">
                         <FormField
                           control={form.control}
@@ -378,51 +383,51 @@ export default function PatientDetail() {
                   </form>
                 </Form>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                  <div className="space-y-4 lg:space-y-6">
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4 text-neutral-600" />
                         <label className="text-sm font-medium text-neutral-600">Nome Completo</label>
                       </div>
-                      <p className="text-lg font-medium text-neutral-900 break-words">{patient.name}</p>
+                      <p className="text-base lg:text-lg font-medium text-neutral-900 break-words">{patient.name}</p>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4 text-neutral-600" />
                         <label className="text-sm font-medium text-neutral-600">CPF</label>
                       </div>
-                      <p className="text-lg font-medium text-neutral-900 font-mono">{formatCPF(patient.cpf)}</p>
+                      <p className="text-base lg:text-lg font-medium text-neutral-900 font-mono">{formatCPF(patient.cpf)}</p>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Calendar className="w-4 h-4 text-neutral-600" />
                         <label className="text-sm font-medium text-neutral-600">Data de Nascimento</label>
                       </div>
-                      <p className="text-lg font-medium text-neutral-900">{formatDate(patient.birthDate)}</p>
+                      <p className="text-base lg:text-lg font-medium text-neutral-900">{formatDate(patient.birthDate)}</p>
                     </div>
                   </div>
-                  <div className="space-y-6">
+                  <div className="space-y-4 lg:space-y-6">
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Phone className="w-4 h-4 text-neutral-600" />
                         <label className="text-sm font-medium text-neutral-600">Telefone</label>
                       </div>
-                      <p className="text-lg font-medium text-neutral-900 font-mono">{formatPhone(patient.phone)}</p>
+                      <p className="text-base lg:text-lg font-medium text-neutral-900 font-mono">{formatPhone(patient.phone)}</p>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Mail className="w-4 h-4 text-neutral-600" />
                         <label className="text-sm font-medium text-neutral-600">Email</label>
                       </div>
-                      <p className="text-lg font-medium text-neutral-900 break-all">{patient.email || "Não informado"}</p>
+                      <p className="text-base lg:text-lg font-medium text-neutral-900 break-all">{patient.email || "Não informado"}</p>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <MapPin className="w-4 h-4 text-neutral-600" />
                         <label className="text-sm font-medium text-neutral-600">Endereço</label>
                       </div>
-                      <p className="text-lg font-medium text-neutral-900 break-words">{patient.address || "Não informado"}</p>
+                      <p className="text-base lg:text-lg font-medium text-neutral-900 break-words">{patient.address || "Não informado"}</p>
                     </div>
                   </div>
                 </div>
@@ -433,7 +438,7 @@ export default function PatientDetail() {
                     <ClipboardList className="w-4 h-4 text-neutral-600" />
                     <label className="text-sm font-medium text-neutral-600">Observações Clínicas</label>
                   </div>
-                  <p className="text-lg text-neutral-900 leading-relaxed">{patient.clinicalNotes}</p>
+                  <p className="text-base lg:text-lg text-neutral-900 leading-relaxed">{patient.clinicalNotes}</p>
                 </div>
               )}
             </CardContent>
