@@ -371,14 +371,14 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
         />
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4 sm:pt-6 border-t">
-        <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
+      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4 sm:pt-6 border-t mt-6 sticky bottom-0 bg-white -mx-2 px-2 pb-2 sm:mx-0 sm:px-0 sm:pb-0">
+        <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto h-10 sm:h-auto">
           Cancelar
         </Button>
         <Button 
           type="submit" 
           disabled={createMutation.isPending || updateMutation.isPending}
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto h-10 sm:h-auto"
         >
           {createMutation.isPending || updateMutation.isPending ? "Salvando..." : "Salvar"}
         </Button>

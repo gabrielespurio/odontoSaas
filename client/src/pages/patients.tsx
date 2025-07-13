@@ -139,17 +139,19 @@ export default function Patients() {
               Novo Paciente
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] overflow-y-auto p-3 sm:p-6">
-            <DialogHeader>
-              <DialogTitle>
+          <DialogContent className="w-[98vw] max-w-4xl h-[96vh] flex flex-col p-1 sm:p-6">
+            <DialogHeader className="flex-shrink-0 pb-2 sm:pb-4 px-2 sm:px-0">
+              <DialogTitle className="text-sm sm:text-lg pr-6 text-left">
                 {editingPatient ? "Editar Paciente" : "Novo Paciente"}
               </DialogTitle>
             </DialogHeader>
-            <PatientForm
-              patient={editingPatient}
-              onSuccess={handleFormSuccess}
-              onCancel={() => setShowForm(false)}
-            />
+            <div className="flex-1 overflow-y-auto px-2 sm:px-0">
+              <PatientForm
+                patient={editingPatient}
+                onSuccess={handleFormSuccess}
+                onCancel={() => setShowForm(false)}
+              />
+            </div>
           </DialogContent>
         </Dialog>
       </div>
