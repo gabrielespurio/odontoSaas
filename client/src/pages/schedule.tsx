@@ -275,7 +275,7 @@ export default function Schedule() {
               Novo Agendamento
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] overflow-y-auto p-3 sm:p-6">
+          <DialogContent className="w-[96vw] max-w-4xl h-[94vh] flex flex-col p-3 sm:p-6 mx-[2vw] sm:mx-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingAppointment ? "Editar Agendamento" : "Novo Agendamento"}

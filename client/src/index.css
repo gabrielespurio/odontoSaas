@@ -2,17 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile-first viewport fixes */
+* {
+  box-sizing: border-box;
+}
+
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
+/* Prevent horizontal overflow on mobile */
+.page-container {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Input field fixes for mobile */
+input, textarea, select {
+  max-width: 100%;
+}
+
+/* Grid container fixes */
+.grid {
+  width: 100%;
+  max-width: 100%;
+}
+
 /* Global styles to eliminate white gaps */
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
+  width: 100%;
+  max-width: 100vw;
 }
 
 #root {
   height: 100%;
   width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 :root {

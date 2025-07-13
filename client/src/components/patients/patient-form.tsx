@@ -178,8 +178,8 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6 w-full max-w-full overflow-hidden">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 w-full max-w-full">
         <div className="space-y-2">
           <Label htmlFor="name">Nome Completo *</Label>
           <Input
@@ -254,7 +254,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
       <div className="space-y-4 sm:space-y-6">
         <h3 className="text-base sm:text-lg font-medium border-t pt-4 sm:pt-6">Endereço</h3>
         
-        <div className="grid grid-cols-12 gap-2 sm:gap-3 md:gap-4">
+        <div className="grid grid-cols-12 gap-2 sm:gap-3 md:gap-4 w-full max-w-full">
           {/* CEP - takes 3 columns */}
           <div className="col-span-12 sm:col-span-6 md:col-span-3 space-y-2">
             <Label htmlFor="cep">CEP</Label>
@@ -371,7 +371,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
         />
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4 sm:pt-6 border-t mt-6 sticky bottom-0 bg-white -mx-2 px-2 pb-2 sm:mx-0 sm:px-0 sm:pb-0">
+      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4 sm:pt-6 border-t mt-6 sticky bottom-0 bg-white -mx-3 px-3 pb-3 sm:mx-0 sm:px-0 sm:pb-0">
         <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto h-10 sm:h-auto">
           Cancelar
         </Button>
