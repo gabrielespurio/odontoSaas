@@ -216,7 +216,7 @@ export default function Procedures() {
               Novo Procedimento
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[96vw] max-w-2xl h-[94vh] flex flex-col p-3 sm:p-6 mx-[2vw] sm:mx-auto">
+          <DialogContent className="max-w-2xl max-h-[95vh] sm:max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>
                 {editingProcedure ? "Editar Procedimento" : "Novo Procedimento"}

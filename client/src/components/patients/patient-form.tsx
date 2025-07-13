@@ -371,7 +371,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
         />
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4 sm:pt-6 border-t mt-6 sticky bottom-0 bg-white -mx-3 px-3 pb-3 sm:mx-0 sm:px-0 sm:pb-0">
+      <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4 sm:pt-6 border-t mt-6 sticky bottom-0 bg-white -mx-4 px-4 pb-4 sm:mx-0 sm:px-0 sm:pb-0">
         <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto h-10 sm:h-auto">
           Cancelar
         </Button>
