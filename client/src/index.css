@@ -149,6 +149,25 @@ html, body {
   .dental-chart-container {
     @apply overflow-x-auto;
   }
+
+  /* Mobile-responsive dental chart */
+  @media (max-width: 768px) {
+    .dental-chart-svg {
+      @apply max-w-full overflow-visible;
+    }
+    
+    .dental-chart-container {
+      @apply px-2;
+    }
+    
+    .dental-tooth:hover {
+      @apply transform scale-110;
+    }
+    
+    .dental-tooth.selected {
+      @apply transform scale-125;
+    }
+  }
   
   .dental-chart-svg {
     @apply min-w-max transition-all duration-300;

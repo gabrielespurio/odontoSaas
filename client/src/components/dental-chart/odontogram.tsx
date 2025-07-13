@@ -147,6 +147,13 @@ export default function Odontogram({ patientId }: OdontogramProps) {
     }
   };
 
+  // Responsive tooth sizing
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const toothWidth = isMobile ? 36 : 26;
+  const toothHeight = isMobile ? 42 : 30;
+  const toothSpacing = isMobile ? 42 : 32;
+  const toothRadius = isMobile ? 6 : 4;
+
   const renderTooth = (toothNumber: string, x: number, y: number) => {
     const isSelected = selectedTooth === toothNumber;
     const condition = getToothCondition(toothNumber);
@@ -176,12 +183,12 @@ export default function Odontogram({ patientId }: OdontogramProps) {
         <rect
           x={x}
           y={y}
-          width="26"
-          height="30"
-          rx="4"
+          width={toothWidth}
+          height={toothHeight}
+          rx={toothRadius}
           fill={toothColor}
           stroke={isSelected ? "#00796B" : borderColor}
-          strokeWidth={isSelected ? "3" : "2"}
+          strokeWidth={isSelected ? (isMobile ? "4" : "3") : (isMobile ? "3" : "2")}
           className="transition-all duration-200 hover:drop-shadow-md"
           style={{
             filter: isSelected ? `url(#glow-${toothNumber})` : `url(#shadow-${toothNumber})`
@@ -189,10 +196,10 @@ export default function Odontogram({ patientId }: OdontogramProps) {
         />
         
         <text
-          x={x + 13}
-          y={y + 20}
+          x={x + toothWidth / 2}
+          y={y + toothHeight / 2 + 4}
           textAnchor="middle"
-          className={`text-xs font-semibold pointer-events-none transition-colors duration-200 ${
+          className={`${isMobile ? 'text-sm' : 'text-xs'} font-semibold pointer-events-none transition-colors duration-200 ${
             isSelected ? 'fill-primary' : 'fill-neutral-700'
           }`}
         >
@@ -201,9 +208,9 @@ export default function Odontogram({ patientId }: OdontogramProps) {
         
         {isSelected && (
           <circle
-            cx={x + 22}
+            cx={x + toothWidth - 4}
             cy={y + 4}
-            r="2"
+            r={isMobile ? 3 : 2}
             fill="#00796B"
             className="animate-pulse"
           />
@@ -240,17 +247,25 @@ export default function Odontogram({ patientId }: OdontogramProps) {
             <div className="flex justify-center dental-chart-container">
               <svg 
                 width="100%" 
-                height="80" 
-                viewBox="0 0 580 80" 
+                height={isMobile ? "100" : "80"} 
+                viewBox={isMobile ? "0 0 700 100" : "0 0 580 80"} 
                 className="dental-chart-svg max-w-full border border-neutral-200 rounded-lg bg-gradient-to-b from-white to-neutral-50 shadow-inner"
               >
                 {/* Upper right teeth */}
-                {FDI_UPPER_RIGHT.map((tooth, index) => renderTooth(tooth, 15 + index * 32, 15))}
+                {FDI_UPPER_RIGHT.map((tooth, index) => renderTooth(tooth, 15 + index * toothSpacing, 15))}
                 {/* Upper left teeth */}
-                {FDI_UPPER_LEFT.map((tooth, index) => renderTooth(tooth, 295 + index * 32, 15))}
+                {FDI_UPPER_LEFT.map((tooth, index) => renderTooth(tooth, (isMobile ? 365 : 295) + index * toothSpacing, 15))}
                 
                 {/* Central divider line */}
-                <line x1="290" y1="10" x2="290" y2="70" stroke="#e5e7eb" strokeWidth="2" strokeDasharray="3,3" />
+                <line 
+                  x1={isMobile ? "350" : "290"} 
+                  y1="10" 
+                  x2={isMobile ? "350" : "290"} 
+                  y2={isMobile ? "90" : "70"} 
+                  stroke="#e5e7eb" 
+                  strokeWidth="2" 
+                  strokeDasharray="3,3" 
+                />
               </svg>
             </div>
           </div>
@@ -261,17 +276,25 @@ export default function Odontogram({ patientId }: OdontogramProps) {
             <div className="flex justify-center dental-chart-container">
               <svg 
                 width="100%" 
-                height="80" 
-                viewBox="0 0 580 80" 
+                height={isMobile ? "100" : "80"} 
+                viewBox={isMobile ? "0 0 700 100" : "0 0 580 80"} 
                 className="dental-chart-svg max-w-full border border-neutral-200 rounded-lg bg-gradient-to-t from-white to-neutral-50 shadow-inner"
               >
                 {/* Lower right teeth */}
-                {FDI_LOWER_RIGHT.map((tooth, index) => renderTooth(tooth, 15 + index * 32, 25))}
+                {FDI_LOWER_RIGHT.map((tooth, index) => renderTooth(tooth, 15 + index * toothSpacing, isMobile ? 35 : 25))}
                 {/* Lower left teeth */}
-                {FDI_LOWER_LEFT.map((tooth, index) => renderTooth(tooth, 295 + index * 32, 25))}
+                {FDI_LOWER_LEFT.map((tooth, index) => renderTooth(tooth, (isMobile ? 365 : 295) + index * toothSpacing, isMobile ? 35 : 25))}
                 
                 {/* Central divider line */}
-                <line x1="290" y1="10" x2="290" y2="70" stroke="#e5e7eb" strokeWidth="2" strokeDasharray="3,3" />
+                <line 
+                  x1={isMobile ? "350" : "290"} 
+                  y1="10" 
+                  x2={isMobile ? "350" : "290"} 
+                  y2={isMobile ? "90" : "70"} 
+                  stroke="#e5e7eb" 
+                  strokeWidth="2" 
+                  strokeDasharray="3,3" 
+                />
               </svg>
             </div>
           </div>
