@@ -885,8 +885,8 @@ export default function Consultations() {
         </CardContent>
       </Card>
 
-      {/* Consultations Table */}
-      <Card>
+      {/* Consultations Table - Desktop */}
+      <Card className="hidden md:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -1137,6 +1137,236 @@ export default function Consultations() {
           )}
         </CardContent>
       </Card>
+
+      {/* Consultations Cards - Mobile */}
+      <div className="md:hidden space-y-4">
+        {/* Agendamentos sem consulta (consultas pendentes) */}
+        {filteredAppointmentsWithoutConsultation?.map((appointment) => (
+          <Card key={`appointment-${appointment.id}`} className="border-l-4 border-yellow-400 bg-yellow-50">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    {getInitials(appointment.patient?.name || "")}
+                  </div>
+                  <div>
+                    <div className="font-medium text-neutral-900">
+                      {appointment.patient?.name}
+                    </div>
+                    <div className="text-sm text-neutral-600">
+                      {appointment.patient?.cpf}
+                    </div>
+                  </div>
+                </div>
+                <Badge 
+                  variant="secondary" 
+                  className="bg-yellow-100 text-yellow-800 border-yellow-300"
+                >
+                  Pendente
+                </Badge>
+              </div>
+              
+              <div className="space-y-2 mb-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600">Data/Hora:</span>
+                  <span className="font-medium">
+                    {new Date(appointment.scheduledDate).toLocaleDateString('pt-BR')} - {new Date(appointment.scheduledDate).toLocaleTimeString('pt-BR', { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600">Dentista:</span>
+                  <span className="font-medium">{appointment.dentist?.name}</span>
+                </div>
+                
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600">Procedimento:</span>
+                  <span className="font-medium">{appointment.procedure?.name || "Consulta geral"}</span>
+                </div>
+              </div>
+              
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => createConsultationFromAppointment(appointment)}
+                  size="sm"
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Criar Consulta
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        
+        {/* Consultas existentes */}
+        {filteredConsultations?.map((consultation) => (
+          <Card key={consultation.id} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    {getInitials(consultation.patient?.name || "")}
+                  </div>
+                  <div>
+                    <div className="font-medium text-neutral-900">
+                      {consultation.patient?.name}
+                    </div>
+                    <div className="text-sm text-neutral-600">
+                      {consultation.patient?.cpf}
+                    </div>
+                  </div>
+                </div>
+                <Badge 
+                  variant="secondary" 
+                  className={getStatusColor(consultation.status || 'agendado')}
+                >
+                  {getStatusLabel(consultation.status || 'agendado')}
+                </Badge>
+              </div>
+              
+              <div className="space-y-2 mb-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600">Data/Hora:</span>
+                  <span className="font-medium">
+                    {new Date(consultation.date).toLocaleDateString('pt-BR')} - {new Date(consultation.date).toLocaleTimeString('pt-BR', { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600">Dentista:</span>
+                  <span className="font-medium">{consultation.dentist?.name}</span>
+                </div>
+                
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600">Procedimentos:</span>
+                  <span className="font-medium text-right max-w-[50%]">
+                    {consultation.procedures && consultation.procedures.length > 0 
+                      ? consultation.procedures.join(", ") 
+                      : "Consulta geral"}
+                  </span>
+                </div>
+              </div>
+              
+              {(consultation.clinicalNotes || consultation.observations) && (
+                <div className="mb-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleRowExpansion(consultation.id)}
+                    className="text-xs text-neutral-600 hover:text-neutral-900 p-0 h-auto justify-start"
+                  >
+                    {expandedRows.has(consultation.id) ? (
+                      <>
+                        <ChevronUp className="w-3 h-3 mr-1" />
+                        Ocultar observações
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-3 h-3 mr-1" />
+                        Ver observações
+                      </>
+                    )}
+                  </Button>
+                  
+                  {expandedRows.has(consultation.id) && (
+                    <div className="mt-2 p-3 bg-neutral-50 rounded-md">
+                      {consultation.clinicalNotes && (
+                        <div className="mb-2">
+                          <div className="text-xs font-medium text-neutral-700 mb-1">
+                            Observações Clínicas:
+                          </div>
+                          <div className="text-sm text-neutral-600">
+                            {consultation.clinicalNotes}
+                          </div>
+                        </div>
+                      )}
+                      {consultation.observations && (
+                        <div>
+                          <div className="text-xs font-medium text-neutral-700 mb-1">
+                            Observações Gerais:
+                          </div>
+                          <div className="text-sm text-neutral-600">
+                            {consultation.observations}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <div className="flex justify-end">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {getStatusActions(consultation.status || 'agendado').map((action) => (
+                      <DropdownMenuItem 
+                        key={action.value}
+                        onClick={() => handleActionClick(consultation, action.value)}
+                        className={`${action.color} cursor-pointer`}
+                      >
+                        <action.icon className="w-4 h-4 mr-2" />
+                        {action.label}
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuItem onClick={() => setSelectedConsultation(consultation)}>
+                      <Eye className="w-4 h-4 mr-2" />
+                      Visualizar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openEditForm(consultation)}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        toast({
+                          title: "Em desenvolvimento",
+                          description: "Funcionalidade de exclusão em desenvolvimento",
+                        });
+                      }}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        
+        {/* Empty state */}
+        {(!filteredConsultations || filteredConsultations.length === 0) && 
+         (!filteredAppointmentsWithoutConsultation || filteredAppointmentsWithoutConsultation.length === 0) && (
+          <Card>
+            <CardContent className="text-center py-8">
+              <Stethoscope className="w-12 h-12 mx-auto mb-4 text-neutral-400" />
+              <h3 className="text-lg font-medium text-neutral-900 mb-2">
+                Nenhum atendimento encontrado
+              </h3>
+              <p className="text-neutral-600 mb-4">
+                Não há atendimentos que correspondam aos filtros aplicados.
+              </p>
+              <Button onClick={() => setShowForm(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Registrar Primeira Consulta
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Consultation Detail Modal */}
       <Dialog open={!!selectedConsultation} onOpenChange={() => setSelectedConsultation(null)}>
