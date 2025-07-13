@@ -28,7 +28,7 @@ const anamneseSchema = z.object({
     smokingHabits: z.string().optional(),
     bleedingProblems: z.boolean().optional(),
     familyHistory: z.string().optional(),
-  }).optional(),
+  }),
 });
 
 type AnamneseFormData = z.infer<typeof anamneseSchema>;
@@ -45,6 +45,30 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
     queryKey: [`/api/anamnese/${patientId}`],
     enabled: !!patientId,
   });
+
+  // Helper function to ensure additionalQuestions is always an object
+  const getAdditionalQuestions = (additionalQuestions: any) => {
+    if (!additionalQuestions || typeof additionalQuestions !== 'object') {
+      return {
+        hasHeartProblems: false,
+        hasDiabetes: false,
+        hasHypertension: false,
+        isPregnant: false,
+        smokingHabits: "",
+        bleedingProblems: false,
+        familyHistory: "",
+      };
+    }
+    return {
+      hasHeartProblems: additionalQuestions.hasHeartProblems || false,
+      hasDiabetes: additionalQuestions.hasDiabetes || false,
+      hasHypertension: additionalQuestions.hasHypertension || false,
+      isPregnant: additionalQuestions.isPregnant || false,
+      smokingHabits: additionalQuestions.smokingHabits || "",
+      bleedingProblems: additionalQuestions.bleedingProblems || false,
+      familyHistory: additionalQuestions.familyHistory || "",
+    };
+  };
 
   const form = useForm<AnamneseFormData>({
     resolver: zodResolver(anamneseSchema),
@@ -77,15 +101,7 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
         allergies: anamnese.allergies || "",
         previousDentalTreatment: anamnese.previousDentalTreatment,
         painComplaint: anamnese.painComplaint || "",
-        additionalQuestions: {
-          hasHeartProblems: anamnese.additionalQuestions?.hasHeartProblems || false,
-          hasDiabetes: anamnese.additionalQuestions?.hasDiabetes || false,
-          hasHypertension: anamnese.additionalQuestions?.hasHypertension || false,
-          isPregnant: anamnese.additionalQuestions?.isPregnant || false,
-          smokingHabits: anamnese.additionalQuestions?.smokingHabits || "",
-          bleedingProblems: anamnese.additionalQuestions?.bleedingProblems || false,
-          familyHistory: anamnese.additionalQuestions?.familyHistory || "",
-        },
+        additionalQuestions: getAdditionalQuestions(anamnese.additionalQuestions),
       });
     }
   }, [anamnese, form]);
@@ -159,7 +175,7 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             {/* Basic Health Questions */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-neutral-900">Histórico Médico</h3>
@@ -227,7 +243,7 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="hasHeartProblems"
-                    checked={form.watch("additionalQuestions.hasHeartProblems")}
+                    checked={form.watch("additionalQuestions")?.hasHeartProblems || false}
                     onCheckedChange={(checked) => 
                       form.setValue("additionalQuestions.hasHeartProblems", !!checked)
                     }
@@ -240,7 +256,7 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="hasDiabetes"
-                    checked={form.watch("additionalQuestions.hasDiabetes")}
+                    checked={form.watch("additionalQuestions")?.hasDiabetes || false}
                     onCheckedChange={(checked) => 
                       form.setValue("additionalQuestions.hasDiabetes", !!checked)
                     }
@@ -253,7 +269,7 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="hasHypertension"
-                    checked={form.watch("additionalQuestions.hasHypertension")}
+                    checked={form.watch("additionalQuestions")?.hasHypertension || false}
                     onCheckedChange={(checked) => 
                       form.setValue("additionalQuestions.hasHypertension", !!checked)
                     }
@@ -266,7 +282,7 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="isPregnant"
-                    checked={form.watch("additionalQuestions.isPregnant")}
+                    checked={form.watch("additionalQuestions")?.isPregnant || false}
                     onCheckedChange={(checked) => 
                       form.setValue("additionalQuestions.isPregnant", !!checked)
                     }
@@ -279,7 +295,7 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="bleedingProblems"
-                    checked={form.watch("additionalQuestions.bleedingProblems")}
+                    checked={form.watch("additionalQuestions")?.bleedingProblems || false}
                     onCheckedChange={(checked) => 
                       form.setValue("additionalQuestions.bleedingProblems", !!checked)
                     }
@@ -294,7 +310,7 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                 <Label htmlFor="smokingHabits">Hábitos de fumo</Label>
                 <Textarea
                   id="smokingHabits"
-                  value={form.watch("additionalQuestions.smokingHabits") || ""}
+                  value={form.watch("additionalQuestions")?.smokingHabits || ""}
                   onChange={(e) => 
                     form.setValue("additionalQuestions.smokingHabits", e.target.value)
                   }
@@ -307,7 +323,7 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                 <Label htmlFor="familyHistory">Histórico familiar relevante</Label>
                 <Textarea
                   id="familyHistory"
-                  value={form.watch("additionalQuestions.familyHistory") || ""}
+                  value={form.watch("additionalQuestions")?.familyHistory || ""}
                   onChange={(e) => 
                     form.setValue("additionalQuestions.familyHistory", e.target.value)
                   }
@@ -319,9 +335,9 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
 
             {/* Important Alerts */}
             {(form.watch("allergies") || 
-              form.watch("additionalQuestions.hasHeartProblems") ||
-              form.watch("additionalQuestions.hasDiabetes") ||
-              form.watch("additionalQuestions.bleedingProblems")) && (
+              form.watch("additionalQuestions")?.hasHeartProblems ||
+              form.watch("additionalQuestions")?.hasDiabetes ||
+              form.watch("additionalQuestions")?.bleedingProblems) && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <div className="flex items-start">
                   <AlertCircle className="w-5 h-5 text-yellow-600 mr-2 mt-0.5" />
@@ -333,13 +349,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                       {form.watch("allergies") && (
                         <li>• Paciente possui alergias relatadas</li>
                       )}
-                      {form.watch("additionalQuestions.hasHeartProblems") && (
+                      {form.watch("additionalQuestions")?.hasHeartProblems && (
                         <li>• Paciente possui problemas cardíacos</li>
                       )}
-                      {form.watch("additionalQuestions.hasDiabetes") && (
+                      {form.watch("additionalQuestions")?.hasDiabetes && (
                         <li>• Paciente é diabético</li>
                       )}
-                      {form.watch("additionalQuestions.bleedingProblems") && (
+                      {form.watch("additionalQuestions")?.bleedingProblems && (
                         <li>• Paciente possui problemas de coagulação</li>
                       )}
                     </ul>

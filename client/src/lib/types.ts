@@ -85,6 +85,16 @@ export interface DentalChart {
   updatedAt: string;
 }
 
+export interface AnamneseAdditionalQuestions {
+  hasHeartProblems?: boolean;
+  hasDiabetes?: boolean;
+  hasHypertension?: boolean;
+  isPregnant?: boolean;
+  smokingHabits?: string;
+  bleedingProblems?: boolean;
+  familyHistory?: string;
+}
+
 export interface Anamnese {
   id: number;
   patientId: number;
@@ -93,7 +103,7 @@ export interface Anamnese {
   allergies?: string;
   previousDentalTreatment: boolean;
   painComplaint?: string;
-  additionalQuestions?: any;
+  additionalQuestions?: AnamneseAdditionalQuestions;
   createdAt: string;
   updatedAt: string;
 }
