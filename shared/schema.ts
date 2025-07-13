@@ -358,10 +358,23 @@ export const insertDentalChartSchema = createInsertSchema(dentalChart).omit({
   updatedAt: true,
 });
 
+// Define additionalQuestions structure
+export const additionalQuestionsSchema = z.object({
+  hasHeartProblems: z.boolean().optional(),
+  hasDiabetes: z.boolean().optional(),
+  hasHypertension: z.boolean().optional(),
+  isPregnant: z.boolean().optional(),
+  smokingHabits: z.string().optional(),
+  bleedingProblems: z.boolean().optional(),
+  familyHistory: z.string().optional(),
+}).optional();
+
 export const insertAnamneseSchema = createInsertSchema(anamnese).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  additionalQuestions: additionalQuestionsSchema,
 });
 
 export const insertFinancialSchema = createInsertSchema(financial).omit({
