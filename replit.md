@@ -328,6 +328,12 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - System now redirects users to password change screen when flag is set to true
   - Users cannot access other parts of the application until password is changed
   - After password change, users are redirected directly to dashboard (no logout required)
+- July 14, 2025. **USER PROFILE INTEGRATION**: Connected user creation form to configuration module profiles
+  - Updated user form schema to accept custom profile names instead of hardcoded roles
+  - Profile dropdown now dynamically loads from user profiles created in configuration module
+  - Removed hardcoded fallback options (admin, dentist, reception) from user creation form
+  - Enhanced role display functions to handle custom profiles while maintaining backward compatibility
+  - Users can now select only from profiles that were actually created in the system
 
 ## User Preferences
 

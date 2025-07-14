@@ -499,10 +499,6 @@ export default function Settings() {
                                       {profile.name}
                                     </SelectItem>
                                   ))}
-                                  {/* Fallback options for backwards compatibility */}
-                                  <SelectItem value="admin">Administrador</SelectItem>
-                                  <SelectItem value="dentist">Dentista</SelectItem>
-                                  <SelectItem value="reception">Recepcionista</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
