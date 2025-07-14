@@ -9,9 +9,15 @@ export function useAuth() {
   useEffect(() => {
     const token = authApi.getToken();
     const userData = authApi.getUser();
+    const needsPasswordChange = authApi.needsPasswordChange();
     
     if (token && userData) {
-      setUser(userData);
+      // Include forcePasswordChange flag in user data
+      const userWithFlag = {
+        ...userData,
+        forcePasswordChange: needsPasswordChange
+      };
+      setUser(userWithFlag);
       setIsAuthenticated(true);
     }
     
@@ -21,10 +27,15 @@ export function useAuth() {
   const login = async (email: string, password: string) => {
     try {
       const response = await authApi.login(email, password);
-      authApi.setAuth(response.token, response.user);
-      setUser(response.user);
+      // Include forcePasswordChange in user data
+      const userWithFlag = {
+        ...response.user,
+        forcePasswordChange: response.forcePasswordChange
+      };
+      authApi.setAuth(response.token, userWithFlag, response.forcePasswordChange);
+      setUser(userWithFlag);
       setIsAuthenticated(true);
-      console.log("Login bem-sucedido, isAuthenticated:", true);
+      console.log("Login bem-sucedido, isAuthenticated:", true, "forcePasswordChange:", response.forcePasswordChange);
       return response;
     } catch (error) {
       throw error;

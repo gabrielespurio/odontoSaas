@@ -228,6 +228,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Forced password change endpoint (no current password required)
+  app.post("/api/auth/force-change-password", authenticateToken, async (req, res) => {
+    try {
+      const { newPassword } = req.body;
+      const userId = req.user.id;
+
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password and reset forcePasswordChange flag
+      await storage.updateUser(userId, { 
+        password: hashedPassword,
+        forcePasswordChange: false 
+      });
+
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Force change password error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/auth/register", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);

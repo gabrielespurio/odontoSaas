@@ -319,6 +319,14 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
 - July 13, 2025. **MOBILE CONSULTATIONS REDESIGN**: Improved mobile responsiveness of consultations module - converted desktop table to mobile-optimized cards with full functionality, better touch targets, and improved information hierarchy
 - July 13, 2025. **FINANCIAL RECEIVABLES MOBILE FIX**: Fixed mobile layout breaking issues in accounts receivable module - implemented responsive design with mobile-optimized cards, improved metrics layout, and enhanced touch targets
 - July 13, 2025. **SETTINGS MODULE MOBILE REDESIGN**: Improved mobile responsiveness of settings/configurations module - converted desktop tables to mobile-optimized cards for both users and categories sections, enhanced button layouts and tab navigation
+- July 14, 2025. **FORCED PASSWORD CHANGE FUNCTIONALITY**: Implemented complete forced password change system
+  - Added `force_password_change` column to users table
+  - Created `/api/auth/force-change-password` endpoint for mandatory password changes
+  - Built dedicated ForceChangePassword component with security warnings
+  - Updated authentication flow to detect and enforce password change requirements
+  - Enhanced User types to include forcePasswordChange flag across frontend and backend
+  - System now redirects users to password change screen when flag is set to true
+  - Users cannot access other parts of the application until password is changed
 
 ## User Preferences
 

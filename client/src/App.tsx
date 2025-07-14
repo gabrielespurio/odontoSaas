@@ -9,6 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useEffect } from "react";
 
 import Login from "@/pages/login";
+import ForceChangePassword from "@/pages/force-change-password";
 import Dashboard from "@/pages/dashboard";
 import Patients from "@/pages/patients";
 import PatientDetail from "@/pages/patient-detail";
@@ -29,16 +30,19 @@ import NotFound from "@/pages/not-found";
 
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const [location, setLocation] = useLocation();
+
+  // Check if user needs to change password
+  const needsPasswordChange = isAuthenticated && user?.forcePasswordChange;
 
   // Redirecionar automaticamente para dashboard se autenticado e na página de login
   useEffect(() => {
-    if (isAuthenticated && (location === "/login" || location === "/")) {
+    if (isAuthenticated && !needsPasswordChange && (location === "/login" || location === "/")) {
       console.log("Redirecionando para dashboard...");
       window.location.href = "/dashboard";
     }
-  }, [isAuthenticated, location, setLocation]);
+  }, [isAuthenticated, needsPasswordChange, location, setLocation]);
 
   if (isLoading) {
     return (
@@ -50,6 +54,11 @@ function Router() {
 
   if (!isAuthenticated) {
     return <Login />;
+  }
+
+  // Force password change if required
+  if (needsPasswordChange) {
+    return <ForceChangePassword />;
   }
 
   return (

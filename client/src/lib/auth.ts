@@ -6,6 +6,7 @@ export interface User {
   name: string;
   email: string;
   role: string;
+  forcePasswordChange?: boolean;
 }
 
 export interface LoginResponse {

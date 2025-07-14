@@ -131,6 +131,7 @@ export interface User {
   email: string;
   role: "admin" | "dentist" | "reception";
   isActive: boolean;
+  forcePasswordChange?: boolean;
   createdAt: string;
 }
 
