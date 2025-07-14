@@ -68,6 +68,14 @@ export function useAuth() {
     }
   };
 
+  const updateUserAfterPasswordChange = () => {
+    if (user) {
+      const updatedUser = { ...user, forcePasswordChange: false };
+      authApi.clearPasswordChangeFlag();
+      setUser(updatedUser);
+    }
+  };
+
   return {
     user,
     isAuthenticated,
@@ -75,5 +83,6 @@ export function useAuth() {
     login,
     logout,
     register,
+    updateUserAfterPasswordChange,
   };
 }

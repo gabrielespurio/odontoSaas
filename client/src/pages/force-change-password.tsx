@@ -13,7 +13,7 @@ export default function ForceChangePassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { logout } = useAuth();
+  const { updateUserAfterPasswordChange } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,10 +46,11 @@ export default function ForceChangePassword() {
         description: "Redirecionando para o sistema...",
       });
 
-      // Redirect to dashboard without logout
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 1000);
+      // Update user state to remove force password change flag
+      updateUserAfterPasswordChange();
+      
+      // Force immediate redirect to dashboard
+      window.location.href = "/dashboard";
     } catch (error: any) {
       toast({
         title: "Erro ao alterar senha",
