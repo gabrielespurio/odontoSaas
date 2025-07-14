@@ -129,9 +129,18 @@ export interface User {
   username: string;
   name: string;
   email: string;
-  role: "admin" | "dentist" | "reception";
+  role: string; // Now supports custom profiles
   isActive: boolean;
   forcePasswordChange?: boolean;
+  createdAt: string;
+}
+
+export interface UserProfile {
+  id: number;
+  name: string;
+  description?: string;
+  modules: string[];
+  isActive: boolean;
   createdAt: string;
 }
 

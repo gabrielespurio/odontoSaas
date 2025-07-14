@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { usePermissions } from "@/hooks/use-permissions";
 import { useState } from "react";
 import { 
   BarChart3, 
@@ -18,23 +19,24 @@ import {
 import odontoSyncLogo from "@assets/ChatGPT_Image_10_de_jul._de_2025__12_09_27-removebg-preview_1752160369330.png";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: BarChart3 },
-  { name: "Pacientes", href: "/patients", icon: Users },
-  { name: "Agenda", href: "/schedule", icon: Calendar },
-  { name: "Atendimentos", href: "/consultations", icon: Stethoscope },
-  { name: "Procedimentos", href: "/procedures", icon: Wrench },
+  { name: "Dashboard", href: "/", icon: BarChart3, module: "dashboard" },
+  { name: "Pacientes", href: "/patients", icon: Users, module: "patients" },
+  { name: "Agenda", href: "/schedule", icon: Calendar, module: "schedule" },
+  { name: "Atendimentos", href: "/consultations", icon: Stethoscope, module: "consultations" },
+  { name: "Procedimentos", href: "/procedures", icon: Wrench, module: "procedures" },
   { 
     name: "Financeiros", 
     href: "/financial", 
     icon: DollarSign,
+    module: "financial",
     submenus: [
       { name: "Contas a Receber", href: "/financial/receivables" },
       { name: "Contas a Pagar", href: "/financial/payables" },
       { name: "Fluxo de Caixa", href: "/financial/cashflow" },
     ]
   },
-  { name: "Relatórios", href: "/reports", icon: FileText },
-  { name: "Configurações", href: "/settings", icon: Settings },
+  { name: "Relatórios", href: "/reports", icon: FileText, module: "reports" },
+  { name: "Configurações", href: "/settings", icon: Settings, module: "settings" },
 ];
 
 interface SidebarProps {
@@ -45,6 +47,7 @@ interface SidebarProps {
 export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const { hasAccess } = usePermissions();
   const [isFinanceOpen, setIsFinanceOpen] = useState(false);
 
   const handleLogout = () => {
@@ -93,7 +96,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-2">
-          {navigation.map((item) => {
+          {navigation.filter(item => hasAccess(item.module)).map((item) => {
             const Icon = item.icon;
             const isActive = location === item.href;
             

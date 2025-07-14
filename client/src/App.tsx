@@ -23,6 +23,7 @@ import FinancialCashFlow from "@/pages/financial-cashflow";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import MainLayout from "@/components/layout/main-layout";
+import ProtectedRoute from "@/components/protected-route";
 import NotFound from "@/pages/not-found";
 
 
@@ -64,19 +65,19 @@ function Router() {
   return (
     <MainLayout>
       <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/patients" component={Patients} />
-        <Route path="/patients/:id" component={PatientDetail} />
-        <Route path="/schedule" component={Schedule} />
-        <Route path="/consultations" component={Consultations} />
-        <Route path="/procedures" component={Procedures} />
-        <Route path="/financial" component={Financial} />
-        <Route path="/financial/receivables" component={FinancialReceivables} />
-        <Route path="/financial/payables" component={FinancialPayables} />
-        <Route path="/financial/cashflow" component={FinancialCashFlow} />
-        <Route path="/reports" component={Reports} />
-        <Route path="/settings" component={Settings} />
+        <Route path="/" component={() => <ProtectedRoute module="dashboard"><Dashboard /></ProtectedRoute>} />
+        <Route path="/dashboard" component={() => <ProtectedRoute module="dashboard"><Dashboard /></ProtectedRoute>} />
+        <Route path="/patients" component={() => <ProtectedRoute module="patients"><Patients /></ProtectedRoute>} />
+        <Route path="/patients/:id" component={() => <ProtectedRoute module="patients"><PatientDetail /></ProtectedRoute>} />
+        <Route path="/schedule" component={() => <ProtectedRoute module="schedule"><Schedule /></ProtectedRoute>} />
+        <Route path="/consultations" component={() => <ProtectedRoute module="consultations"><Consultations /></ProtectedRoute>} />
+        <Route path="/procedures" component={() => <ProtectedRoute module="procedures"><Procedures /></ProtectedRoute>} />
+        <Route path="/financial" component={() => <ProtectedRoute module="financial"><Financial /></ProtectedRoute>} />
+        <Route path="/financial/receivables" component={() => <ProtectedRoute module="financial"><FinancialReceivables /></ProtectedRoute>} />
+        <Route path="/financial/payables" component={() => <ProtectedRoute module="financial"><FinancialPayables /></ProtectedRoute>} />
+        <Route path="/financial/cashflow" component={() => <ProtectedRoute module="financial"><FinancialCashFlow /></ProtectedRoute>} />
+        <Route path="/reports" component={() => <ProtectedRoute module="reports"><Reports /></ProtectedRoute>} />
+        <Route path="/settings" component={() => <ProtectedRoute module="settings"><Settings /></ProtectedRoute>} />
         <Route component={NotFound} />
       </Switch>
     </MainLayout>

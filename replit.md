@@ -334,6 +334,14 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Removed hardcoded fallback options (admin, dentist, reception) from user creation form
   - Enhanced role display functions to handle custom profiles while maintaining backward compatibility
   - Users can now select only from profiles that were actually created in the system
+- July 14, 2025. **COMPREHENSIVE ACCESS CONTROL SYSTEM**: Implemented module-based access control using user profiles
+  - Created `use-permissions` hook to manage user access control based on profile modules
+  - Implemented `ProtectedRoute` component for route-level access control
+  - Updated sidebar to dynamically show/hide navigation items based on user permissions
+  - Created `Unauthorized` component for access denied scenarios
+  - Users with custom profiles only see modules assigned to their profile
+  - Admin users maintain full access to all modules for backward compatibility
+  - System checks profile modules against navigation items to control access
 
 ## User Preferences
 
