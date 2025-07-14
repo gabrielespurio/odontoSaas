@@ -39,10 +39,7 @@ export default function ForceChangePassword() {
     setIsLoading(true);
 
     try {
-      await apiRequest("/api/auth/force-change-password", {
-        method: "POST",
-        body: { newPassword },
-      });
+      await apiRequest("POST", "/api/auth/force-change-password", { newPassword });
 
       toast({
         title: "Senha alterada com sucesso",

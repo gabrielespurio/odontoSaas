@@ -231,8 +231,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Forced password change endpoint (no current password required)
   app.post("/api/auth/force-change-password", authenticateToken, async (req, res) => {
     try {
+      console.log("🔐 Force change password request received");
+      console.log("📝 Request body:", req.body);
+      console.log("👤 User from token:", (req as any).user);
+      
       const { newPassword } = req.body;
-      const userId = req.user.id;
+      const userId = (req as any).user.id;
 
       if (!newPassword || newPassword.length < 6) {
         return res.status(400).json({ message: "Password must be at least 6 characters long" });
