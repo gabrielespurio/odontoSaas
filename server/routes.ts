@@ -384,13 +384,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate username from email (part before @)
       const username = userData.email.split('@')[0];
       
-      const user = await storage.createUser({
+      // Create user without forcePasswordChange first
+      const userToCreate = {
         ...userData,
         username,
         password: hashedPassword,
-        forcePasswordChange: userData.forcePasswordChange || false,
-      });
-
+      };
+      delete userToCreate.forcePasswordChange;
+      
+      const user = await storage.createUser(userToCreate);
+      
       res.json({
         id: user.id,
         username: user.username,
@@ -398,6 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         role: user.role,
         isActive: user.isActive,
+        forcePasswordChange: userData.forcePasswordChange || false,
         createdAt: user.createdAt,
       });
     } catch (error) {

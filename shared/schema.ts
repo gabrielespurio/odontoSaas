@@ -32,7 +32,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   role: userRoleEnum("role").notNull().default("dentist"),
   isActive: boolean("is_active").notNull().default(true),
-  forcePasswordChange: boolean("force_password_change").notNull().default(false),
+  // forcePasswordChange: boolean("force_password_change").notNull().default(false), // Temporarily disabled
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
