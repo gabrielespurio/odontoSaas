@@ -31,7 +31,7 @@ export default function Login() {
     } catch (error) {
       toast({
         title: "Erro no login",
-        description: "Email ou senha incorretos",
+        description: "Email/username ou senha incorretos",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -55,14 +55,14 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email ou Username</Label>
               <Input
                 id="email"
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="Digite seu email"
+                placeholder="Digite seu email ou username"
               />
             </div>
             <div className="space-y-2">
