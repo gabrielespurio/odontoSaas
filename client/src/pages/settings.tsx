@@ -27,9 +27,7 @@ const userSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  role: z.enum(["admin", "dentist", "reception"], {
-    required_error: "Selecione um papel",
-  }),
+  role: z.string().min(1, "Selecione um perfil"),
   forcePasswordChange: z.boolean().optional(),
 });
 
@@ -95,7 +93,7 @@ export default function Settings() {
       name: "",
       email: "",
       password: "",
-      role: "dentist",
+      role: "",
       forcePasswordChange: false,
     },
   });
@@ -305,7 +303,7 @@ export default function Settings() {
       name: user.name,
       email: user.email,
       password: "",
-      role: user.role as "admin" | "dentist" | "reception",
+      role: user.role,
       forcePasswordChange: false,
     });
     setShowUserForm(true);
@@ -342,6 +340,7 @@ export default function Settings() {
   };
 
   const getRoleBadgeVariant = (role: string) => {
+    // Check if it's a standard role or custom profile
     switch (role) {
       case "admin":
         return "destructive";
@@ -350,11 +349,13 @@ export default function Settings() {
       case "reception":
         return "secondary";
       default:
+        // For custom profiles, use a neutral variant
         return "outline";
     }
   };
 
   const getRoleLabel = (role: string) => {
+    // Check if it's a standard role or custom profile
     switch (role) {
       case "admin":
         return "Administrador";
@@ -363,6 +364,7 @@ export default function Settings() {
       case "reception":
         return "Recepcionista";
       default:
+        // For custom profiles, return the profile name as-is
         return role;
     }
   };
@@ -421,7 +423,7 @@ export default function Settings() {
                           name: "",
                           email: "",
                           password: "",
-                          role: "dentist",
+                          role: "",
                           forcePasswordChange: false,
                         });
                       }}
@@ -492,6 +494,12 @@ export default function Settings() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
+                                  {profiles?.map((profile) => (
+                                    <SelectItem key={profile.id} value={profile.name}>
+                                      {profile.name}
+                                    </SelectItem>
+                                  ))}
+                                  {/* Fallback options for backwards compatibility */}
                                   <SelectItem value="admin">Administrador</SelectItem>
                                   <SelectItem value="dentist">Dentista</SelectItem>
                                   <SelectItem value="reception">Recepcionista</SelectItem>
