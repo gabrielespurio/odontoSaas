@@ -168,6 +168,9 @@ export default function Settings() {
   });
 
   const onUserSubmit = (data: UserFormData) => {
+    console.log("📝 Dados do formulário:", data);
+    console.log("🔒 forcePasswordChange:", data.forcePasswordChange);
+    
     if (editingUser) {
       const updateData = { ...data };
       if (!data.password) {

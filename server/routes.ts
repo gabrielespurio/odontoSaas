@@ -395,6 +395,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", async (req, res) => {
     try {
+      console.log("🔍 Backend recebeu dados:", req.body);
+      console.log("🔒 forcePasswordChange no backend:", req.body.forcePasswordChange);
+      
       // Create custom schema for user creation without username field
       const userCreateSchema = z.object({
         name: z.string().min(1),
@@ -405,20 +408,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const userData = userCreateSchema.parse(req.body);
+      console.log("✅ Dados após parse:", userData);
+      
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       
       // Generate username from email (part before @)
       const username = userData.email.split('@')[0];
       
-      // Create user without forcePasswordChange first
+      // Create user with forcePasswordChange
       const userToCreate = {
         ...userData,
         username,
         password: hashedPassword,
+        forcePasswordChange: userData.forcePasswordChange || false,
       };
-      delete userToCreate.forcePasswordChange;
       
+      console.log("📤 Criando usuário com dados:", userToCreate);
       const user = await storage.createUser(userToCreate);
+      console.log("✅ Usuário criado:", user);
       
       res.json({
         id: user.id,
@@ -427,7 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         role: user.role,
         isActive: user.isActive,
-        forcePasswordChange: userData.forcePasswordChange || false,
+        forcePasswordChange: user.forcePasswordChange,
         createdAt: user.createdAt,
       });
     } catch (error) {
