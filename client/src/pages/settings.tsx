@@ -381,11 +381,11 @@ export default function Settings() {
                           name="role"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Papel</FormLabel>
+                              <FormLabel>Perfil</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Selecione um papel" />
+                                    <SelectValue placeholder="Selecione um perfil" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
@@ -457,7 +457,7 @@ export default function Settings() {
                           <TableHead>Nome</TableHead>
                           <TableHead>Username</TableHead>
                           <TableHead>Email</TableHead>
-                          <TableHead>Papel</TableHead>
+                          <TableHead>Perfil</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead className="w-[50px]">Ações</TableHead>
                         </TableRow>
