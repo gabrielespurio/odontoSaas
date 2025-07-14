@@ -763,23 +763,25 @@ export default function Settings() {
 
       {/* Delete User Confirmation Dialog */}
       <AlertDialog open={showDeleteUserDialog} onOpenChange={setShowDeleteUserDialog}>
-        <AlertDialogContent className="max-w-md mx-auto">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg">Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm">
-              Tem certeza que deseja excluir o usuário <strong>{userToDelete?.name}</strong>?
+        <AlertDialogContent className="max-w-sm w-full mx-auto p-4 sm:p-6">
+          <AlertDialogHeader className="space-y-2">
+            <AlertDialogTitle className="text-base font-semibold">Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-gray-600">
+              Excluir o usuário <strong>{userToDelete?.name}</strong>?
               <br />
-              <span className="text-xs text-gray-500 mt-2 block">
+              <span className="text-xs text-gray-500 mt-1 block">
                 Esta ação não pode ser desfeita.
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="text-sm">Cancelar</AlertDialogCancel>
+          <AlertDialogFooter className="flex-row justify-end gap-2 mt-4 space-y-0">
+            <AlertDialogCancel className="text-sm px-3 py-1.5 h-auto">
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteUser}
               disabled={deleteUserMutation.isPending}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 text-sm"
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 text-sm px-3 py-1.5 h-auto"
             >
               {deleteUserMutation.isPending ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
