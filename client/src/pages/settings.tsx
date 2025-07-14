@@ -763,7 +763,10 @@ export default function Settings() {
 
       {/* Delete User Confirmation Dialog */}
       <AlertDialog open={showDeleteUserDialog} onOpenChange={setShowDeleteUserDialog}>
-        <AlertDialogContent className="max-w-sm w-full mx-auto p-4 sm:p-6">
+        <AlertDialogContent 
+          className="!w-[400px] !max-w-[400px] !mx-auto p-4"
+          style={{ width: '400px', maxWidth: '400px' }}
+        >
           <AlertDialogHeader className="space-y-2">
             <AlertDialogTitle className="text-base font-semibold">Confirmar Exclusão</AlertDialogTitle>
             <AlertDialogDescription className="text-sm text-gray-600">
