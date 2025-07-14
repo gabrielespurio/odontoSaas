@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,6 +29,7 @@ const userSchema = z.object({
   role: z.enum(["admin", "dentist", "reception"], {
     required_error: "Selecione um papel",
   }),
+  forcePasswordChange: z.boolean().optional(),
 });
 
 // Category form schema
@@ -64,6 +66,7 @@ export default function Settings() {
       email: "",
       password: "",
       role: "dentist",
+      forcePasswordChange: false,
     },
   });
 
@@ -191,6 +194,7 @@ export default function Settings() {
       email: user.email,
       password: "",
       role: user.role as "admin" | "dentist" | "reception",
+      forcePasswordChange: false,
     });
     setShowUserForm(true);
   };
@@ -280,6 +284,7 @@ export default function Settings() {
                           email: "",
                           password: "",
                           role: "dentist",
+                          forcePasswordChange: false,
                         });
                       }}
                     >
@@ -355,6 +360,28 @@ export default function Settings() {
                                 </SelectContent>
                               </Select>
                               <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={userForm.control}
+                          name="forcePasswordChange"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                  Solicitar alteração de senha no primeiro acesso
+                                </FormLabel>
+                                <FormDescription>
+                                  O usuário será obrigado a trocar a senha no primeiro login
+                                </FormDescription>
+                              </div>
                             </FormItem>
                           )}
                         />

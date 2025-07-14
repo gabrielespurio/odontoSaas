@@ -185,10 +185,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: user.name, 
           email: user.email, 
           role: user.role 
-        } 
+        },
+        forcePasswordChange: user.forcePasswordChange 
       });
     } catch (error) {
       console.error("Login error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Change password endpoint
+  app.post("/api/auth/change-password", authenticateToken, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const userId = req.user.id;
+
+      // Get user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Verify current password
+      const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Current password is incorrect" });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password and reset forcePasswordChange flag
+      await storage.updateUser(userId, { 
+        password: hashedPassword,
+        forcePasswordChange: false 
+      });
+
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Change password error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -340,6 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: z.string().email(),
         password: z.string().min(6),
         role: z.enum(["admin", "dentist", "reception"]),
+        forcePasswordChange: z.boolean().optional(),
       });
       
       const userData = userCreateSchema.parse(req.body);
@@ -352,6 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...userData,
         username,
         password: hashedPassword,
+        forcePasswordChange: userData.forcePasswordChange || false,
       });
 
       res.json({

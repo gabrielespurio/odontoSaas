@@ -11,6 +11,7 @@ export interface User {
 export interface LoginResponse {
   token: string;
   user: User;
+  forcePasswordChange?: boolean;
 }
 
 export const authApi = {
@@ -33,6 +34,7 @@ export const authApi = {
   logout: () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("forcePasswordChange");
   },
 
   getToken: (): string | null => {
@@ -44,12 +46,21 @@ export const authApi = {
     return userStr ? JSON.parse(userStr) : null;
   },
 
-  setAuth: (token: string, user: User) => {
+  setAuth: (token: string, user: User, forcePasswordChange?: boolean) => {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("forcePasswordChange", forcePasswordChange?.toString() || "false");
   },
 
   isAuthenticated: (): boolean => {
     return !!localStorage.getItem("token");
+  },
+
+  needsPasswordChange: (): boolean => {
+    return localStorage.getItem("forcePasswordChange") === "true";
+  },
+
+  clearPasswordChangeFlag: () => {
+    localStorage.setItem("forcePasswordChange", "false");
   },
 };
