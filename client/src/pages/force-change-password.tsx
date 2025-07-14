@@ -43,12 +43,13 @@ export default function ForceChangePassword() {
 
       toast({
         title: "Senha alterada com sucesso",
-        description: "Sua senha foi alterada. Faça login novamente.",
+        description: "Redirecionando para o sistema...",
       });
 
-      // Logout and redirect to login
-      logout();
-      window.location.href = "/login";
+      // Redirect to dashboard without logout
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 1000);
     } catch (error: any) {
       toast({
         title: "Erro ao alterar senha",
@@ -107,7 +108,7 @@ export default function ForceChangePassword() {
           
           <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
             <p className="text-sm text-amber-700">
-              <strong>Importante:</strong> Após alterar sua senha, você será redirecionado para a tela de login.
+              <strong>Importante:</strong> Após alterar sua senha, você será redirecionado para o sistema.
             </p>
           </div>
         </CardContent>

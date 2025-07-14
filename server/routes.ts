@@ -231,10 +231,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Forced password change endpoint (no current password required)
   app.post("/api/auth/force-change-password", authenticateToken, async (req, res) => {
     try {
-      console.log("🔐 Force change password request received");
-      console.log("📝 Request body:", req.body);
-      console.log("👤 User from token:", (req as any).user);
-      
       const { newPassword } = req.body;
       const userId = (req as any).user.id;
 
@@ -399,9 +395,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", async (req, res) => {
     try {
-      console.log("🔍 Backend recebeu dados:", req.body);
-      console.log("🔒 forcePasswordChange no backend:", req.body.forcePasswordChange);
-      
       // Create custom schema for user creation without username field
       const userCreateSchema = z.object({
         name: z.string().min(1),
@@ -412,8 +405,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const userData = userCreateSchema.parse(req.body);
-      console.log("✅ Dados após parse:", userData);
-      
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       
       // Generate username from email (part before @)
@@ -427,9 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         forcePasswordChange: userData.forcePasswordChange || false,
       };
       
-      console.log("📤 Criando usuário com dados:", userToCreate);
       const user = await storage.createUser(userToCreate);
-      console.log("✅ Usuário criado:", user);
       
       res.json({
         id: user.id,

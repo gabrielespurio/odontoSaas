@@ -327,6 +327,7 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Enhanced User types to include forcePasswordChange flag across frontend and backend
   - System now redirects users to password change screen when flag is set to true
   - Users cannot access other parts of the application until password is changed
+  - After password change, users are redirected directly to dashboard (no logout required)
 
 ## User Preferences
 
