@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import odontoSyncLogo from "@assets/ChatGPT_Image_10_de_jul._de_2025__12_09_27-removebg-preview_1752160369330.png";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -21,7 +21,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await login(username, password);
+      await login(email, password);
       toast({
         title: "Login realizado com sucesso",
         description: "Bem-vindo ao OdontoSync!",
@@ -31,7 +31,7 @@ export default function Login() {
     } catch (error) {
       toast({
         title: "Erro no login",
-        description: "Usuário ou senha incorretos",
+        description: "Email ou senha incorretos",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -55,14 +55,14 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Usuário</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="Digite seu usuário"
+                placeholder="Digite seu email"
               />
             </div>
             <div className="space-y-2">

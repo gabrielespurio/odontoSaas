@@ -18,9 +18,9 @@ export function useAuth() {
     setIsLoading(false);
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = async (email: string, password: string) => {
     try {
-      const response = await authApi.login(username, password);
+      const response = await authApi.login(email, password);
       authApi.setAuth(response.token, response.user);
       setUser(response.user);
       setIsAuthenticated(true);

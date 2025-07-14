@@ -5,6 +5,7 @@ import { db } from "./db";
 import { eq, and, sql, isNull, desc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { z } from "zod";
 import { 
   insertUserSchema, 
   insertPatientSchema, 
@@ -153,9 +154,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { username, password } = req.body;
+      const { email, password } = req.body;
       
-      const user = await storage.getUserByUsername(username);
+      // Try to find user by email first, fallback to username for existing users
+      let user = await storage.getUserByEmail ? await storage.getUserByEmail(email) : null;
+      if (!user) {
+        user = await storage.getUserByUsername(email);
+      }
+      
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -328,11 +334,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", async (req, res) => {
     try {
-      const userData = insertUserSchema.parse(req.body);
+      // Create custom schema for user creation without username field
+      const userCreateSchema = z.object({
+        name: z.string().min(1),
+        email: z.string().email(),
+        password: z.string().min(6),
+        role: z.enum(["admin", "dentist", "reception"]),
+      });
+      
+      const userData = userCreateSchema.parse(req.body);
       const hashedPassword = await bcrypt.hash(userData.password, 10);
+      
+      // Generate username from email (part before @)
+      const username = userData.email.split('@')[0];
       
       const user = await storage.createUser({
         ...userData,
+        username,
         password: hashedPassword,
       });
 

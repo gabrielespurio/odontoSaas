@@ -22,7 +22,6 @@ import type { User, ProcedureCategory } from "@/lib/types";
 
 // User form schema
 const userSchema = z.object({
-  username: z.string().min(3, "Username deve ter pelo menos 3 caracteres"),
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
@@ -61,7 +60,6 @@ export default function Settings() {
   const userForm = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
     defaultValues: {
-      username: "",
       name: "",
       email: "",
       password: "",
@@ -189,7 +187,6 @@ export default function Settings() {
   const handleEditUser = (user: User) => {
     setEditingUser(user);
     userForm.reset({
-      username: user.username,
       name: user.name,
       email: user.email,
       password: "",
@@ -279,7 +276,6 @@ export default function Settings() {
                       onClick={() => {
                         setEditingUser(null);
                         userForm.reset({
-                          username: "",
                           name: "",
                           email: "",
                           password: "",
@@ -299,19 +295,6 @@ export default function Settings() {
                     </DialogHeader>
                     <Form {...userForm}>
                       <form onSubmit={userForm.handleSubmit(onUserSubmit)} className="space-y-4">
-                        <FormField
-                          control={userForm.control}
-                          name="username"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Username</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
                         <FormField
                           control={userForm.control}
                           name="name"
