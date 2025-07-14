@@ -763,10 +763,7 @@ export default function Settings() {
 
       {/* Delete User Confirmation Dialog */}
       <AlertDialog open={showDeleteUserDialog} onOpenChange={setShowDeleteUserDialog}>
-        <AlertDialogContent 
-          className="!w-[400px] !max-w-[400px] !mx-auto p-4"
-          style={{ width: '400px', maxWidth: '400px' }}
-        >
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-[400px] mx-4 p-4 sm:mx-auto sm:w-[400px]">
           <AlertDialogHeader className="space-y-2">
             <AlertDialogTitle className="text-base font-semibold">Confirmar Exclusão</AlertDialogTitle>
             <AlertDialogDescription className="text-sm text-gray-600">
@@ -777,14 +774,14 @@ export default function Settings() {
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-row justify-end gap-2 mt-4 space-y-0">
-            <AlertDialogCancel className="text-sm px-3 py-1.5 h-auto">
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-4 space-y-2 sm:space-y-0">
+            <AlertDialogCancel className="text-sm px-3 py-2 w-full sm:w-auto">
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteUser}
               disabled={deleteUserMutation.isPending}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 text-sm px-3 py-1.5 h-auto"
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 text-sm px-3 py-2 w-full sm:w-auto"
             >
               {deleteUserMutation.isPending ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
