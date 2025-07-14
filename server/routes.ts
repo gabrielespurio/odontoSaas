@@ -402,7 +402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: z.string().min(1),
         email: z.string().email(),
         password: z.string().min(6),
-        role: z.enum(["admin", "dentist", "reception"]),
+        role: z.string().min(1), // Changed to accept any string (custom profiles)
         forcePasswordChange: z.boolean().optional(),
       });
       

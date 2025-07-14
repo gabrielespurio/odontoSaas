@@ -30,7 +30,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  role: userRoleEnum("role").notNull().default("dentist"),
+  role: text("role").notNull().default("dentist"), // Changed to text to support custom profiles
   isActive: boolean("is_active").notNull().default(true),
   forcePasswordChange: boolean("force_password_change").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
