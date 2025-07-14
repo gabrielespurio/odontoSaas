@@ -8,6 +8,7 @@ import {
   anamnese,
   financial,
   procedureCategories,
+  userProfiles,
   receivables,
   payables,
   cashFlow,
@@ -29,6 +30,8 @@ import {
   type InsertFinancial,
   type ProcedureCategory,
   type InsertProcedureCategory,
+  type UserProfile,
+  type InsertUserProfile,
   type Receivable,
   type InsertReceivable,
   type Payable,
@@ -58,6 +61,12 @@ export interface IStorage {
   getProcedureCategory(id: number): Promise<ProcedureCategory | undefined>;
   createProcedureCategory(category: InsertProcedureCategory): Promise<ProcedureCategory>;
   updateProcedureCategory(id: number, category: Partial<InsertProcedureCategory>): Promise<ProcedureCategory>;
+  
+  // User Profiles
+  getUserProfiles(): Promise<UserProfile[]>;
+  getUserProfile(id: number): Promise<UserProfile | undefined>;
+  createUserProfile(profile: InsertUserProfile): Promise<UserProfile>;
+  updateUserProfile(id: number, profile: Partial<InsertUserProfile>): Promise<UserProfile>;
   
   // Procedures
   getProcedures(): Promise<Procedure[]>;
@@ -206,6 +215,26 @@ export class DatabaseStorage implements IStorage {
   async updateProcedureCategory(id: number, insertProcedureCategory: Partial<InsertProcedureCategory>): Promise<ProcedureCategory> {
     const [category] = await db.update(procedureCategories).set(insertProcedureCategory).where(eq(procedureCategories.id, id)).returning();
     return category;
+  }
+
+  // User Profiles
+  async getUserProfiles(): Promise<UserProfile[]> {
+    return await db.select().from(userProfiles).where(eq(userProfiles.isActive, true)).orderBy(userProfiles.name);
+  }
+
+  async getUserProfile(id: number): Promise<UserProfile | undefined> {
+    const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.id, id));
+    return profile || undefined;
+  }
+
+  async createUserProfile(insertUserProfile: InsertUserProfile): Promise<UserProfile> {
+    const [profile] = await db.insert(userProfiles).values(insertUserProfile).returning();
+    return profile;
+  }
+
+  async updateUserProfile(id: number, insertUserProfile: Partial<InsertUserProfile>): Promise<UserProfile> {
+    const [profile] = await db.update(userProfiles).set(insertUserProfile).where(eq(userProfiles.id, id)).returning();
+    return profile;
   }
 
   // Procedures

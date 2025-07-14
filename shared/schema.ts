@@ -67,6 +67,16 @@ export const procedureCategories = pgTable("procedure_categories", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// User Profiles table
+export const userProfiles = pgTable("user_profiles", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  modules: jsonb("modules").notNull().default('[]'), // Array of module names
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Procedures table
 export const procedures = pgTable("procedures", {
   id: serial("id").primaryKey(),
@@ -389,6 +399,11 @@ export const insertProcedureCategorySchema = createInsertSchema(procedureCategor
   createdAt: true,
 });
 
+export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertReceivableSchema = createInsertSchema(receivables).omit({
   id: true,
   createdAt: true,
@@ -425,6 +440,8 @@ export type Financial = typeof financial.$inferSelect;
 export type InsertFinancial = z.infer<typeof insertFinancialSchema>;
 export type ProcedureCategory = typeof procedureCategories.$inferSelect;
 export type InsertProcedureCategory = z.infer<typeof insertProcedureCategorySchema>;
+export type UserProfile = typeof userProfiles.$inferSelect;
+export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 
 // Novos tipos para o módulo financeiro
 export type Receivable = typeof receivables.$inferSelect;

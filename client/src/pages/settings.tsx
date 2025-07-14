@@ -20,7 +20,7 @@ import { z } from "zod";
 import { Plus, Users, Settings2, Edit, MoreHorizontal, Trash2, FolderPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { User, ProcedureCategory } from "@/lib/types";
+import type { User, ProcedureCategory, UserProfile } from "@/lib/types";
 
 // User form schema
 const userSchema = z.object({
@@ -39,15 +39,37 @@ const categorySchema = z.object({
   description: z.string().optional(),
 });
 
+// Profile form schema
+const profileSchema = z.object({
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  description: z.string().optional(),
+  modules: z.array(z.string()).min(1, "Selecione pelo menos um módulo"),
+});
+
 type UserFormData = z.infer<typeof userSchema>;
 type CategoryFormData = z.infer<typeof categorySchema>;
+type ProfileFormData = z.infer<typeof profileSchema>;
+
+// Available system modules
+const SYSTEM_MODULES = [
+  { id: "dashboard", name: "Dashboard", description: "Visão geral do sistema" },
+  { id: "patients", name: "Pacientes", description: "Gestão de pacientes" },
+  { id: "schedule", name: "Agenda", description: "Agendamento de consultas" },
+  { id: "consultations", name: "Atendimentos", description: "Registro de consultas" },
+  { id: "procedures", name: "Procedimentos", description: "Gestão de procedimentos" },
+  { id: "financial", name: "Financeiros", description: "Controle financeiro" },
+  { id: "reports", name: "Relatórios", description: "Relatórios e estatísticas" },
+  { id: "settings", name: "Configurações", description: "Configurações do sistema" },
+];
 
 export default function Settings() {
   const [showUserForm, setShowUserForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [showProfileForm, setShowProfileForm] = useState(false);
   const [showDeleteUserDialog, setShowDeleteUserDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editingCategory, setEditingCategory] = useState<ProcedureCategory | null>(null);
+  const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const { toast } = useToast();
 
@@ -59,6 +81,11 @@ export default function Settings() {
   // Fetch procedure categories
   const { data: categories, isLoading: categoriesLoading } = useQuery<ProcedureCategory[]>({
     queryKey: ["/api/procedure-categories"],
+  });
+
+  // Fetch user profiles
+  const { data: profiles, isLoading: profilesLoading } = useQuery<UserProfile[]>({
+    queryKey: ["/api/user-profiles"],
   });
 
   // User form
@@ -79,6 +106,15 @@ export default function Settings() {
     defaultValues: {
       name: "",
       description: "",
+    },
+  });
+
+  const profileForm = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      modules: [],
     },
   });
 
@@ -211,6 +247,58 @@ export default function Settings() {
     }
   };
 
+  // Create profile mutation
+  const createProfileMutation = useMutation({
+    mutationFn: (data: ProfileFormData) => apiRequest("POST", "/api/user-profiles", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user-profiles"] });
+      setShowProfileForm(false);
+      profileForm.reset();
+      toast({
+        title: "Perfil criado com sucesso",
+        description: "O novo perfil foi adicionado ao sistema.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao criar perfil",
+        description: "Ocorreu um erro ao criar o perfil.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: ProfileFormData) => 
+      apiRequest("PUT", `/api/user-profiles/${editingProfile?.id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user-profiles"] });
+      setShowProfileForm(false);
+      setEditingProfile(null);
+      profileForm.reset();
+      toast({
+        title: "Perfil atualizado com sucesso",
+        description: "O perfil foi atualizado.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao atualizar perfil",
+        description: "Ocorreu um erro ao atualizar o perfil.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onProfileSubmit = (data: ProfileFormData) => {
+    if (editingProfile) {
+      updateProfileMutation.mutate(data);
+    } else {
+      createProfileMutation.mutate(data);
+    }
+  };
+
   const handleEditUser = (user: User) => {
     setEditingUser(user);
     userForm.reset({
@@ -230,6 +318,16 @@ export default function Settings() {
       description: category.description || "",
     });
     setShowCategoryForm(true);
+  };
+
+  const handleEditProfile = (profile: UserProfile) => {
+    setEditingProfile(profile);
+    profileForm.reset({
+      name: profile.name,
+      description: profile.description || "",
+      modules: Array.isArray(profile.modules) ? profile.modules : [],
+    });
+    setShowProfileForm(true);
   };
 
   const handleDeleteUser = (user: User) => {
@@ -284,11 +382,16 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="users" className="flex items-center gap-2 text-sm">
             <Users className="w-4 h-4" />
             <span className="hidden sm:inline">Usuários</span>
             <span className="sm:hidden">Users</span>
+          </TabsTrigger>
+          <TabsTrigger value="profiles" className="flex items-center gap-2 text-sm">
+            <Settings2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Perfis</span>
+            <span className="sm:hidden">Perf.</span>
           </TabsTrigger>
           <TabsTrigger value="categories" className="flex items-center gap-2 text-sm">
             <FolderPlus className="w-4 h-4" />
@@ -561,6 +664,271 @@ export default function Settings() {
                                 </Badge>
                                 <Badge variant={user.isActive ? "default" : "secondary"}>
                                   {user.isActive ? "Ativo" : "Inativo"}
+                                </Badge>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Profiles Tab */}
+        <TabsContent value="profiles" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <CardTitle>Perfis de Usuário</CardTitle>
+                  <CardDescription>
+                    Gerencie perfis com módulos específicos do sistema
+                  </CardDescription>
+                </div>
+                <Dialog open={showProfileForm} onOpenChange={setShowProfileForm}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      className="bg-teal-600 hover:bg-teal-700 w-full sm:w-auto"
+                      onClick={() => {
+                        setEditingProfile(null);
+                        profileForm.reset({
+                          name: "",
+                          description: "",
+                          modules: [],
+                        });
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Novo Perfil
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {editingProfile ? "Editar Perfil" : "Novo Perfil"}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <Form {...profileForm}>
+                      <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
+                        <FormField
+                          control={profileForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome do Perfil</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Ex: Dentista Clínico" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={profileForm.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Descrição</FormLabel>
+                              <FormControl>
+                                <Textarea {...field} placeholder="Descrição opcional do perfil" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={profileForm.control}
+                          name="modules"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Módulos do Sistema</FormLabel>
+                              <FormDescription>
+                                Selecione os módulos que este perfil terá acesso
+                              </FormDescription>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                                {SYSTEM_MODULES.map((module) => (
+                                  <div key={module.id} className="flex items-start space-x-3 p-3 border rounded-lg">
+                                    <Checkbox
+                                      checked={field.value?.includes(module.id) || false}
+                                      onCheckedChange={(checked) => {
+                                        const currentModules = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...currentModules, module.id]);
+                                        } else {
+                                          field.onChange(currentModules.filter(m => m !== module.id));
+                                        }
+                                      }}
+                                    />
+                                    <div className="flex-1">
+                                      <div className="font-medium text-sm">{module.name}</div>
+                                      <div className="text-xs text-gray-600">{module.description}</div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <div className="flex justify-end space-x-2 pt-4">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => setShowProfileForm(false)}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button 
+                            type="submit" 
+                            className="bg-teal-600 hover:bg-teal-700"
+                            disabled={createProfileMutation.isPending || updateProfileMutation.isPending}
+                          >
+                            {editingProfile ? "Atualizar" : "Criar"}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {profilesLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+                </div>
+              ) : (
+                <>
+                  {/* Desktop Table */}
+                  <div className="hidden md:block rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Descrição</TableHead>
+                          <TableHead>Módulos</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="w-[50px]">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {profiles?.map((profile) => (
+                          <TableRow key={profile.id}>
+                            <TableCell className="font-medium">{profile.name}</TableCell>
+                            <TableCell>{profile.description || "-"}</TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {(Array.isArray(profile.modules) ? profile.modules : []).slice(0, 3).map((moduleId) => {
+                                  const module = SYSTEM_MODULES.find(m => m.id === moduleId);
+                                  return module ? (
+                                    <Badge key={moduleId} variant="outline" className="text-xs">
+                                      {module.name}
+                                    </Badge>
+                                  ) : null;
+                                })}
+                                {Array.isArray(profile.modules) && profile.modules.length > 3 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{profile.modules.length - 3}
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={profile.isActive ? "default" : "secondary"}>
+                                {profile.isActive ? "Ativo" : "Inativo"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditProfile(profile)}>
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Editar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile Cards */}
+                  <div className="md:hidden space-y-4">
+                    {profiles?.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Settings2 className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          Nenhum perfil encontrado
+                        </h3>
+                        <p className="text-gray-600 mb-4">
+                          Comece criando o primeiro perfil de usuário.
+                        </p>
+                        <Button onClick={() => setShowProfileForm(true)} className="bg-teal-600 hover:bg-teal-700">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Criar Primeiro Perfil
+                        </Button>
+                      </div>
+                    ) : (
+                      profiles?.map((profile) => (
+                        <Card key={profile.id} className="hover:shadow-md transition-shadow">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <h3 className="font-medium text-gray-900">{profile.name}</h3>
+                                <p className="text-sm text-gray-600">{profile.description || "Sem descrição"}</p>
+                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditProfile(profile)}>
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Editar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              <div>
+                                <p className="text-xs font-medium text-gray-700 mb-2">Módulos:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {(Array.isArray(profile.modules) ? profile.modules : []).slice(0, 4).map((moduleId) => {
+                                    const module = SYSTEM_MODULES.find(m => m.id === moduleId);
+                                    return module ? (
+                                      <Badge key={moduleId} variant="outline" className="text-xs">
+                                        {module.name}
+                                      </Badge>
+                                    ) : null;
+                                  })}
+                                  {Array.isArray(profile.modules) && profile.modules.length > 4 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      +{profile.modules.length - 4}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center justify-between">
+                                <Badge variant={profile.isActive ? "default" : "secondary"}>
+                                  {profile.isActive ? "Ativo" : "Inativo"}
                                 </Badge>
                               </div>
                             </div>

@@ -16,6 +16,7 @@ import {
   insertAnamneseSchema, 
   insertFinancialSchema,
   insertProcedureCategorySchema,
+  insertUserProfileSchema,
   insertReceivableSchema,
   insertPayableSchema,
   insertCashFlowSchema,
@@ -25,6 +26,7 @@ import {
   consultations,
   procedures,
   procedureCategories,
+  userProfiles,
   dentalChart,
   anamnese,
   financial,
@@ -531,6 +533,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(category);
     } catch (error) {
       console.error("Update procedure category error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // User Profiles
+  app.get("/api/user-profiles", async (req, res) => {
+    try {
+      const profiles = await storage.getUserProfiles();
+      res.json(profiles);
+    } catch (error) {
+      console.error("Get user profiles error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/user-profiles", async (req, res) => {
+    try {
+      const profileData = insertUserProfileSchema.parse(req.body);
+      const profile = await storage.createUserProfile(profileData);
+      res.json(profile);
+    } catch (error) {
+      console.error("Create user profile error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/user-profiles/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const profileData = insertUserProfileSchema.partial().parse(req.body);
+      const profile = await storage.updateUserProfile(id, profileData);
+      res.json(profile);
+    } catch (error) {
+      console.error("Update user profile error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
