@@ -763,23 +763,25 @@ export default function Settings() {
 
       {/* Delete User Confirmation Dialog */}
       <AlertDialog open={showDeleteUserDialog} onOpenChange={setShowDeleteUserDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md mx-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-lg">Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
               Tem certeza que deseja excluir o usuário <strong>{userToDelete?.name}</strong>?
               <br />
-              Esta ação não pode ser desfeita e todos os dados relacionados a este usuário serão removidos permanentemente.
+              <span className="text-xs text-gray-500 mt-2 block">
+                Esta ação não pode ser desfeita.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="text-sm">Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteUser}
               disabled={deleteUserMutation.isPending}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 text-sm"
             >
-              {deleteUserMutation.isPending ? "Excluindo..." : "Excluir Usuário"}
+              {deleteUserMutation.isPending ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
