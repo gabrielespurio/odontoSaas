@@ -132,6 +132,7 @@ export interface User {
   role: string; // Now supports custom profiles
   isActive: boolean;
   forcePasswordChange?: boolean;
+  dataScope: "all" | "own"; // Defines if user can see all clinic data or only own data
   createdAt: string;
 }
 

@@ -62,9 +62,32 @@ export function usePermissions() {
     }
   };
 
+  // Check if user has access to all clinic data or only own data
+  const hasDataScope = (scope: "all" | "own"): boolean => {
+    if (!user) return false;
+    
+    // Admin always has access to all data
+    if (user.role === "admin") return true;
+    
+    // Check user's data scope
+    return user.dataScope === scope;
+  };
+
+  // Get current user's data scope
+  const getDataScope = (): "all" | "own" => {
+    if (!user) return "own";
+    
+    // Admin always has access to all data
+    if (user.role === "admin") return "all";
+    
+    return user.dataScope || "all";
+  };
+
   return {
     hasAccess,
     getAccessibleModules,
+    hasDataScope,
+    getDataScope,
     userProfile,
     isLoading: !user || !profiles,
   };

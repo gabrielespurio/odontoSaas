@@ -386,6 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: users.email,
         role: users.role,
         isActive: users.isActive,
+        dataScope: users.dataScope,
         createdAt: users.createdAt,
       }).from(users).orderBy(users.name);
       res.json(usersData);
@@ -403,6 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: z.string().email(),
         password: z.string().min(6),
         role: z.string().min(1), // Changed to accept any string (custom profiles)
+        dataScope: z.enum(["all", "own"]).optional().default("all"),
         forcePasswordChange: z.boolean().optional(),
       });
       
@@ -429,6 +431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         role: user.role,
         isActive: user.isActive,
+        dataScope: user.dataScope,
         forcePasswordChange: user.forcePasswordChange,
         createdAt: user.createdAt,
       });
@@ -456,6 +459,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         role: user.role,
         isActive: user.isActive,
+        dataScope: user.dataScope,
+        forcePasswordChange: user.forcePasswordChange,
         createdAt: user.createdAt,
       });
     } catch (error) {

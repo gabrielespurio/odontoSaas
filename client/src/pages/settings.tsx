@@ -28,6 +28,7 @@ const userSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
   role: z.string().min(1, "Selecione um perfil"),
+  dataScope: z.enum(["all", "own"], { required_error: "Selecione o escopo de dados" }),
   forcePasswordChange: z.boolean().optional(),
 });
 
@@ -94,6 +95,7 @@ export default function Settings() {
       email: "",
       password: "",
       role: "",
+      dataScope: "all",
       forcePasswordChange: false,
     },
   });
@@ -304,7 +306,8 @@ export default function Settings() {
       email: user.email,
       password: "",
       role: user.role,
-      forcePasswordChange: false,
+      dataScope: user.dataScope || "all",
+      forcePasswordChange: user.forcePasswordChange || false,
     });
     setShowUserForm(true);
   };
@@ -424,6 +427,7 @@ export default function Settings() {
                           email: "",
                           password: "",
                           role: "",
+                          dataScope: "all",
                           forcePasswordChange: false,
                         });
                       }}
@@ -507,6 +511,34 @@ export default function Settings() {
                         />
                         <FormField
                           control={userForm.control}
+                          name="dataScope"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Escopo de Dados</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Selecione o escopo" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="all">
+                                    Todos os dados da clínica
+                                  </SelectItem>
+                                  <SelectItem value="own">
+                                    Apenas dados próprios
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormDescription>
+                                Define se o usuário pode visualizar dados de todos os dentistas ou apenas os próprios
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={userForm.control}
                           name="forcePasswordChange"
                           render={({ field }) => (
                             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
@@ -565,6 +597,7 @@ export default function Settings() {
                           <TableHead>Username</TableHead>
                           <TableHead>Email</TableHead>
                           <TableHead>Perfil</TableHead>
+                          <TableHead>Acesso</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead className="w-[50px]">Ações</TableHead>
                         </TableRow>
@@ -578,6 +611,11 @@ export default function Settings() {
                             <TableCell>
                               <Badge variant={getRoleBadgeVariant(user.role)}>
                                 {getRoleLabel(user.role)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={user.dataScope === "all" ? "default" : "outline"}>
+                                {user.dataScope === "all" ? "Todos os dados" : "Dados próprios"}
                               </Badge>
                             </TableCell>
                             <TableCell>

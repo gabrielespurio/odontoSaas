@@ -33,6 +33,7 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("dentist"), // Changed to text to support custom profiles
   isActive: boolean("is_active").notNull().default(true),
   forcePasswordChange: boolean("force_password_change").notNull().default(false),
+  dataScope: text("data_scope").notNull().default("all"), // "all" or "own" - defines if user can see all clinic data or only own data
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

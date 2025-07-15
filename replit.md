@@ -342,6 +342,13 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Users with custom profiles only see modules assigned to their profile
   - Admin users maintain full access to all modules for backward compatibility
   - System checks profile modules against navigation items to control access
+- July 14, 2025. **DATA SCOPE CONTROL SYSTEM**: Implemented granular data access control
+  - Added `dataScope` field to users table with values "all" or "own"
+  - Enhanced user creation form with data scope selection
+  - Users can be configured to see all clinic data or only their own data
+  - Updated backend to handle data scope in user creation and updates
+  - Enhanced permissions hook to check data scope access
+  - Admin users always have access to all data regardless of scope setting
 
 ## User Preferences
 
