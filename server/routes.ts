@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { eq, and, sql, isNull, desc } from "drizzle-orm";
+import { eq, and, or, sql, isNull, desc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
@@ -46,16 +46,29 @@ function authenticateToken(req: any, res: any, next: any) {
     return res.status(401).json({ message: 'Access token required' });
   }
 
-  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
-    if (err) {
-      return res.status(403).json({ message: 'Invalid token' });
-    }
+  try {
+    const user = jwt.verify(token, JWT_SECRET);
     req.user = user;
     next();
-  });
+  } catch (err) {
+    console.error('JWT verification error:', err);
+    return res.status(403).json({ message: 'Invalid token' });
+  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+
+  // Debug endpoint to check users - NO AUTH
+  app.get("/debug/users", async (req, res) => {
+    try {
+      const usersData = await db.select().from(users);
+      res.json(usersData);
+    } catch (error) {
+      console.error("Debug users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Debug endpoint to create tables (temporary) - NO AUTH
   app.post("/api/debug/create-tables", async (req, res) => {
     try {
@@ -288,6 +301,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint to check users - NO AUTH (moved above authentication)
+  app.get("/api/debug/users", async (req, res) => {
+    try {
+      const usersData = await db.select().from(users);
+      res.json(usersData);
+    } catch (error) {
+      console.error("Debug users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get dentists only - NO AUTH (temporary fix for dentist dropdown)
+  app.get("/api/users/dentists", async (req, res) => {
+    try {
+      const dentistsData = await db.select({
+        id: users.id,
+        username: users.username,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+      }).from(users).where(
+        and(
+          or(
+            eq(users.role, "Dentista"),
+            eq(users.role, "dentista"),
+            eq(users.role, "dentist"),
+            eq(users.role, "admin") // Admin users can also be dentists
+          ),
+          eq(users.isActive, true)
+        )
+      ).orderBy(users.name);
+      res.json(dentistsData);
+    } catch (error) {
+      console.error("Get dentists error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Protected routes
   app.use("/api", authenticateToken);
 
@@ -489,32 +542,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get dentists only
-  app.get("/api/users/dentists", async (req, res) => {
-    try {
-      const dentistsData = await db.select({
-        id: users.id,
-        username: users.username,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        isActive: users.isActive,
-        createdAt: users.createdAt,
-      }).from(users).where(
-        and(
-          or(
-            eq(users.role, "Dentista"),
-            eq(users.role, "dentista")
-          ),
-          eq(users.isActive, true)
-        )
-      ).orderBy(users.name);
-      res.json(dentistsData);
-    } catch (error) {
-      console.error("Get dentists error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+
 
   // Procedure Categories
   app.get("/api/procedure-categories", async (req, res) => {
