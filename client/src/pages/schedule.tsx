@@ -252,6 +252,12 @@ export default function Schedule() {
     setSelectedTimeSlot("");
   };
 
+  const handleNewAppointment = () => {
+    setEditingAppointment(null);
+    setSelectedTimeSlot("");
+    setShowForm(true);
+  };
+
   const handleStatusChange = (appointmentId: number, newStatus: string) => {
     updateAppointmentMutation.mutate({ id: appointmentId, status: newStatus });
   };
@@ -270,7 +276,10 @@ export default function Schedule() {
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-neutral-900">Agenda</h1>
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
-            <Button className="bg-teal-600 hover:bg-teal-700 w-full sm:w-auto">
+            <Button 
+              className="bg-teal-600 hover:bg-teal-700 w-full sm:w-auto"
+              onClick={handleNewAppointment}
+            >
               <Plus className="w-4 h-4 mr-2" />
               Novo Agendamento
             </Button>
