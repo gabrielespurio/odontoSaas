@@ -356,6 +356,15 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Fixed dentist dropdown issue in appointment booking form by ensuring `/api/users/dentists` endpoint works correctly
   - Verified all core functionality including patient management, appointment scheduling, and dental chart features
   - System now fully operational in standard Replit environment with all features working properly
+- July 15, 2025. **CRITICAL SECURITY FIX**: Implemented comprehensive data scope access control system
+  - Added `authenticateToken` middleware to all data-sensitive endpoints (/api/appointments, /api/consultations, /api/patients, /api/users/dentists)
+  - Enhanced JWT tokens to include user's dataScope field for proper authorization
+  - Users with dataScope "own" can only access their own data (appointments, consultations where dentistId matches user.id)
+  - Users with dataScope "all" or admin role can access all clinic data
+  - Fixed security vulnerability where users with "own" scope could see all clinic data
+  - Implemented proper filtering in backend queries based on user's data scope
+  - Created test users: dentista1@teste.com (scope: own), dentista2@teste.com (scope: all) for validation
+  - System now enforces data access restrictions correctly across all modules
 
 ## User Preferences
 

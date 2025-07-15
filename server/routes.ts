@@ -187,7 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const token = jwt.sign(
-        { id: user.id, username: user.username, role: user.role },
+        { id: user.id, username: user.username, role: user.role, dataScope: user.dataScope },
         JWT_SECRET,
         { expiresIn: '24h' }
       );
@@ -199,7 +199,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           username: user.username, 
           name: user.name, 
           email: user.email, 
-          role: user.role 
+          role: user.role,
+          dataScope: user.dataScope 
         },
         forcePasswordChange: user.forcePasswordChange 
       });
@@ -280,7 +281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const token = jwt.sign(
-        { id: user.id, username: user.username, role: user.role },
+        { id: user.id, username: user.username, role: user.role, dataScope: user.dataScope },
         JWT_SECRET,
         { expiresIn: '24h' }
       );
@@ -292,7 +293,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           username: user.username, 
           name: user.name, 
           email: user.email, 
-          role: user.role 
+          role: user.role,
+          dataScope: user.dataScope 
         } 
       });
     } catch (error) {
@@ -312,30 +314,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get dentists only - NO AUTH (temporary fix for dentist dropdown)
-  app.get("/api/users/dentists", async (req, res) => {
+  // Get dentists only - WITH AUTH AND DATA SCOPE CONTROL
+  app.get("/api/users/dentists", authenticateToken, async (req, res) => {
     try {
-      const dentistsData = await db.select({
-        id: users.id,
-        username: users.username,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        isActive: users.isActive,
-        createdAt: users.createdAt,
-      }).from(users).where(
-        and(
-          or(
-            eq(users.role, "Dentista"),
-            eq(users.role, "dentista"),
-            eq(users.role, "dentist")
-          ),
-          eq(users.isActive, true)
-        )
-      ).orderBy(users.name);
-      res.json(dentistsData);
+      const user = req.user;
+      
+      // If user has "own" scope and is not admin, only return themselves if they are a dentist
+      if (user.role !== "admin" && user.dataScope === "own") {
+        if (user.role === "Dentista" || user.role === "dentista" || user.role === "dentist") {
+          const dentists = await db.select({
+            id: users.id,
+            username: users.username,
+            name: users.name,
+            email: users.email,
+            role: users.role,
+            isActive: users.isActive,
+            createdAt: users.createdAt,
+          }).from(users).where(
+            and(
+              eq(users.id, user.id),
+              eq(users.isActive, true)
+            )
+          );
+          res.json(dentists);
+        } else {
+          res.json([]);
+        }
+      } else {
+        // Admin or users with "all" scope can see all dentists
+        const dentistsData = await db.select({
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+          isActive: users.isActive,
+          createdAt: users.createdAt,
+        }).from(users).where(
+          and(
+            or(
+              eq(users.role, "Dentista"),
+              eq(users.role, "dentista"),
+              eq(users.role, "dentist")
+            ),
+            eq(users.isActive, true)
+          )
+        ).orderBy(users.name);
+        res.json(dentistsData);
+      }
     } catch (error) {
       console.error("Get dentists error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Check user data scope
+  app.get("/api/user-scope", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      res.json({
+        userId: user.id,
+        username: user.username,
+        name: user.name,
+        role: user.role,
+        dataScope: user.dataScope,
+        hasFullAccess: user.role === "admin" || user.dataScope === "all"
+      });
+    } catch (error) {
+      console.error("User scope error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -355,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Patients
-  app.get("/api/patients", async (req, res) => {
+  app.get("/api/patients", authenticateToken, async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
@@ -646,12 +692,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Appointments
-  app.get("/api/appointments", async (req, res) => {
+  app.get("/api/appointments", authenticateToken, async (req, res) => {
     try {
       const date = req.query.date ? new Date(req.query.date as string) : undefined;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
-      const dentistId = req.query.dentistId ? parseInt(req.query.dentistId as string) : undefined;
+      let dentistId = req.query.dentistId ? parseInt(req.query.dentistId as string) : undefined;
+      
+      // Apply data scope control
+      const user = req.user;
+      if (user.role !== "admin" && user.dataScope === "own") {
+        // Users with "own" scope can only see their own appointments
+        dentistId = user.id;
+      }
       
       const appointments = await storage.getAppointments(date, dentistId, startDate, endDate);
       res.json(appointments);
@@ -732,6 +785,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Endpoint para buscar agendamentos que não têm consulta correspondente
   app.get("/api/appointments-without-consultation", authenticateToken, async (req, res) => {
     try {
+      // Apply data scope control
+      const user = req.user;
+      let whereConditions = [isNull(consultations.id)];
+      
+      if (user.role !== "admin" && user.dataScope === "own") {
+        // Users with "own" scope can only see their own appointments
+        whereConditions.push(eq(appointments.dentistId, user.id));
+      }
+      
       const appointmentsWithoutConsultation = await db.select({
         id: appointments.id,
         patientId: appointments.patientId,
@@ -772,7 +834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         eq(appointments.dentistId, consultations.dentistId),
         sql`DATE(${appointments.scheduledDate}) = DATE(${consultations.date})`
       ))
-      .where(isNull(consultations.id))
+      .where(and(...whereConditions))
       .orderBy(desc(appointments.scheduledDate));
 
       res.json(appointmentsWithoutConsultation);
@@ -861,10 +923,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Consultations
-  app.get("/api/consultations", async (req, res) => {
+  app.get("/api/consultations", authenticateToken, async (req, res) => {
     try {
       const patientId = req.query.patientId ? parseInt(req.query.patientId as string) : undefined;
-      const dentistId = req.query.dentistId ? parseInt(req.query.dentistId as string) : undefined;
+      let dentistId = req.query.dentistId ? parseInt(req.query.dentistId as string) : undefined;
+      
+      // Apply data scope control
+      const user = req.user;
+      if (user.role !== "admin" && user.dataScope === "own") {
+        // Users with "own" scope can only see their own consultations
+        dentistId = user.id;
+      }
       
       const consultations = await storage.getConsultations(patientId, dentistId);
       res.json(consultations);
