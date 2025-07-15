@@ -301,13 +301,13 @@ export default function Consultations() {
     return false;
   };
 
-  // Initialize procedures when form opens
+  // Initialize procedures when form opens (only if not from appointment)
   useEffect(() => {
-    if (showForm) {
+    if (showForm && !form.getValues("appointmentId")) {
       setSelectedProcedures([{ id: Date.now(), procedureId: 0 }]);
       setTimeConflictError(""); // Limpar erros de conflito ao abrir o formulário
     }
-  }, [showForm]);
+  }, [showForm, form]);
 
   // Initialize procedures when edit form opens
   useEffect(() => {
@@ -316,6 +316,21 @@ export default function Consultations() {
       setTimeConflictError(""); // Limpar erros de conflito ao abrir o formulário de edição
     }
   }, [showEditForm]);
+
+  // Effect to handle procedures when consultation form is opened from appointment
+  useEffect(() => {
+    if (showForm && form.getValues("appointmentId") && procedures) {
+      const procedureIds = form.getValues("procedureIds") || [];
+      
+      if (procedureIds.length > 0) {
+        const proceduresWithIds = procedureIds.map((id, index) => ({ 
+          id: Date.now() + index, 
+          procedureId: id 
+        }));
+        setSelectedProcedures(proceduresWithIds);
+      }
+    }
+  }, [showForm, form, procedures]);
 
   const createConsultationMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/consultations", data),
