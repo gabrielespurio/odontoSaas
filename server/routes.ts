@@ -500,7 +500,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: users.role,
         isActive: users.isActive,
         createdAt: users.createdAt,
-      }).from(users).where(and(eq(users.role, "dentist"), eq(users.isActive, true))).orderBy(users.name);
+      }).from(users).where(
+        and(
+          or(
+            eq(users.role, "Dentista"),
+            eq(users.role, "dentista")
+          ),
+          eq(users.isActive, true)
+        )
+      ).orderBy(users.name);
       res.json(dentistsData);
     } catch (error) {
       console.error("Get dentists error:", error);
