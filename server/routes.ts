@@ -328,8 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           or(
             eq(users.role, "Dentista"),
             eq(users.role, "dentista"),
-            eq(users.role, "dentist"),
-            eq(users.role, "admin") // Admin users can also be dentists
+            eq(users.role, "dentist")
           ),
           eq(users.isActive, true)
         )
