@@ -3,7 +3,7 @@ import pkg from 'pg';
 const { Pool } = pkg;
 
 async function createAdminUser() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const pool = new Pool({ connectionString: "postgresql://neondb_owner:npg_uCjQlFSAK78T@ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require" });
   
   try {
     // Hash the password
@@ -25,7 +25,7 @@ async function createAdminUser() {
 }
 
 async function createSampleData() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const pool = new Pool({ connectionString: "postgresql://neondb_owner:npg_uCjQlFSAK78T@ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require" });
   
   try {
     // Create procedure categories
