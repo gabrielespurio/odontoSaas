@@ -379,6 +379,13 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Balance calculation restricted to user's own paid receivables for "own" scope users
   - Admin users and "all" scope users maintain full access to all financial data
   - Successfully tested with dentista2 user (scope: own) - confirmed complete data isolation
+- July 16, 2025. **RECEIVABLES TABLE IMPROVEMENT**: Enhanced accounts receivable table with dropdown actions
+  - Replaced two separate buttons (Edit/Receive) with single three-dot menu icon
+  - Implemented dropdown menu with Edit, Receive, and Delete options
+  - Added DELETE functionality with confirmation dialog for receivables
+  - Created backend DELETE route and storage method for receivables
+  - Simplified patient column to display only patient name (removed icon and phone)
+  - Improved table layout and user experience with cleaner design
 
 ## User Preferences
 

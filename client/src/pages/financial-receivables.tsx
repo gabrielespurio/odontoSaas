@@ -405,21 +405,9 @@ export default function FinancialReceivables() {
                       return (
                         <TableRow key={receivable.id}>
                           <TableCell>
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
-                                <span className="text-teal-700 font-medium text-sm">
-                                  {receivable.patient.name.charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {receivable.patient.name}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {receivable.patient.phone}
-                                </p>
-                              </div>
-                            </div>
+                            <span className="font-medium text-gray-900">
+                              {receivable.patient.name}
+                            </span>
                           </TableCell>
                           
                           <TableCell>
