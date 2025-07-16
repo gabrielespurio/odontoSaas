@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { 
   Plus, 
   Search, 
@@ -19,6 +21,8 @@ import {
   Edit,
   CreditCard,
   Building,
+  MoreHorizontal,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -75,6 +79,24 @@ export default function FinancialPayables() {
       toast({
         title: "Erro",
         description: "Erro ao registrar pagamento",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deletePayableMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/payables/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/payables"] });
+      toast({
+        title: "Sucesso",
+        description: "Conta a pagar excluída com sucesso",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir conta a pagar",
         variant: "destructive",
       });
     },
@@ -369,27 +391,53 @@ export default function FinancialPayables() {
                         </TableCell>
                         
                         <TableCell className="text-right">
-                          <div className="flex justify-end space-x-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setEditingPayable(payable)}
-                            >
-                              <Edit className="w-4 h-4 mr-1" />
-                              Editar
-                            </Button>
-                            {payable.status === "pending" && (
-                              <Button
-                                size="sm"
-                                onClick={() => markAsPaidMutation.mutate(payable.id)}
-                                disabled={markAsPaidMutation.isPending}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                <CreditCard className="w-4 h-4 mr-1" />
-                                Pagar
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
                               </Button>
-                            )}
-                          </div>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setEditingPayable(payable)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Editar
+                              </DropdownMenuItem>
+                              {payable.status === "pending" && (
+                                <DropdownMenuItem 
+                                  onClick={() => markAsPaidMutation.mutate(payable.id)}
+                                  disabled={markAsPaidMutation.isPending}
+                                >
+                                  <CreditCard className="mr-2 h-4 w-4" />
+                                  Pagar
+                                </DropdownMenuItem>
+                              )}
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Excluir
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Tem certeza de que deseja excluir esta conta a pagar? Esta ação não pode ser desfeita.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deletePayableMutation.mutate(payable.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     );

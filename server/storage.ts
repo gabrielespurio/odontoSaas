@@ -720,6 +720,14 @@ export class DatabaseStorage implements IStorage {
     return record;
   }
 
+  async deletePayable(id: number): Promise<void> {
+    // Primeiro, remover todas as entradas relacionadas no fluxo de caixa
+    await db.delete(cashFlow).where(eq(cashFlow.payableId, id));
+    
+    // Depois, remover a conta a pagar
+    await db.delete(payables).where(eq(payables.id, id));
+  }
+
   // Cash Flow (Fluxo de Caixa)
   async getCashFlow(startDate?: Date, endDate?: Date): Promise<CashFlow[]> {
     const whereConditions = [];

@@ -1402,6 +1402,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/payables/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deletePayable(id);
+      res.json({ message: "Payable deleted successfully" });
+    } catch (error) {
+      console.error("Delete payable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Cash Flow (Fluxo de Caixa)
   app.get("/api/cash-flow", authenticateToken, async (req, res) => {
     try {
