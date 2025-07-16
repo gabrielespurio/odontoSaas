@@ -106,6 +106,7 @@ export interface IStorage {
   getReceivable(id: number): Promise<Receivable | undefined>;
   createReceivable(receivable: InsertReceivable): Promise<Receivable>;
   updateReceivable(id: number, receivable: Partial<InsertReceivable>): Promise<Receivable>;
+  deleteReceivable(id: number): Promise<void>;
   createReceivableFromConsultation(consultationId: number, procedures: number[], installments?: number): Promise<Receivable[]>;
   
   // Payables (Contas a Pagar)
@@ -575,6 +576,14 @@ export class DatabaseStorage implements IStorage {
     }
     
     return record;
+  }
+
+  async deleteReceivable(id: number): Promise<void> {
+    // Primeiro, remover todas as entradas relacionadas no fluxo de caixa
+    await db.delete(cashFlow).where(eq(cashFlow.receivableId, id));
+    
+    // Depois, remover a conta a receber
+    await db.delete(receivables).where(eq(receivables.id, id));
   }
 
   async createReceivableFromConsultation(consultationId: number, procedureIds: number[], installments: number = 1, customAmount?: string): Promise<Receivable[]> {

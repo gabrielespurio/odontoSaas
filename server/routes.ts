@@ -1309,6 +1309,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/receivables/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteReceivable(id);
+      res.json({ message: "Receivable deleted successfully" });
+    } catch (error) {
+      console.error("Delete receivable error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Criar contas a receber a partir de consulta
   app.post("/api/receivables/from-consultation", async (req, res) => {
     try {

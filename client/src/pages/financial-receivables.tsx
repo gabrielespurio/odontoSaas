@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { 
   Plus, 
   Search, 
@@ -19,6 +20,8 @@ import {
   Eye,
   Edit,
   CreditCard,
+  MoreHorizontal,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -166,6 +169,30 @@ export default function FinancialReceivables() {
   const handleEdit = (receivable: Receivable) => {
     setEditingReceivable(receivable);
     setShowForm(true);
+  };
+
+  const handleDelete = async (receivable: Receivable) => {
+    if (window.confirm(`Tem certeza que deseja excluir esta conta a receber de ${receivable.patient.name}?`)) {
+      try {
+        await apiRequest(`/api/receivables/${receivable.id}`, {
+          method: "DELETE",
+        });
+        
+        toast({
+          title: "Sucesso",
+          description: "Conta a receber excluída com sucesso.",
+        });
+        
+        queryClient.invalidateQueries({ queryKey: ["/api/receivables"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/financial-metrics"] });
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao excluir conta a receber.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const handleFormSuccess = () => {
@@ -450,26 +477,32 @@ export default function FinancialReceivables() {
                           </TableCell>
                           
                           <TableCell className="text-right">
-                            <div className="flex justify-end space-x-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleEdit(receivable)}
-                              >
-                                <Edit className="w-4 h-4 mr-1" />
-                                Editar
-                              </Button>
-                              {receivable.status === "pending" && (
-                                <Button 
-                                  size="sm"
-                                  onClick={() => handlePayment(receivable)}
-                                  className="bg-green-600 hover:bg-green-700"
-                                >
-                                  <CreditCard className="w-4 h-4 mr-1" />
-                                  Receber
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
                                 </Button>
-                              )}
-                            </div>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEdit(receivable)}>
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Editar
+                                </DropdownMenuItem>
+                                {receivable.status === "pending" && (
+                                  <DropdownMenuItem onClick={() => handlePayment(receivable)}>
+                                    <CreditCard className="w-4 h-4 mr-2" />
+                                    Receber
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem 
+                                  onClick={() => handleDelete(receivable)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       );
