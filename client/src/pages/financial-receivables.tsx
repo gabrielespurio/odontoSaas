@@ -390,7 +390,6 @@ export default function FinancialReceivables() {
                       <TableHead>Valor</TableHead>
                       <TableHead>Vencimento</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Descrição</TableHead>
                       <TableHead>Parcelas</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -440,19 +439,6 @@ export default function FinancialReceivables() {
                           
                           <TableCell>
                             {getStatusBadge(receivable.status, receivable.dueDate)}
-                          </TableCell>
-                          
-                          <TableCell>
-                            <div>
-                              <p className="text-sm text-gray-900">
-                                {receivable.description || "Sem descrição"}
-                              </p>
-                              {receivable.paymentDate && (
-                                <p className="text-sm text-green-600 mt-1">
-                                  Pago em {formatDate(receivable.paymentDate)}
-                                </p>
-                              )}
-                            </div>
                           </TableCell>
                           
                           <TableCell>
