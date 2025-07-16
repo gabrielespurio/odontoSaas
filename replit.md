@@ -385,6 +385,8 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Added DELETE functionality with confirmation dialog for receivables
   - Created backend DELETE route and storage method for receivables
   - Simplified patient column to display only patient name (removed icon and phone)
+  - Simplified dentist column to display only dentist name (removed icon)
+  - Removed description column to streamline table layout
   - Improved table layout and user experience with cleaner design
 
 ## User Preferences

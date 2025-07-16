@@ -410,16 +410,9 @@ export default function FinancialReceivables() {
                           </TableCell>
                           
                           <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                                <span className="text-blue-700 font-medium text-xs">
-                                  {dentist?.name.charAt(0).toUpperCase() || "?"}
-                                </span>
-                              </div>
-                              <span className="text-sm font-medium text-gray-900">
-                                {dentist?.name || "Não identificado"}
-                              </span>
-                            </div>
+                            <span className="text-sm font-medium text-gray-900">
+                              {dentist?.name || "Não identificado"}
+                            </span>
                           </TableCell>
                           
                           <TableCell>
