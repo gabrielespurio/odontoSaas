@@ -1199,6 +1199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = (req as any).user;
       const patientId = req.query.patientId ? parseInt(req.query.patientId as string) : undefined;
+      const dentistId = req.query.dentistId ? parseInt(req.query.dentistId as string) : undefined;
       const status = req.query.status as string;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
@@ -1206,7 +1207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply data scope filtering
       let receivablesResult;
       if (user.role === "admin" || user.dataScope === "all") {
-        receivablesResult = await storage.getReceivables(patientId, status, startDate, endDate);
+        receivablesResult = await storage.getReceivables(patientId, status, startDate, endDate, dentistId);
       } else {
         // For users with "own" scope, filter by their appointments/consultations
         const userConsultations = await db.select({
@@ -1252,7 +1253,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             patientId, 
             status, 
             startDate, 
-            endDate
+            endDate,
+            dentistId
           );
 
           // Filter results to only include user's own data

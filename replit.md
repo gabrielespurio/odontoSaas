@@ -388,6 +388,19 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Simplified dentist column to display only dentist name (removed icon)
   - Removed description column to streamline table layout
   - Improved table layout and user experience with cleaner design
+- July 16, 2025. **PAYABLES TABLE IMPROVEMENT**: Enhanced accounts payable table with dropdown actions
+  - Replaced two separate buttons (Edit/Pay) with single three-dot menu icon
+  - Implemented dropdown menu with Edit, Pay, and Delete options
+  - Added DELETE functionality with confirmation dialog for payables
+  - Created backend DELETE route and storage method for payables
+  - Pay option only appears for accounts with "pending" status
+  - Improved table layout and user experience with cleaner design
+- July 16, 2025. **RECEIVABLES FILTER ENHANCEMENT**: Improved filtering system for accounts receivable
+  - Changed patient filter to dentist filter for better data organization
+  - Updated frontend to show dentist dropdown instead of patient dropdown
+  - Enhanced backend API to support dentist filtering with proper data scope control
+  - Users can now filter receivables by specific dentist assignments
+  - Maintains data scope restrictions for users with "own" access level
 
 ## User Preferences
 

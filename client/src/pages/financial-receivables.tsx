@@ -73,7 +73,7 @@ type Patient = {
 export default function FinancialReceivables() {
   const [search, setSearch] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [selectedPatient, setSelectedPatient] = useState<string>("all");
+  const [selectedDentist, setSelectedDentist] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [editingReceivable, setEditingReceivable] = useState<Receivable | null>(null);
@@ -84,7 +84,7 @@ export default function FinancialReceivables() {
   const { data: receivables, isLoading: receivablesLoading } = useQuery<Receivable[]>({
     queryKey: ["/api/receivables", {
       status: selectedStatus !== "all" ? selectedStatus : undefined,
-      patientId: selectedPatient !== "all" ? parseInt(selectedPatient) : undefined
+      dentistId: selectedDentist !== "all" ? parseInt(selectedDentist) : undefined
     }],
   });
 
@@ -331,15 +331,15 @@ export default function FinancialReceivables() {
                 </SelectContent>
               </Select>
               
-              <Select value={selectedPatient} onValueChange={setSelectedPatient}>
+              <Select value={selectedDentist} onValueChange={setSelectedDentist}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Paciente" />
+                  <SelectValue placeholder="Dentista" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os Pacientes</SelectItem>
-                  {patients?.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id.toString()}>
-                      {patient.name}
+                  <SelectItem value="all">Todos os Dentistas</SelectItem>
+                  {dentists?.map((dentist) => (
+                    <SelectItem key={dentist.id} value={dentist.id.toString()}>
+                      {dentist.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -348,7 +348,7 @@ export default function FinancialReceivables() {
               <Button variant="outline" onClick={() => {
                 setSearch("");
                 setSelectedStatus("all");
-                setSelectedPatient("all");
+                setSelectedDentist("all");
               }} className="w-full md:w-auto">
                 Limpar Filtros
               </Button>

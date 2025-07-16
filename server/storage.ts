@@ -473,7 +473,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Receivables (Contas a Receber)
-  async getReceivables(patientId?: number, status?: string, startDate?: Date, endDate?: Date): Promise<(Receivable & { patient: Patient; consultation?: Consultation; appointment?: Appointment })[]> {
+  async getReceivables(patientId?: number, status?: string, startDate?: Date, endDate?: Date, dentistId?: number): Promise<(Receivable & { patient: Patient; consultation?: Consultation; appointment?: Appointment })[]> {
     const whereConditions = [];
     
     if (patientId) {
@@ -487,6 +487,12 @@ export class DatabaseStorage implements IStorage {
     }
     if (endDate) {
       whereConditions.push(sql`${receivables.dueDate} <= ${endDate}`);
+    }
+    if (dentistId) {
+      whereConditions.push(or(
+        eq(consultations.dentistId, dentistId),
+        eq(appointments.dentistId, dentistId)
+      ));
     }
 
     let query = db
