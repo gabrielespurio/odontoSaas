@@ -506,9 +506,22 @@ export class DatabaseStorage implements IStorage {
         notes: receivables.notes,
         createdAt: receivables.createdAt,
         updatedAt: receivables.updatedAt,
-        patient: patients,
-        consultation: consultations,
-        appointment: appointments,
+        patient: {
+          id: patients.id,
+          name: patients.name,
+          email: patients.email,
+          phone: patients.phone,
+        },
+        consultation: {
+          id: consultations.id,
+          date: consultations.date,
+        },
+        appointment: {
+          id: appointments.id,
+          scheduledDate: appointments.scheduledDate,
+        },
+        consultationDentistId: consultations.dentistId,
+        appointmentDentistId: appointments.dentistId,
       })
       .from(receivables)
       .innerJoin(patients, eq(receivables.patientId, patients.id))

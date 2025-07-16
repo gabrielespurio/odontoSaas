@@ -1209,44 +1209,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         receivablesResult = await storage.getReceivables(patientId, status, startDate, endDate);
       } else {
         // For users with "own" scope, filter by their appointments/consultations
-        receivablesResult = await db.select({
-          id: receivables.id,
-          patientId: receivables.patientId,
-          consultationId: receivables.consultationId,
-          appointmentId: receivables.appointmentId,
-          amount: receivables.amount,
-          dueDate: receivables.dueDate,
-          status: receivables.status,
-          description: receivables.description,
-          installment: receivables.installment,
-          totalInstallments: receivables.totalInstallments,
-          createdAt: receivables.createdAt,
-          patient: {
-            id: patients.id,
-            name: patients.name,
-            email: patients.email,
-            phone: patients.phone,
-          },
-          consultationId: consultations.id,
-          consultationDentistId: consultations.dentistId,
-          appointmentId: appointments.id,
-          appointmentDentistId: appointments.dentistId,
-        }).from(receivables)
-          .leftJoin(patients, eq(receivables.patientId, patients.id))
-          .leftJoin(consultations, eq(receivables.consultationId, consultations.id))
-          .leftJoin(appointments, eq(receivables.appointmentId, appointments.id))
-          .where(
-            and(
-              patientId ? eq(receivables.patientId, patientId) : undefined,
-              status ? eq(receivables.status, status) : undefined,
-              startDate ? sql`${receivables.dueDate} >= ${startDate}` : undefined,
-              endDate ? sql`${receivables.dueDate} <= ${endDate}` : undefined,
-              or(
-                eq(consultations.dentistId, user.id),
-                eq(appointments.dentistId, user.id)
-              )
-            )
+        const userConsultations = await db.select({
+          id: consultations.id,
+          patientId: consultations.patientId,
+          dentistId: consultations.dentistId,
+        }).from(consultations)
+          .where(eq(consultations.dentistId, user.id));
+
+        const userAppointments = await db.select({
+          id: appointments.id,
+          patientId: appointments.patientId,
+          dentistId: appointments.dentistId,
+        }).from(appointments)
+          .where(eq(appointments.dentistId, user.id));
+
+        const consultationIds = userConsultations.map(c => c.id);
+        const appointmentIds = userAppointments.map(a => a.id);
+
+        if (consultationIds.length === 0 && appointmentIds.length === 0) {
+          receivablesResult = [];
+        } else {
+          let whereConditions = [];
+          
+          if (patientId) whereConditions.push(eq(receivables.patientId, patientId));
+          if (status) whereConditions.push(eq(receivables.status, status));
+          if (startDate) whereConditions.push(sql`${receivables.dueDate} >= ${startDate}`);
+          if (endDate) whereConditions.push(sql`${receivables.dueDate} <= ${endDate}`);
+
+          const orConditions = [];
+          if (consultationIds.length > 0) {
+            orConditions.push(sql`${receivables.consultationId} IN (${consultationIds.join(',')})`);
+          }
+          if (appointmentIds.length > 0) {
+            orConditions.push(sql`${receivables.appointmentId} IN (${appointmentIds.join(',')})`);
+          }
+
+          if (orConditions.length > 0) {
+            whereConditions.push(or(...orConditions));
+          }
+
+          receivablesResult = await storage.getReceivables(
+            patientId, 
+            status, 
+            startDate, 
+            endDate
           );
+
+          // Filter results to only include user's own data
+          receivablesResult = receivablesResult.filter(r => 
+            (r.consultationId && consultationIds.includes(r.consultationId)) ||
+            (r.appointmentId && appointmentIds.includes(r.appointmentId))
+          );
+        }
       }
       
       res.json(receivablesResult);
@@ -1346,10 +1360,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/payables", async (req, res) => {
+  app.post("/api/payables", authenticateToken, async (req, res) => {
     try {
+      const user = (req as any).user;
       const payableData = insertPayableSchema.parse(req.body);
-      const payable = await storage.createPayable(payableData);
+      
+      // Add createdBy field
+      const payableWithCreatedBy = {
+        ...payableData,
+        createdBy: user.id
+      };
+      
+      const payable = await storage.createPayable(payableWithCreatedBy);
       res.json(payable);
     } catch (error) {
       console.error("Create payable error:", error);
@@ -1386,7 +1408,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (startDate) whereConditions.push(sql`${cashFlow.date} >= ${startDate}`);
         if (endDate) whereConditions.push(sql`${cashFlow.date} <= ${endDate}`);
         
-        const userCashFlow = await db.select().from(cashFlow)
+        const userCashFlow = await db.select({
+          id: cashFlow.id,
+          type: cashFlow.type,
+          amount: cashFlow.amount,
+          description: cashFlow.description,
+          date: cashFlow.date,
+          category: cashFlow.category,
+          receivableId: cashFlow.receivableId,
+          payableId: cashFlow.payableId,
+          createdAt: cashFlow.createdAt,
+        }).from(cashFlow)
           .leftJoin(receivables, eq(cashFlow.receivableId, receivables.id))
           .leftJoin(consultations, eq(receivables.consultationId, consultations.id))
           .leftJoin(appointments, eq(receivables.appointmentId, appointments.id))
@@ -1401,7 +1433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             )
           );
         
-        res.json(userCashFlow.map(row => row.cash_flow));
+        res.json(userCashFlow);
       }
     } catch (error) {
       console.error("Get cash flow error:", error);

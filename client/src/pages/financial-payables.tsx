@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   Plus, 
   Search, 
@@ -35,6 +36,7 @@ type Payable = {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  createdBy?: number;
 };
 
 export default function FinancialPayables() {
@@ -51,6 +53,10 @@ export default function FinancialPayables() {
       status: selectedStatus !== "all" ? selectedStatus : undefined,
       category: selectedCategory !== "all" ? selectedCategory : undefined
     }],
+  });
+
+  const { data: users } = useQuery<any[]>({
+    queryKey: ["/api/users"],
   });
 
   const markAsPaidMutation = useMutation({
@@ -257,81 +263,139 @@ export default function FinancialPayables() {
         </CardContent>
       </Card>
 
-      {/* Payables Table */}
+      {/* Contas a Pagar - Tabela */}
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Contas a Pagar</CardTitle>
+          <CardTitle className="text-xl font-semibold text-gray-900">Contas a Pagar</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="responsive-table-container">
-            <table className="responsive-table">
-              <thead className="bg-neutral-50">
-                <tr className="border-b">
-                  <th className="text-left py-4 px-6 font-medium text-neutral-700">Descrição</th>
-                  <th className="text-left py-4 px-6 font-medium text-neutral-700">Fornecedor</th>
-                  <th className="text-left py-4 px-6 font-medium text-neutral-700">Categoria</th>
-                  <th className="text-left py-4 px-6 font-medium text-neutral-700">Valor</th>
-                  <th className="text-left py-4 px-6 font-medium text-neutral-700">Vencimento</th>
-                  <th className="text-left py-4 px-6 font-medium text-neutral-700">Status</th>
-                  <th className="text-center py-4 px-6 font-medium text-neutral-700">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPayables.map((payable) => (
-                  <tr key={payable.id} className="border-b hover:bg-neutral-50/50 transition-colors">
-                    <td className="py-4 px-6">
-                      <div>
-                        <p className="font-medium text-neutral-900">{payable.description}</p>
-                        {payable.notes && (
-                          <p className="text-sm text-neutral-600">{payable.notes}</p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center">
-                        <Building className="w-4 h-4 text-neutral-400 mr-2" />
-                        <span className="text-neutral-900">{payable.supplier || "Não informado"}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <Badge variant="outline">{payable.category}</Badge>
-                    </td>
-                    <td className="py-4 px-6 font-mono font-medium text-neutral-900">
-                      {formatCurrency(payable.amount)}
-                    </td>
-                    <td className="py-4 px-6 text-neutral-900">
-                      {formatDate(payable.dueDate)}
-                    </td>
-                    <td className="py-4 px-6">
-                      {getStatusBadge(payable.status)}
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex justify-center gap-2">
-                        {payable.status === "pending" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => markAsPaidMutation.mutate(payable.id)}
-                            disabled={markAsPaidMutation.isPending}
-                          >
-                            <CreditCard className="w-4 h-4 mr-1" />
-                            Pagar
-                          </Button>
-                        )}
-                        <Button size="sm" variant="ghost">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {filteredPayables.length === 0 && (
+        <CardContent>
+          {payablesLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-12 bg-gray-300 rounded mb-2"></div>
+                </div>
+              ))}
+            </div>
+          ) : filteredPayables.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-neutral-600">Nenhuma conta a pagar encontrada</p>
+              <DollarSign className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Nenhuma conta a pagar encontrada
+              </h3>
+              <p className="text-gray-600">
+                Crie uma nova conta a pagar para começar.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Responsável</TableHead>
+                    <TableHead>Fornecedor</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredPayables.map((payable) => {
+                    const user = users?.find(u => u.id === payable.createdBy);
+                    
+                    return (
+                      <TableRow key={payable.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {payable.description}
+                            </p>
+                            {payable.notes && (
+                              <p className="text-sm text-gray-500 mt-1">
+                                {payable.notes}
+                              </p>
+                            )}
+                          </div>
+                        </TableCell>
+                        
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                              <span className="text-purple-700 font-medium text-xs">
+                                {user?.name.charAt(0).toUpperCase() || "?"}
+                              </span>
+                            </div>
+                            <span className="text-sm font-medium text-gray-900">
+                              {user?.name || "Não identificado"}
+                            </span>
+                          </div>
+                        </TableCell>
+                        
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Building className="w-4 h-4 text-gray-400" />
+                            <span className="text-sm text-gray-900">
+                              {payable.supplier || "Não informado"}
+                            </span>
+                          </div>
+                        </TableCell>
+                        
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {payable.category}
+                          </Badge>
+                        </TableCell>
+                        
+                        <TableCell>
+                          <span className="font-semibold text-gray-900">
+                            {formatCurrency(payable.amount)}
+                          </span>
+                        </TableCell>
+                        
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="w-4 h-4 text-gray-400" />
+                            <span className="text-sm text-gray-600">
+                              {formatDate(payable.dueDate)}
+                            </span>
+                          </div>
+                        </TableCell>
+                        
+                        <TableCell>
+                          {getStatusBadge(payable.status)}
+                        </TableCell>
+                        
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setEditingPayable(payable)}
+                            >
+                              <Edit className="w-4 h-4 mr-1" />
+                              Editar
+                            </Button>
+                            {payable.status === "pending" && (
+                              <Button
+                                size="sm"
+                                onClick={() => markAsPaidMutation.mutate(payable.id)}
+                                disabled={markAsPaidMutation.isPending}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <CreditCard className="w-4 h-4 mr-1" />
+                                Pagar
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   Plus, 
   Search, 
@@ -55,6 +56,8 @@ type Receivable = {
     id: number;
     scheduledDate: string;
   };
+  consultationDentistId?: number;
+  appointmentDentistId?: number;
 };
 
 type Patient = {
@@ -84,6 +87,10 @@ export default function FinancialReceivables() {
 
   const { data: patients } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
+  });
+
+  const { data: dentists } = useQuery<any[]>({
+    queryKey: ["/api/users/dentists"],
   });
 
   const markAsPaidMutation = useMutation({
@@ -322,185 +329,159 @@ export default function FinancialReceivables() {
           </CardContent>
         </Card>
 
-        {/* Lista de Contas a Receber - Desktop */}
-        <Card className="hidden md:block">
+        {/* Contas a Receber - Tabela */}
+        <Card>
           <CardHeader>
-            <CardTitle>Contas a Receber</CardTitle>
+            <CardTitle className="text-xl font-semibold text-gray-900">Contas a Receber</CardTitle>
           </CardHeader>
           <CardContent>
             {receivablesLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : filteredReceivables.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                Nenhuma conta a receber encontrada
-              </div>
-            ) : (
               <div className="space-y-4">
-                {filteredReceivables.map((receivable) => (
-                  <div key={receivable.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
-                          {getInitials(receivable.patient.name)}
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-gray-900">{receivable.patient.name}</h4>
-                          <p className="text-sm text-gray-600">{receivable.description}</p>
-                          {receivable.installments > 1 && (
-                            <p className="text-xs text-gray-500">
-                              Parcela {receivable.installmentNumber}/{receivable.installments}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-gray-900">{formatCurrency(receivable.amount)}</p>
-                          <p className="text-sm text-gray-600">Venc: {formatDate(receivable.dueDate)}</p>
-                          {receivable.paymentDate && (
-                            <p className="text-sm text-green-600">Pago: {formatDate(receivable.paymentDate)}</p>
-                          )}
-                        </div>
-                        
-                        <div className="flex flex-col items-end space-y-2">
-                          {getStatusBadge(receivable.status, receivable.dueDate)}
-                          
-                          <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEdit(receivable)}
-                            >
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                            
-                            {receivable.status === "pending" && (
-                              <Button
-                                size="sm"
-                                onClick={() => handlePayment(receivable)}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                <CreditCard className="w-3 h-3 mr-1" />
-                                Receber
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="h-12 bg-gray-300 rounded mb-2"></div>
                   </div>
                 ))}
+              </div>
+            ) : filteredReceivables.length === 0 ? (
+              <div className="text-center py-8">
+                <DollarSign className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Nenhuma conta a receber encontrada
+                </h3>
+                <p className="text-gray-600">
+                  Crie uma nova conta a receber para começar.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Paciente</TableHead>
+                      <TableHead>Dentista</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Vencimento</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Parcelas</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredReceivables.map((receivable) => {
+                      const dentist = dentists?.find(d => 
+                        d.id === receivable.consultationDentistId || 
+                        d.id === receivable.appointmentDentistId
+                      );
+                      
+                      return (
+                        <TableRow key={receivable.id}>
+                          <TableCell>
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
+                                <span className="text-teal-700 font-medium text-sm">
+                                  {receivable.patient.name.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {receivable.patient.name}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {receivable.patient.phone}
+                                </p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-blue-700 font-medium text-xs">
+                                  {dentist?.name.charAt(0).toUpperCase() || "?"}
+                                </span>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900">
+                                {dentist?.name || "Não identificado"}
+                              </span>
+                            </div>
+                          </TableCell>
+                          
+                          <TableCell>
+                            <span className="font-semibold text-gray-900">
+                              {formatCurrency(receivable.amount)}
+                            </span>
+                          </TableCell>
+                          
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm text-gray-600">
+                                {formatDate(receivable.dueDate)}
+                              </span>
+                            </div>
+                          </TableCell>
+                          
+                          <TableCell>
+                            {getStatusBadge(receivable.status, receivable.dueDate)}
+                          </TableCell>
+                          
+                          <TableCell>
+                            <div>
+                              <p className="text-sm text-gray-900">
+                                {receivable.description || "Sem descrição"}
+                              </p>
+                              {receivable.paymentDate && (
+                                <p className="text-sm text-green-600 mt-1">
+                                  Pago em {formatDate(receivable.paymentDate)}
+                                </p>
+                              )}
+                            </div>
+                          </TableCell>
+                          
+                          <TableCell>
+                            <span className="text-sm text-gray-600">
+                              {receivable.installments > 1 
+                                ? `${receivable.installmentNumber}/${receivable.installments}`
+                                : "Única"
+                              }
+                            </span>
+                          </TableCell>
+                          
+                          <TableCell className="text-right">
+                            <div className="flex justify-end space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEdit(receivable)}
+                              >
+                                <Edit className="w-4 h-4 mr-1" />
+                                Editar
+                              </Button>
+                              {receivable.status === "pending" && (
+                                <Button 
+                                  size="sm"
+                                  onClick={() => handlePayment(receivable)}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <CreditCard className="w-4 h-4 mr-1" />
+                                  Receber
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Lista de Contas a Receber - Mobile */}
-        <div className="md:hidden">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Contas a Receber</h2>
-          {receivablesLoading ? (
-            <Card>
-              <CardContent className="p-8">
-                <div className="flex justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ) : filteredReceivables.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <DollarSign className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Nenhuma conta encontrada
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Não há contas a receber que correspondam aos filtros aplicados.
-                </p>
-                <Button onClick={() => setShowForm(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Criar Primeira Conta
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {filteredReceivables.map((receivable) => (
-                <Card key={receivable.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
-                          {getInitials(receivable.patient.name)}
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-gray-900">{receivable.patient.name}</h4>
-                          <p className="text-sm text-gray-600">{receivable.description}</p>
-                          {receivable.installments > 1 && (
-                            <p className="text-xs text-gray-500">
-                              Parcela {receivable.installmentNumber}/{receivable.installments}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      {getStatusBadge(receivable.status, receivable.dueDate)}
-                    </div>
-                    
-                    <div className="space-y-2 mb-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Valor:</span>
-                        <span className="text-lg font-bold text-gray-900">{formatCurrency(receivable.amount)}</span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Vencimento:</span>
-                        <span className="text-sm font-medium text-gray-900">{formatDate(receivable.dueDate)}</span>
-                      </div>
-                      
-                      {receivable.paymentDate && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Pagamento:</span>
-                          <span className="text-sm font-medium text-green-600">{formatDate(receivable.paymentDate)}</span>
-                        </div>
-                      )}
-                      
-                      {receivable.paymentMethod && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Método:</span>
-                          <span className="text-sm font-medium text-gray-900">{receivable.paymentMethod}</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEdit(receivable)}
-                      >
-                        <Edit className="w-3 h-3 mr-1" />
-                        Editar
-                      </Button>
-                      
-                      {receivable.status === "pending" && (
-                        <Button
-                          size="sm"
-                          onClick={() => handlePayment(receivable)}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <CreditCard className="w-3 h-3 mr-1" />
-                          Receber
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+
       </div>
 
       {/* Modal de Pagamento */}
