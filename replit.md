@@ -370,6 +370,15 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Implemented proper filtering in backend queries based on user's data scope
   - Created test users: dentista1@teste.com (scope: own), dentista2@teste.com (scope: all) for validation
   - System now enforces data access restrictions correctly across all modules
+- July 16, 2025. **FINANCIAL MODULE SECURITY ENHANCEMENT**: Implemented complete data scope access control for financial modules
+  - Added `authenticateToken` middleware to all financial endpoints (/api/receivables, /api/payables, /api/cash-flow, /api/financial-metrics, /api/current-balance)
+  - Users with dataScope "own" can only see receivables from their own consultations/appointments
+  - Users with dataScope "own" cannot see payables (clinic expenses) - returns empty array
+  - Financial metrics for "own" scope users calculated only from their own receivables data
+  - Cash flow filtering implemented to show only entries related to user's own receivables
+  - Balance calculation restricted to user's own paid receivables for "own" scope users
+  - Admin users and "all" scope users maintain full access to all financial data
+  - Successfully tested with dentista2 user (scope: own) - confirmed complete data isolation
 
 ## User Preferences
 

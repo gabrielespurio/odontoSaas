@@ -1195,15 +1195,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Receivables (Contas a Receber)
-  app.get("/api/receivables", async (req, res) => {
+  app.get("/api/receivables", authenticateToken, async (req, res) => {
     try {
+      const user = (req as any).user;
       const patientId = req.query.patientId ? parseInt(req.query.patientId as string) : undefined;
       const status = req.query.status as string;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
       
-      const receivables = await storage.getReceivables(patientId, status, startDate, endDate);
-      res.json(receivables);
+      // Apply data scope filtering
+      let receivablesResult;
+      if (user.role === "admin" || user.dataScope === "all") {
+        receivablesResult = await storage.getReceivables(patientId, status, startDate, endDate);
+      } else {
+        // For users with "own" scope, filter by their appointments/consultations
+        receivablesResult = await db.select({
+          id: receivables.id,
+          patientId: receivables.patientId,
+          consultationId: receivables.consultationId,
+          appointmentId: receivables.appointmentId,
+          amount: receivables.amount,
+          dueDate: receivables.dueDate,
+          status: receivables.status,
+          description: receivables.description,
+          installment: receivables.installment,
+          totalInstallments: receivables.totalInstallments,
+          createdAt: receivables.createdAt,
+          patient: {
+            id: patients.id,
+            name: patients.name,
+            email: patients.email,
+            phone: patients.phone,
+          },
+          consultationId: consultations.id,
+          consultationDentistId: consultations.dentistId,
+          appointmentId: appointments.id,
+          appointmentDentistId: appointments.dentistId,
+        }).from(receivables)
+          .leftJoin(patients, eq(receivables.patientId, patients.id))
+          .leftJoin(consultations, eq(receivables.consultationId, consultations.id))
+          .leftJoin(appointments, eq(receivables.appointmentId, appointments.id))
+          .where(
+            and(
+              patientId ? eq(receivables.patientId, patientId) : undefined,
+              status ? eq(receivables.status, status) : undefined,
+              startDate ? sql`${receivables.dueDate} >= ${startDate}` : undefined,
+              endDate ? sql`${receivables.dueDate} <= ${endDate}` : undefined,
+              or(
+                eq(consultations.dentistId, user.id),
+                eq(appointments.dentistId, user.id)
+              )
+            )
+          );
+      }
+      
+      res.json(receivablesResult);
     } catch (error) {
       console.error("Get receivables error:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -1262,15 +1308,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Payables (Contas a Pagar)
-  app.get("/api/payables", async (req, res) => {
+  app.get("/api/payables", authenticateToken, async (req, res) => {
     try {
+      const user = (req as any).user;
       const status = req.query.status as string;
       const category = req.query.category as string;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
       
-      const payables = await storage.getPayables(status, category, startDate, endDate);
-      res.json(payables);
+      // Apply data scope filtering - only admin and "all" scope users can see payables
+      if (user.role === "admin" || user.dataScope === "all") {
+        const payables = await storage.getPayables(status, category, startDate, endDate);
+        res.json(payables);
+      } else {
+        // Users with "own" scope cannot see payables (clinic expenses)
+        res.json([]);
+      }
     } catch (error) {
       console.error("Get payables error:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -1317,36 +1370,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cash Flow (Fluxo de Caixa)
-  app.get("/api/cash-flow", async (req, res) => {
+  app.get("/api/cash-flow", authenticateToken, async (req, res) => {
     try {
+      const user = (req as any).user;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
       
-      const cashFlow = await storage.getCashFlow(startDate, endDate);
-      res.json(cashFlow);
+      // Apply data scope filtering
+      if (user.role === "admin" || user.dataScope === "all") {
+        const cashFlow = await storage.getCashFlow(startDate, endDate);
+        res.json(cashFlow);
+      } else {
+        // Users with "own" scope only see cash flow from their own receivables
+        let whereConditions = [];
+        if (startDate) whereConditions.push(sql`${cashFlow.date} >= ${startDate}`);
+        if (endDate) whereConditions.push(sql`${cashFlow.date} <= ${endDate}`);
+        
+        const userCashFlow = await db.select().from(cashFlow)
+          .leftJoin(receivables, eq(cashFlow.receivableId, receivables.id))
+          .leftJoin(consultations, eq(receivables.consultationId, consultations.id))
+          .leftJoin(appointments, eq(receivables.appointmentId, appointments.id))
+          .where(
+            and(
+              whereConditions.length > 0 ? and(...whereConditions) : undefined,
+              or(
+                eq(consultations.dentistId, user.id),
+                eq(appointments.dentistId, user.id),
+                isNull(cashFlow.receivableId) // Allow entries not related to receivables
+              )
+            )
+          );
+        
+        res.json(userCashFlow.map(row => row.cash_flow));
+      }
     } catch (error) {
       console.error("Get cash flow error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.get("/api/financial-metrics", async (req, res) => {
+  app.get("/api/financial-metrics", authenticateToken, async (req, res) => {
     try {
+      const user = (req as any).user;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
       
-      const metrics = await storage.getFinancialMetrics(startDate, endDate);
-      res.json(metrics);
+      // Apply data scope filtering
+      if (user.role === "admin" || user.dataScope === "all") {
+        const metrics = await storage.getFinancialMetrics(startDate, endDate);
+        res.json(metrics);
+      } else {
+        // Users with "own" scope only see metrics from their own data
+        const whereReceivables = [];
+        if (startDate) whereReceivables.push(sql`${receivables.dueDate} >= ${startDate}`);
+        if (endDate) whereReceivables.push(sql`${receivables.dueDate} <= ${endDate}`);
+        
+        // Calculate metrics only for user's own receivables
+        const userReceivablesQuery = db
+          .select({ 
+            amount: receivables.amount,
+            status: receivables.status 
+          })
+          .from(receivables)
+          .leftJoin(consultations, eq(receivables.consultationId, consultations.id))
+          .leftJoin(appointments, eq(receivables.appointmentId, appointments.id))
+          .where(
+            and(
+              whereReceivables.length > 0 ? and(...whereReceivables) : undefined,
+              or(
+                eq(consultations.dentistId, user.id),
+                eq(appointments.dentistId, user.id)
+              )
+            )
+          );
+        
+        const userReceivables = await userReceivablesQuery;
+        
+        const totalReceivables = userReceivables.reduce((sum, r) => sum + parseFloat(r.amount), 0);
+        const totalReceived = userReceivables.filter(r => r.status === 'paid').reduce((sum, r) => sum + parseFloat(r.amount), 0);
+        const pendingReceivables = userReceivables.filter(r => r.status === 'pending').reduce((sum, r) => sum + parseFloat(r.amount), 0);
+        
+        const metrics = {
+          totalReceivables,
+          totalPayables: 0, // Users with "own" scope don't see payables
+          totalReceived,
+          totalPaid: 0,
+          pendingReceivables,
+          pendingPayables: 0,
+          currentBalance: totalReceived
+        };
+        
+        res.json(metrics);
+      }
     } catch (error) {
       console.error("Get financial metrics error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.get("/api/current-balance", async (req, res) => {
+  app.get("/api/current-balance", authenticateToken, async (req, res) => {
     try {
-      const balance = await storage.getCurrentBalance();
-      res.json({ balance });
+      const user = (req as any).user;
+      
+      // Apply data scope filtering
+      if (user.role === "admin" || user.dataScope === "all") {
+        const balance = await storage.getCurrentBalance();
+        res.json({ balance });
+      } else {
+        // Users with "own" scope only see balance from their own receivables
+        const userReceivablesQuery = db
+          .select({ 
+            amount: receivables.amount,
+            status: receivables.status 
+          })
+          .from(receivables)
+          .leftJoin(consultations, eq(receivables.consultationId, consultations.id))
+          .leftJoin(appointments, eq(receivables.appointmentId, appointments.id))
+          .where(
+            and(
+              eq(receivables.status, 'paid'),
+              or(
+                eq(consultations.dentistId, user.id),
+                eq(appointments.dentistId, user.id)
+              )
+            )
+          );
+        
+        const userReceivables = await userReceivablesQuery;
+        const balance = userReceivables.reduce((sum, r) => sum + parseFloat(r.amount), 0);
+        
+        res.json({ balance });
+      }
     } catch (error) {
       console.error("Get current balance error:", error);
       res.status(500).json({ message: "Internal server error" });
