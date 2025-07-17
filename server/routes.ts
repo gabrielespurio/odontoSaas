@@ -720,32 +720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const appointmentData = insertAppointmentSchema.parse(req.body);
       
-      // Validar se o horário está disponível considerando a duração dos procedimentos
-      const scheduledDate = new Date(appointmentData.scheduledDate);
-      const newStartTime = scheduledDate.getTime();
-      
-      // Buscar todos os agendamentos do mesmo dia e dentista
-      const existingAppointments = await storage.getAppointments(scheduledDate, appointmentData.dentistId);
-      
-      // Verificar se o novo horário conflita com algum procedimento em andamento
-      const conflictingAppointment = existingAppointments.find(apt => {
-        const aptDate = new Date(apt.scheduledDate);
-        const aptStartTime = aptDate.getTime();
-        const aptEndTime = aptStartTime + (apt.procedure.duration * 60 * 1000); // duração em minutos para millisegundos
-        
-        // Verifica se o novo horário está dentro do período do procedimento existente
-        return newStartTime >= aptStartTime && newStartTime < aptEndTime;
-      });
-      
-      if (conflictingAppointment) {
-        const conflictStart = new Date(conflictingAppointment.scheduledDate);
-        const conflictEnd = new Date(conflictStart.getTime() + (conflictingAppointment.procedure.duration * 60 * 1000));
-        
-        return res.status(409).json({ 
-          message: `Horário ocupado pelo procedimento "${conflictingAppointment.procedure.name}" que vai das ${conflictStart.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} às ${conflictEnd.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}.` 
-        });
-      }
-      
+      // Enhanced conflict validation is now handled in storage layer
       const appointment = await storage.createAppointment(appointmentData);
       
       // Send WhatsApp message to patient
@@ -773,6 +748,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(appointment);
     } catch (error) {
       console.error("Create appointment error:", error);
+      if (error.message.includes("Conflito de horário")) {
+        return res.status(409).json({ message: error.message });
+      }
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -819,6 +797,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Cancel all appointments error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Endpoint para limpar agendamentos cancelados (hard delete)
+  app.post("/api/appointments/cleanup-cancelled", async (req, res) => {
+    try {
+      const result = await storage.cleanupCancelledAppointments();
+      
+      res.json({ 
+        success: true, 
+        message: `${result.count} agendamentos cancelados foram removidos permanentemente`,
+        count: result.count
+      });
+    } catch (error) {
+      console.error("Cleanup cancelled appointments error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Endpoint para verificar disponibilidade de slot
+  app.post("/api/appointments/check-availability", async (req, res) => {
+    try {
+      const { dentistId, scheduledDate, procedureId, excludeId } = req.body;
+      
+      const result = await storage.isSlotAvailable(
+        dentistId, 
+        new Date(scheduledDate), 
+        procedureId, 
+        excludeId
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Check availability error:", error);
       res.status(500).json({ message: "Erro interno do servidor" });
     }
   });

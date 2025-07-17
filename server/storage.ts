@@ -80,6 +80,9 @@ export interface IStorage {
   createAppointment(appointment: InsertAppointment): Promise<Appointment & { patient: Patient; dentist: User; procedure: Procedure }>;
   updateAppointment(id: number, appointment: Partial<InsertAppointment>): Promise<Appointment>;
   cancelAllAppointments(): Promise<{ count: number }>;
+  cleanupCancelledAppointments(): Promise<{ count: number }>;
+  isSlotAvailable(dentistId: number, scheduledDate: Date, procedureId: number, excludeId?: number): Promise<{ available: boolean; conflictMessage?: string }>;
+  checkAppointmentConflicts(appointmentData: InsertAppointment, tx?: any, excludeId?: number): Promise<{ hasConflict: boolean; message: string }>;
   
   // Consultations
   getConsultations(patientId?: number, dentistId?: number): Promise<(Consultation & { patient: Patient; dentist: User })[]>;
@@ -327,35 +330,129 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAppointment(insertAppointment: InsertAppointment): Promise<Appointment & { patient: Patient; dentist: User; procedure: Procedure }> {
-    const [appointment] = await db.insert(appointments).values(insertAppointment).returning();
+    // Validate appointment conflicts with transaction for atomicity
+    const result = await db.transaction(async (tx) => {
+      // Check for conflicts before creating
+      const conflictCheck = await this.checkAppointmentConflicts(insertAppointment, tx);
+      if (conflictCheck.hasConflict) {
+        throw new Error(conflictCheck.message);
+      }
+      
+      // Create the appointment
+      const [appointment] = await tx.insert(appointments).values(insertAppointment).returning();
+      
+      // Fetch the complete appointment with related data
+      const completeAppointment = await tx.select({
+        id: appointments.id,
+        patientId: appointments.patientId,
+        dentistId: appointments.dentistId,
+        procedureId: appointments.procedureId,
+        scheduledDate: appointments.scheduledDate,
+        status: appointments.status,
+        notes: appointments.notes,
+        createdAt: appointments.createdAt,
+        updatedAt: appointments.updatedAt,
+        patient: patients,
+        dentist: users,
+        procedure: procedures,
+      })
+      .from(appointments)
+      .innerJoin(patients, eq(appointments.patientId, patients.id))
+      .innerJoin(users, eq(appointments.dentistId, users.id))
+      .innerJoin(procedures, eq(appointments.procedureId, procedures.id))
+      .where(eq(appointments.id, appointment.id));
+      
+      return completeAppointment[0];
+    });
     
-    // Fetch the complete appointment with related data
-    const completeAppointment = await db.select({
-      id: appointments.id,
-      patientId: appointments.patientId,
-      dentistId: appointments.dentistId,
-      procedureId: appointments.procedureId,
-      scheduledDate: appointments.scheduledDate,
-      status: appointments.status,
-      notes: appointments.notes,
-      createdAt: appointments.createdAt,
-      updatedAt: appointments.updatedAt,
-      patient: patients,
-      dentist: users,
-      procedure: procedures,
-    })
-    .from(appointments)
-    .innerJoin(patients, eq(appointments.patientId, patients.id))
-    .innerJoin(users, eq(appointments.dentistId, users.id))
-    .innerJoin(procedures, eq(appointments.procedureId, procedures.id))
-    .where(eq(appointments.id, appointment.id));
-    
-    return completeAppointment[0];
+    return result;
   }
 
   async updateAppointment(id: number, insertAppointment: Partial<InsertAppointment>): Promise<Appointment> {
-    const [appointment] = await db.update(appointments).set(insertAppointment).where(eq(appointments.id, id)).returning();
-    return appointment;
+    // Validate appointment conflicts for updates too
+    const result = await db.transaction(async (tx) => {
+      if (insertAppointment.scheduledDate || insertAppointment.dentistId || insertAppointment.procedureId) {
+        const current = await this.getAppointment(id);
+        if (current) {
+          const updatedAppointment = {
+            ...current,
+            ...insertAppointment,
+          };
+          
+          const conflictCheck = await this.checkAppointmentConflicts(updatedAppointment, tx, id);
+          if (conflictCheck.hasConflict) {
+            throw new Error(conflictCheck.message);
+          }
+        }
+      }
+      
+      const [appointment] = await tx.update(appointments).set(insertAppointment).where(eq(appointments.id, id)).returning();
+      return appointment;
+    });
+    
+    return result;
+  }
+
+  // Enhanced conflict checking method with timezone handling
+  async checkAppointmentConflicts(appointmentData: InsertAppointment, tx?: any, excludeId?: number): Promise<{ hasConflict: boolean; message: string }> {
+    const dbConnection = tx || db;
+    
+    // Get procedure details to check duration
+    const procedure = await dbConnection.select().from(procedures).where(eq(procedures.id, appointmentData.procedureId));
+    if (!procedure.length) {
+      return { hasConflict: false, message: '' };
+    }
+    
+    const procedureDuration = procedure[0].duration; // in minutes
+    const newStartTime = new Date(appointmentData.scheduledDate);
+    const newEndTime = new Date(newStartTime.getTime() + (procedureDuration * 60 * 1000));
+    
+    // Check for conflicts with existing appointments
+    const existingAppointments = await dbConnection.select({
+      id: appointments.id,
+      scheduledDate: appointments.scheduledDate,
+      procedureId: appointments.procedureId,
+      procedure: procedures,
+    })
+    .from(appointments)
+    .innerJoin(procedures, eq(appointments.procedureId, procedures.id))
+    .where(
+      and(
+        eq(appointments.dentistId, appointmentData.dentistId),
+        sql`${appointments.status} != 'cancelado'`,
+        sql`DATE(${appointments.scheduledDate}) = DATE(${newStartTime})`,
+        excludeId ? sql`${appointments.id} != ${excludeId}` : sql`true`
+      )
+    );
+    
+    // Check for time conflicts
+    for (const existingAppt of existingAppointments) {
+      const existingStartTime = new Date(existingAppt.scheduledDate);
+      const existingEndTime = new Date(existingStartTime.getTime() + (existingAppt.procedure.duration * 60 * 1000));
+      
+      // Check if time periods overlap
+      const hasOverlap = (newStartTime < existingEndTime && newEndTime > existingStartTime);
+      
+      if (hasOverlap) {
+        const conflictStart = existingStartTime.toLocaleTimeString('pt-BR', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          timeZone: 'America/Sao_Paulo'
+        });
+        const conflictEnd = existingEndTime.toLocaleTimeString('pt-BR', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          timeZone: 'America/Sao_Paulo'
+        });
+        
+        return {
+          hasConflict: true,
+          message: `Conflito de horário detectado! Já existe um agendamento de ${conflictStart} até ${conflictEnd} (${existingAppt.procedure.name}).`
+        };
+      }
+    }
+    
+    return { hasConflict: false, message: '' };
   }
 
   async cancelAllAppointments(): Promise<{ count: number }> {
@@ -364,6 +461,28 @@ export class DatabaseStorage implements IStorage {
       .where(sql`${appointments.status} != 'cancelado'`)
       .returning();
     return { count: result.length };
+  }
+
+  // Hard delete cancelled appointments to free up slots
+  async cleanupCancelledAppointments(): Promise<{ count: number }> {
+    const result = await db.delete(appointments)
+      .where(eq(appointments.status, 'cancelado'))
+      .returning();
+    return { count: result.length };
+  }
+
+  // Check if appointment slot is available
+  async isSlotAvailable(dentistId: number, scheduledDate: Date, procedureId: number, excludeId?: number): Promise<{ available: boolean; conflictMessage?: string }> {
+    const conflictCheck = await this.checkAppointmentConflicts(
+      { dentistId, scheduledDate, procedureId } as InsertAppointment,
+      null,
+      excludeId
+    );
+    
+    return {
+      available: !conflictCheck.hasConflict,
+      conflictMessage: conflictCheck.message
+    };
   }
 
   // Consultations

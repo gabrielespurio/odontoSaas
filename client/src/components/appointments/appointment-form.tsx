@@ -55,37 +55,24 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     queryKey: ["/api/appointments"],
   });
 
-  // Função para verificar conflitos de horário considerando duração dos procedimentos
-  const checkTimeConflict = (scheduledDate: string, dentistId: number, excludeId?: number) => {
-    if (!appointments || !scheduledDate || !dentistId || !procedures) return false;
+  // Enhanced conflict checking using API
+  const checkTimeConflict = async (scheduledDate: string, dentistId: number, procedureId: number, excludeId?: number) => {
+    if (!scheduledDate || !dentistId || !procedureId) return { hasConflict: false, message: '' };
     
-    const newDate = new Date(scheduledDate);
-    const newStartTime = newDate.getTime();
-    
-    return appointments.some(apt => {
-      if (excludeId && apt.id === excludeId) return false;
-      if (apt.dentistId !== dentistId) return false;
+    try {
+      const response = await apiRequest("/api/appointments/check-availability", {
+        method: "POST",
+        body: { dentistId, scheduledDate, procedureId, excludeId }
+      });
       
-      const aptDate = new Date(apt.scheduledDate);
-      
-      // Verifica se é o mesmo dia
-      const isSameDay = aptDate.getDate() === newDate.getDate() &&
-                       aptDate.getMonth() === newDate.getMonth() &&
-                       aptDate.getFullYear() === newDate.getFullYear();
-      
-      if (!isSameDay) return false;
-      
-      // Encontra o procedimento do agendamento existente
-      const existingProcedure = procedures.find(p => p.id === apt.procedure.id);
-      if (!existingProcedure) return false;
-      
-      const aptStartTime = aptDate.getTime();
-      const aptEndTime = aptStartTime + (existingProcedure.duration * 60 * 1000); // duração em minutos para millisegundos
-      
-      // Verifica se o novo horário conflita com o período do procedimento existente
-      // O conflito ocorre se o novo horário está dentro do período do procedimento existente
-      return newStartTime >= aptStartTime && newStartTime < aptEndTime;
-    });
+      return {
+        hasConflict: !response.available,
+        message: response.conflictMessage || ''
+      };
+    } catch (error) {
+      console.error("Error checking time conflict:", error);
+      return { hasConflict: false, message: '' };
+    }
   };
 
   const getInitialScheduledDate = () => {
