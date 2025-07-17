@@ -62,6 +62,12 @@ export default function PatientDetail() {
 
   const { data: consultations, isLoading: consultationsLoading } = useQuery<Consultation[]>({
     queryKey: [`/api/consultations`, { patientId }],
+    queryFn: () => 
+      fetch(`/api/consultations?patientId=${patientId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      }).then(res => res.json()),
     enabled: !!patientId,
   });
 
