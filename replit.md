@@ -423,6 +423,8 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Error handling that doesn't affect appointment creation if WhatsApp fails
   - Uses WHATSAPP_API_KEY environment variable for secure API access
   - Message format: "Olá [nome], sua consulta está marcada para o dia [data] às [hora]."
+  - Fixed timezone issue to use Brazil timezone (America/Sao_Paulo GMT-3)
+  - Updated createAppointment method to return complete patient data for WhatsApp integration
 
 ## User Preferences
 
