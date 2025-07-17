@@ -535,97 +535,112 @@ export default function Schedule() {
                           );
                         }
                       } else {
-                        const hasAnyAppointment = filteredDentists.some(dentist => 
-                          getAppointmentForSlot(date, time, dentist.id)
-                        );
+                        // Multi-dentist view: show appointments starting at this slot or occupied by previous appointments
+                        const cellAppointments = filteredDentists.map(dentist => {
+                          const appointment = getAppointmentForSlot(date, time, dentist.id);
+                          const occupiedByPrevious = isSlotOccupiedByPreviousAppointment(date, time, dentist.id);
+                          return { dentist, appointment, occupiedByPrevious };
+                        }).filter(item => item.appointment || item.occupiedByPrevious);
                         
-                        if (hasAnyAppointment) {
+                        if (cellAppointments.length > 0) {
                           return (
-                            <div key={dayIndex} className="schedule-day-cell">
-                              <div className="w-full space-y-1">
-                                {filteredDentists.map((dentist) => {
-                                  const appointment = getAppointmentForSlot(date, time, dentist.id);
-                                  const occupiedByPrevious = isSlotOccupiedByPreviousAppointment(date, time, dentist.id);
+                            <div key={dayIndex} className="schedule-day-cell relative">
+                              {cellAppointments.map(({ dentist, appointment, occupiedByPrevious }) => {
+                                if (appointment) {
+                                  // This is the starting slot of an appointment - show full appointment with proper spanning
+                                  const duration = appointment.procedure?.duration || 30;
+                                  const slotSpan = getAppointmentSlotSpan(appointment);
                                   
-                                  if (appointment) {
-                                    const duration = appointment.procedure?.duration || 30;
-                                    const slotSpan = getAppointmentSlotSpan(appointment);
-                                    
-                                    return (
-                                      <div key={dentist.id} className={`rounded p-1 text-xs relative group ${getStatusColor(appointment.status)} text-white`}
-                                           style={{ 
-                                             height: `${Math.min(slotSpan * 28, 52)}px`, // Adjusted for multi-dentist view
-                                             position: 'relative',
-                                             zIndex: 10
-                                           }}>
-                                        <div className="flex justify-between items-start">
-                                          <div className="flex-1 cursor-pointer" onClick={() => {
-                                            setEditingAppointment(appointment);
-                                            setShowForm(true);
-                                          }}>
-                                            <div className="font-medium truncate">{appointment.patient?.name}</div>
-                                            <div className="opacity-90 truncate">{dentist.name}</div>
-                                            <div className="opacity-75 text-xs">
-                                              {duration >= 60 
-                                                ? `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ''}`
-                                                : `${duration}min`}
-                                            </div>
+                                  return (
+                                    <div key={`${dentist.id}-apt`} 
+                                         className={`rounded p-1 text-xs group ${getStatusColor(appointment.status)} text-white`}
+                                         style={{ 
+                                           height: `${slotSpan * 60}px`, // Full height spanning multiple slots
+                                           width: '100%',
+                                           position: 'absolute',
+                                           top: '0',
+                                           left: '0',
+                                           zIndex: 10,
+                                           border: '1px solid rgba(255,255,255,0.2)'
+                                         }}>
+                                      <div className="flex justify-between items-start h-full">
+                                        <div className="flex-1 cursor-pointer p-1" onClick={() => {
+                                          setEditingAppointment(appointment);
+                                          setShowForm(true);
+                                        }}>
+                                          <div className="font-medium truncate text-xs">{appointment.patient?.name}</div>
+                                          <div className="opacity-90 truncate text-xs">{dentist.name}</div>
+                                          <div className="opacity-75 text-xs mt-1">
+                                            {new Date(appointment.scheduledDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                           </div>
-                                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <DropdownMenu>
-                                              <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="sm" className="h-4 w-4 p-0 hover:bg-white/20">
-                                                  <MoreHorizontal className="h-2 w-2" />
-                                                </Button>
-                                              </DropdownMenuTrigger>
-                                              <DropdownMenuContent align="end" className="w-48">
-                                                {getStatusActions(appointment.status).map((action) => (
-                                                  <DropdownMenuItem 
-                                                    key={action.value}
-                                                    onClick={() => handleStatusChange(appointment.id, action.value)}
-                                                    className={`${action.color} cursor-pointer`}
-                                                  >
-                                                    <action.icon className="w-4 h-4 mr-2" />
-                                                    {action.label}
-                                                  </DropdownMenuItem>
-                                                ))}
-                                                <DropdownMenuItem 
-                                                  onClick={() => {
-                                                    setEditingAppointment(appointment);
-                                                    setShowForm(true);
-                                                  }}
-                                                  className="cursor-pointer"
-                                                >
-                                                  <Edit2 className="w-4 h-4 mr-2" />
-                                                  Editar
-                                                </DropdownMenuItem>
-                                              </DropdownMenuContent>
-                                            </DropdownMenu>
+                                          <div className="opacity-75 text-xs">
+                                            {duration >= 60 
+                                              ? `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ''}`
+                                              : `${duration}min`}
                                           </div>
                                         </div>
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                          <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-white/20">
+                                                <MoreHorizontal className="h-3 w-3" />
+                                              </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-48">
+                                              {getStatusActions(appointment.status).map((action) => (
+                                                <DropdownMenuItem 
+                                                  key={action.value}
+                                                  onClick={() => handleStatusChange(appointment.id, action.value)}
+                                                  className={`${action.color} cursor-pointer`}
+                                                >
+                                                  <action.icon className="w-4 h-4 mr-2" />
+                                                  {action.label}
+                                                </DropdownMenuItem>
+                                              ))}
+                                              <DropdownMenuItem 
+                                                onClick={() => {
+                                                  setEditingAppointment(appointment);
+                                                  setShowForm(true);
+                                                }}
+                                                className="cursor-pointer"
+                                              >
+                                                <Edit2 className="w-4 h-4 mr-2" />
+                                                Editar
+                                              </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                          </DropdownMenu>
+                                        </div>
                                       </div>
-                                    );
-                                  } else if (occupiedByPrevious) {
-                                    return (
-                                      <div key={dentist.id} className={`rounded p-1 text-xs ${getStatusColor(occupiedByPrevious.status)} text-white opacity-60`}
-                                           style={{ 
-                                             height: '24px',
-                                             display: 'flex',
-                                             alignItems: 'center',
-                                             justifyContent: 'center',
-                                             cursor: 'pointer'
-                                           }}
-                                           onClick={() => {
-                                             setEditingAppointment(occupiedByPrevious);
-                                             setShowForm(true);
-                                           }}>
+                                    </div>
+                                  );
+                                } else if (occupiedByPrevious) {
+                                  // This slot is occupied by a previous appointment - show continuation indicator
+                                  return (
+                                    <div key={`${dentist.id}-cont`} 
+                                         className={`rounded p-1 text-xs ${getStatusColor(occupiedByPrevious.status)} text-white opacity-60`}
+                                         style={{ 
+                                           height: '60px',
+                                           width: '100%',
+                                           position: 'absolute',
+                                           top: '0',
+                                           left: '0',
+                                           display: 'flex',
+                                           alignItems: 'center',
+                                           justifyContent: 'center',
+                                           cursor: 'pointer'
+                                         }}
+                                         onClick={() => {
+                                           setEditingAppointment(occupiedByPrevious);
+                                           setShowForm(true);
+                                         }}>
+                                      <div className="text-center opacity-75">
                                         <div className="text-xs">...</div>
                                       </div>
-                                    );
-                                  }
-                                  return null;
-                                })}
-                              </div>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })}
                             </div>
                           );
                         } else {
