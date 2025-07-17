@@ -392,11 +392,15 @@ export class DatabaseStorage implements IStorage {
     // Remove attendanceNumber if it exists to avoid conflicts
     delete (consultationData as any).attendanceNumber;
     
-    // Ensure procedures is an array
+    // Ensure procedures is properly formatted as array
     let procedures = consultationData.procedures;
     if (typeof procedures === 'string') {
       procedures = [procedures];
+    } else if (!Array.isArray(procedures)) {
+      procedures = procedures ? [procedures] : [];
     }
+    
+    console.log('Creating consultation with procedures:', procedures);
     
     // Use Drizzle ORM for safe insertion
     const [consultation] = await db.insert(consultations).values({
