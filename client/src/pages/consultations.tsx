@@ -574,16 +574,16 @@ export default function Consultations() {
     return matchesSearch && matchesPatient;
   }) || [];
 
-  // Paginação para consultas
+  // Paginação para consultas (histórico)
   const consultationsPagination = usePagination({
     data: filteredConsultations,
-    itemsPerPage: 8,
+    itemsPerPage: 10,
   });
 
-  // Paginação para agendamentos sem consulta
+  // Paginação para agendamentos sem consulta (mais itens por página pois são prioritários)
   const appointmentsPagination = usePagination({
     data: filteredAppointmentsWithoutConsultation,
-    itemsPerPage: 2,
+    itemsPerPage: 5,
   });
 
   if (consultationsLoading) {
@@ -1154,34 +1154,77 @@ export default function Consultations() {
             </Table>
           </div>
           
-          {/* Paginação */}
-          <div className="px-6 pb-6">
-            <div className="mb-4">
-              <h4 className="text-sm font-medium text-gray-600 mb-2">Agendamentos sem consulta:</h4>
-              <TablePagination
-                currentPage={appointmentsPagination.currentPage}
-                totalPages={appointmentsPagination.totalPages}
-                onPageChange={appointmentsPagination.goToPage}
-                canGoPrevious={appointmentsPagination.canGoPrevious}
-                canGoNext={appointmentsPagination.canGoNext}
-                startIndex={appointmentsPagination.startIndex}
-                endIndex={appointmentsPagination.endIndex}
-                totalItems={appointmentsPagination.totalItems}
-              />
-            </div>
+          {/* Seção de Navegação e Paginação */}
+          <div className="border-t bg-gray-50">
+            {/* Agendamentos sem consulta - Seção destacada */}
+            {filteredAppointmentsWithoutConsultation && filteredAppointmentsWithoutConsultation.length > 0 && (
+              <div className="px-6 py-4 border-b bg-yellow-50">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <h4 className="text-sm font-semibold text-yellow-800">
+                      Agendamentos Pendentes de Consulta ({filteredAppointmentsWithoutConsultation.length})
+                    </h4>
+                  </div>
+                  <div className="text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded-full">
+                    Necessitam atenção
+                  </div>
+                </div>
+                <TablePagination
+                  currentPage={appointmentsPagination.currentPage}
+                  totalPages={appointmentsPagination.totalPages}
+                  onPageChange={appointmentsPagination.goToPage}
+                  canGoPrevious={appointmentsPagination.canGoPrevious}
+                  canGoNext={appointmentsPagination.canGoNext}
+                  startIndex={appointmentsPagination.startIndex}
+                  endIndex={appointmentsPagination.endIndex}
+                  totalItems={appointmentsPagination.totalItems}
+                />
+              </div>
+            )}
             
-            <div>
-              <h4 className="text-sm font-medium text-gray-600 mb-2">Consultas:</h4>
-              <TablePagination
-                currentPage={consultationsPagination.currentPage}
-                totalPages={consultationsPagination.totalPages}
-                onPageChange={consultationsPagination.goToPage}
-                canGoPrevious={consultationsPagination.canGoPrevious}
-                canGoNext={consultationsPagination.canGoNext}
-                startIndex={consultationsPagination.startIndex}
-                endIndex={consultationsPagination.endIndex}
-                totalItems={consultationsPagination.totalItems}
-              />
+            {/* Consultas realizadas - Seção principal */}
+            {filteredConsultations && filteredConsultations.length > 0 && (
+              <div className="px-6 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-primary rounded-full"></div>
+                    <h4 className="text-sm font-semibold text-gray-800">
+                      Consultas Realizadas ({filteredConsultations.length})
+                    </h4>
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    Histórico de atendimentos
+                  </div>
+                </div>
+                <TablePagination
+                  currentPage={consultationsPagination.currentPage}
+                  totalPages={consultationsPagination.totalPages}
+                  onPageChange={consultationsPagination.goToPage}
+                  canGoPrevious={consultationsPagination.canGoPrevious}
+                  canGoNext={consultationsPagination.canGoNext}
+                  startIndex={consultationsPagination.startIndex}
+                  endIndex={consultationsPagination.endIndex}
+                  totalItems={consultationsPagination.totalItems}
+                />
+              </div>
+            )}
+            
+            {/* Resumo geral - sempre visível */}
+            <div className="px-6 py-3 bg-gray-100 border-t">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-gray-600">
+                <div className="flex items-center space-x-4">
+                  <span>
+                    📅 Total de agendamentos: {appointmentsPagination.totalItems}
+                  </span>
+                  <span>
+                    ✅ Total de consultas: {consultationsPagination.totalItems}
+                  </span>
+                </div>
+                <div className="text-gray-500">
+                  Use Ctrl + F para buscar rapidamente
+                </div>
+              </div>
             </div>
           </div>
           
