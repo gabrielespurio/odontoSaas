@@ -36,7 +36,15 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [conflictError, setConflictError] = useState<string | null>(null);
+  const [conflictState, setConflictState] = useState<{
+    hasError: boolean;
+    message: string;
+    lastValidated: string;
+  }>({
+    hasError: false,
+    message: '',
+    lastValidated: ''
+  });
   const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
 
@@ -113,49 +121,72 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const watchedDentist = form.watch("dentistId");
   const watchedProcedures = form.watch("procedureIds");
 
-  // Função de validação simplificada e direta
-  const validateTimeSlot = useCallback(async () => {
-    // Limpar timeout anterior
-    if (validationTimeoutRef.current) {
-      clearTimeout(validationTimeoutRef.current);
-      validationTimeoutRef.current = null;
-    }
-
-    // Se campos não estão preenchidos, limpar erro
+  // Sistema de validação imperativo para controle total
+  const performValidation = useCallback(() => {
+    const currentKey = `${watchedDate || ''}-${watchedDentist || ''}-${watchedProcedures?.[0] || ''}`;
+    
+    // Se campos incompletos, limpar estado
     if (!watchedDate || !watchedDentist || !watchedProcedures || watchedProcedures.length === 0 || watchedProcedures[0] <= 0) {
-      setConflictError(null);
+      setConflictState({
+        hasError: false,
+        message: '',
+        lastValidated: ''
+      });
       return;
     }
 
-    // Validação com timeout
-    validationTimeoutRef.current = setTimeout(async () => {
-      try {
-        console.log('Validando:', { watchedDate, watchedDentist, procedure: watchedProcedures[0] });
-        const result = await checkTimeConflict(watchedDate, watchedDentist, watchedProcedures[0], appointment?.id);
-        console.log('Resultado:', result);
-        
-        if (result.hasConflict) {
-          setConflictError(result.message || "Este horário não está disponível");
-        } else {
-          setConflictError(null);
-        }
-      } catch (error) {
-        console.error("Erro na validação:", error);
-        setConflictError(null);
-      }
-    }, 600);
-  }, [watchedDate, watchedDentist, watchedProcedures, appointment?.id, checkTimeConflict]);
+    // Evitar validações duplicadas
+    if (conflictState.lastValidated === currentKey) {
+      return;
+    }
 
-  // Executar validação quando campos mudarem
+    // Executar validação
+    const executeValidation = async () => {
+      try {
+        console.log('🔍 Validando:', currentKey);
+        const result = await checkTimeConflict(watchedDate, watchedDentist, watchedProcedures[0], appointment?.id);
+        console.log('📋 Resultado API:', result);
+        
+        // Atualizar estado de forma atômica
+        setConflictState(prev => {
+          const newState = {
+            hasError: result.hasConflict,
+            message: result.hasConflict ? (result.message || "Este horário não está disponível") : '',
+            lastValidated: currentKey
+          };
+          console.log('🔄 Estado atualizado:', prev, '→', newState);
+          return newState;
+        });
+        
+      } catch (error) {
+        console.error("❌ Erro na validação:", error);
+        setConflictState({
+          hasError: false,
+          message: '',
+          lastValidated: currentKey
+        });
+      }
+    };
+
+    executeValidation();
+  }, [watchedDate, watchedDentist, watchedProcedures, appointment?.id, checkTimeConflict, conflictState.lastValidated]);
+
+  // Trigger de validação com debounce
   useEffect(() => {
-    validateTimeSlot();
+    if (validationTimeoutRef.current) {
+      clearTimeout(validationTimeoutRef.current);
+    }
     
+    validationTimeoutRef.current = setTimeout(() => {
+      performValidation();
+    }, 500);
+
     return () => {
       if (validationTimeoutRef.current) {
         clearTimeout(validationTimeoutRef.current);
       }
     };
-  }, [validateTimeSlot]);
+  }, [performValidation]);
 
   // Initialize procedures when editing or creating
   useEffect(() => {
@@ -230,7 +261,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
 
   const onSubmit = (data: AppointmentFormData) => {
     // Verificar conflito antes de submeter
-    if (conflictError) {
+    if (conflictState.hasError) {
       toast({
         title: "Erro",
         description: "Não é possível agendar no horário selecionado. Escolha outro horário.",
@@ -427,9 +458,9 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
               type="datetime-local"
               {...form.register("scheduledDate")}
               min={new Date().toISOString().slice(0, 16)}
-              className={`${conflictError ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : ''}`}
+              className={`${conflictState.hasError ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : ''}`}
             />
-            {conflictError && (
+            {conflictState.hasError && (
               <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                 <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -440,7 +471,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
           {form.formState.errors.scheduledDate && (
             <p className="text-sm text-red-600">{form.formState.errors.scheduledDate.message}</p>
           )}
-          {conflictError && (
+          {conflictState.hasError && (
             <div className="bg-red-50 border border-red-200 rounded-md p-3">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -453,7 +484,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
                     Horário não disponível
                   </h3>
                   <div className="mt-1 text-sm text-red-700">
-                    {conflictError}
+                    {conflictState.message}
                   </div>
                 </div>
               </div>
@@ -562,8 +593,8 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
           </Button>
           <Button 
             type="submit" 
-            disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending || !!conflictError}
-            className={`${conflictError ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending || conflictState.hasError}
+            className={`${conflictState.hasError ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {createAppointmentMutation.isPending || updateAppointmentMutation.isPending 
               ? "Salvando..." 
