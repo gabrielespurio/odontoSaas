@@ -114,7 +114,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
         try {
           const conflictResult = await checkTimeConflict(watchedDate, watchedDentist, watchedProcedures[0], appointment?.id);
           if (conflictResult.hasConflict) {
-            setTimeConflictError("Este horário conflita com outro procedimento em andamento");
+            setTimeConflictError(conflictResult.message || "Este horário não está disponível");
           } else {
             setTimeConflictError(null);
           }
@@ -124,7 +124,9 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
         }
       };
       
-      validateConflict();
+      // Add a small delay to avoid too many API calls while user is typing
+      const timeoutId = setTimeout(validateConflict, 300);
+      return () => clearTimeout(timeoutId);
     } else {
       setTimeConflictError(null);
     }
@@ -394,18 +396,43 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
 
         <div className="space-y-2">
           <Label htmlFor="scheduledDate">Data e Hora *</Label>
-          <Input
-            id="scheduledDate"
-            type="datetime-local"
-            {...form.register("scheduledDate")}
-            min={new Date().toISOString().slice(0, 16)}
-            className={`${timeConflictError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-          />
+          <div className="relative">
+            <Input
+              id="scheduledDate"
+              type="datetime-local"
+              {...form.register("scheduledDate")}
+              min={new Date().toISOString().slice(0, 16)}
+              className={`${timeConflictError ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : ''}`}
+            />
+            {timeConflictError && (
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+          </div>
           {form.formState.errors.scheduledDate && (
             <p className="text-sm text-red-600">{form.formState.errors.scheduledDate.message}</p>
           )}
           {timeConflictError && (
-            <p className="text-red-500 text-sm font-medium">{timeConflictError}</p>
+            <div className="bg-red-50 border border-red-200 rounded-md p-3">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    Horário não disponível
+                  </h3>
+                  <div className="mt-1 text-sm text-red-700">
+                    {timeConflictError}
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
