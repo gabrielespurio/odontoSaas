@@ -367,6 +367,7 @@ export class DatabaseStorage implements IStorage {
 
     let query = db.select({
       id: consultations.id,
+      attendanceNumber: consultations.attendanceNumber,
       patientId: consultations.patientId,
       dentistId: consultations.dentistId,
       appointmentId: consultations.appointmentId,
@@ -397,12 +398,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createConsultation(insertConsultation: InsertConsultation): Promise<Consultation> {
+    // The trigger will automatically set the attendance number
     const [consultation] = await db.insert(consultations).values(insertConsultation).returning();
     return consultation;
   }
 
   async updateConsultation(id: number, insertConsultation: Partial<InsertConsultation>): Promise<Consultation> {
-    const [consultation] = await db.update(consultations).set(insertConsultation).where(eq(consultations.id, id)).returning();
+    const updateData = { ...insertConsultation };
+    // Remove attendanceNumber from update data as it should not be changed
+    delete (updateData as any).attendanceNumber;
+    const [consultation] = await db.update(consultations).set(updateData).where(eq(consultations.id, id)).returning();
     return consultation;
   }
 

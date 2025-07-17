@@ -922,6 +922,7 @@ export default function Consultations() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12"></TableHead>
+                  <TableHead className="w-24">Nº</TableHead>
                   <TableHead>Paciente</TableHead>
                   <TableHead>Data/Hora</TableHead>
                   <TableHead>Dentista</TableHead>
@@ -938,6 +939,11 @@ export default function Consultations() {
                       <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                         {getInitials(appointment.patient?.name || "")}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs text-yellow-600 font-mono">
+                        PENDENTE
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
@@ -1009,6 +1015,11 @@ export default function Consultations() {
                         <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
                           {getInitials(consultation.patient?.name || "")}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-mono font-semibold text-primary">
+                          {(consultation as any).attendanceNumber || "------"}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
@@ -1122,7 +1133,7 @@ export default function Consultations() {
                     </TableRow>
                     {expandedRows.has(consultation.id) && (
                       <TableRow className="bg-neutral-50">
-                        <TableCell colSpan={7}>
+                        <TableCell colSpan={8}>
                           <div className="py-4 px-6 space-y-3">
                             {consultation.clinicalNotes && (
                               <div>
@@ -1315,6 +1326,11 @@ export default function Consultations() {
                     {getInitials(consultation.patient?.name || "")}
                   </div>
                   <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-mono font-semibold text-primary bg-primary/10 px-2 py-1 rounded">
+                        #{(consultation as any).attendanceNumber || "------"}
+                      </span>
+                    </div>
                     <div className="font-medium text-neutral-900">
                       {consultation.patient?.name}
                     </div>

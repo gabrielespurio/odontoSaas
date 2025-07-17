@@ -1,6 +1,7 @@
 import { 
   pgTable, 
   text, 
+  varchar,
   serial, 
   integer, 
   boolean, 
@@ -106,6 +107,7 @@ export const appointments = pgTable("appointments", {
 // Consultations table
 export const consultations = pgTable("consultations", {
   id: serial("id").primaryKey(),
+  attendanceNumber: varchar("attendance_number", { length: 6 }).unique(),
   patientId: integer("patient_id").notNull(),
   dentistId: integer("dentist_id").notNull(),
   appointmentId: integer("appointment_id"),
@@ -359,6 +361,7 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
 
 export const insertConsultationSchema = createInsertSchema(consultations).omit({
   id: true,
+  attendanceNumber: true,
   createdAt: true,
 }).extend({
   date: z.string().transform((str) => new Date(str)),
