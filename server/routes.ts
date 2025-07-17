@@ -1160,7 +1160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Anamnese
-  app.get("/api/anamnese/:patientId", async (req, res) => {
+  app.get("/api/anamnese/:patientId", authenticateToken, async (req, res) => {
     try {
       const patientId = parseInt(req.params.patientId);
       const anamnese = await storage.getAnamnese(patientId);
@@ -1171,7 +1171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/anamnese", async (req, res) => {
+  app.post("/api/anamnese", authenticateToken, async (req, res) => {
     try {
       const anamneseData = insertAnamneseSchema.parse(req.body);
       const anamnese = await storage.createAnamnese(anamneseData);
@@ -1182,7 +1182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/anamnese/:id", async (req, res) => {
+  app.put("/api/anamnese/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const anamneseData = insertAnamneseSchema.partial().parse(req.body);

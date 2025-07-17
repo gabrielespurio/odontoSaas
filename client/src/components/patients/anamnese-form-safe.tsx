@@ -42,6 +42,17 @@ const AnamneseFormSafe = memo(({ patientId }: Props) => {
   // Fetch data
   const { data: anamnese, isLoading, error } = useQuery({
     queryKey: [`/api/anamnese/${patientId}`],
+    queryFn: () => 
+      fetch(`/api/anamnese/${patientId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      }).then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      }),
     enabled: !!patientId && patientId > 0,
     retry: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
