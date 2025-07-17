@@ -397,46 +397,26 @@ export class DatabaseStorage implements IStorage {
   async checkAppointmentConflicts(appointmentData: InsertAppointment, tx?: any, excludeId?: number): Promise<{ hasConflict: boolean; message: string }> {
     const dbConnection = tx || db;
     
-    console.log("=== CONFLICT CHECK DEBUG ===");
-    console.log("Checking appointment:", appointmentData);
-    console.log("Exclude ID:", excludeId);
-    
     // Get procedure details to check duration
     const procedure = await dbConnection.select().from(procedures).where(eq(procedures.id, appointmentData.procedureId));
     if (!procedure.length) {
-      console.log("No procedure found for ID:", appointmentData.procedureId);
       return { hasConflict: false, message: '' };
     }
-    
-    console.log("Procedure found:", procedure[0]);
     
     const procedureDuration = procedure[0].duration; // in minutes
     const newStartTime = new Date(appointmentData.scheduledDate);
     const newEndTime = new Date(newStartTime.getTime() + (procedureDuration * 60 * 1000));
     
-    console.log("New appointment time range:", {
-      start: newStartTime,
-      end: newEndTime,
-      duration: procedureDuration
-    });
-    
-    // Build where conditions
+    // Build where conditions para buscar agendamentos do mesmo dentista que não estão cancelados
     let whereConditions = [
       eq(appointments.dentistId, appointmentData.dentistId),
-      sql`${appointments.status} != 'cancelado'`,
-      sql`DATE(${appointments.scheduledDate}) = DATE(${newStartTime.toISOString()})`
+      sql`${appointments.status} != 'cancelado'`
     ];
     
     // Add exclude condition only if excludeId is provided
     if (excludeId) {
       whereConditions.push(sql`${appointments.id} != ${excludeId}`);
     }
-    
-    console.log("Query conditions:", {
-      dentistId: appointmentData.dentistId,
-      date: newStartTime.toISOString(),
-      excludeId: excludeId
-    });
     
     // Check for conflicts with existing appointments
     const existingAppointments = await dbConnection.select({
@@ -449,44 +429,25 @@ export class DatabaseStorage implements IStorage {
     .innerJoin(procedures, eq(appointments.procedureId, procedures.id))
     .where(and(...whereConditions));
     
-    console.log("Existing appointments found:", existingAppointments.length);
-    console.log("Existing appointments:", existingAppointments);
-    
     // Check for time conflicts
     for (const existingAppt of existingAppointments) {
       const existingStartTime = new Date(existingAppt.scheduledDate);
       const existingEndTime = new Date(existingStartTime.getTime() + (existingAppt.procedure.duration * 60 * 1000));
       
-      console.log("Checking existing appointment:", {
-        id: existingAppt.id,
-        start: existingStartTime,
-        end: existingEndTime,
-        procedure: existingAppt.procedure.name
-      });
-      
       // Check if time periods overlap
       const hasOverlap = (newStartTime < existingEndTime && newEndTime > existingStartTime);
       
-      console.log("Overlap check:", {
-        condition1: newStartTime < existingEndTime,
-        condition2: newEndTime > existingStartTime,
-        hasOverlap
-      });
-      
       if (hasOverlap) {
-        const conflictStart = existingStartTime.toLocaleTimeString('pt-BR', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          timeZone: 'America/Sao_Paulo'
-        });
-        const conflictEnd = existingEndTime.toLocaleTimeString('pt-BR', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          timeZone: 'America/Sao_Paulo'
-        });
+        // Converter UTC para horário de Brasília para exibição
+        const displayStart = new Date(existingAppt.scheduledDate);
+        const displayEnd = new Date(displayStart.getTime() + (existingAppt.procedure.duration * 60 * 1000));
         
-        console.log("CONFLICT FOUND!");
-        console.log("=== END CONFLICT CHECK ===");
+        // Ajustar para horário de Brasília (-3 UTC)
+        const brStartHour = (displayStart.getUTCHours() - 3 + 24) % 24;
+        const brEndHour = (displayEnd.getUTCHours() - 3 + 24) % 24;
+        
+        const conflictStart = `${String(brStartHour).padStart(2, '0')}:${String(displayStart.getUTCMinutes()).padStart(2, '0')}`;
+        const conflictEnd = `${String(brEndHour).padStart(2, '0')}:${String(displayEnd.getUTCMinutes()).padStart(2, '0')}`;
         
         return {
           hasConflict: true,
@@ -494,9 +455,6 @@ export class DatabaseStorage implements IStorage {
         };
       }
     }
-    
-    console.log("No conflicts found");
-    console.log("=== END CONFLICT CHECK ===");
     
     return { hasConflict: false, message: '' };
   }

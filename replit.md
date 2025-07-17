@@ -238,6 +238,10 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
 - July 17, 2025. Improved error handling in API requests to properly display server error messages
 - July 17, 2025. Added visual indicators for conflicting appointment times with red background and warning icons
 - July 17, 2025. Implemented debounced validation to reduce API calls while user types in date/time fields
+- July 17, 2025. **APPOINTMENT AVAILABILITY FIX**: Fixed timezone conversion issue causing false availability conflicts
+- July 17, 2025. Adjusted frontend to properly convert local time (Brasília) to UTC before sending to API
+- July 17, 2025. Fixed backend conflict checking to compare appointments correctly regardless of timezone
+- July 17, 2025. Corrected display of conflict messages to show Brasília time instead of UTC
 - July 08, 2025. **DENTIST SELECTION FIX**: Fixed dentist selection dropdown to show only users with dentist role
 - July 08, 2025. Updated appointment form to use dedicated /api/users/dentists endpoint instead of filtering all users
 - July 08, 2025. **SCHEDULE FILTER FIX**: Fixed schedule page dentist filter to use /api/users/dentists endpoint
