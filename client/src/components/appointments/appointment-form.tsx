@@ -126,56 +126,43 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     // Create a unique key for this validation combination
     const validationKey = `${watchedDate || ''}-${watchedDentist || ''}-${watchedProcedures?.[0] || ''}`;
     
-    // Reset conflict state immediately when inputs change
-    setConflictState(prev => ({
-      ...prev,
+    // Reset conflict state completely when inputs change
+    setConflictState({
       isValidating: false,
       hasConflict: false,
       message: '',
       lastValidatedKey: ''
-    }));
+    });
     
     // Check if all required fields are filled
     if (!watchedDate || !watchedDentist || !watchedProcedures || watchedProcedures.length === 0 || watchedProcedures[0] <= 0) {
       return;
     }
 
-    // Set validating state
-    setConflictState(prev => ({
-      ...prev,
-      isValidating: true
-    }));
-
     const validateTimeSlot = async () => {
       try {
         const conflictResult = await checkTimeConflict(watchedDate, watchedDentist, watchedProcedures[0], appointment?.id);
         
-        // Only update if this validation is still relevant
-        setConflictState(prev => {
-          if (prev.lastValidatedKey === validationKey) {
-            return prev; // Already processed this validation
-          }
-          
-          return {
-            isValidating: false,
-            hasConflict: conflictResult.hasConflict,
-            message: conflictResult.hasConflict ? (conflictResult.message || "Este horário não está disponível") : '',
-            lastValidatedKey: validationKey
-          };
+        // Set the final state based on result
+        setConflictState({
+          isValidating: false,
+          hasConflict: conflictResult.hasConflict,
+          message: conflictResult.hasConflict ? (conflictResult.message || "Este horário não está disponível") : '',
+          lastValidatedKey: validationKey
         });
         
       } catch (error) {
         console.error("Erro ao verificar conflito:", error);
-        setConflictState(prev => ({
-          ...prev,
+        setConflictState({
           isValidating: false,
           hasConflict: false,
-          message: ''
-        }));
+          message: '',
+          lastValidatedKey: validationKey
+        });
       }
     };
 
-    const timeoutId = setTimeout(validateTimeSlot, 300);
+    const timeoutId = setTimeout(validateTimeSlot, 500);
     return () => clearTimeout(timeoutId);
   }, [watchedDate, watchedDentist, watchedProcedures, appointment?.id]);
 
