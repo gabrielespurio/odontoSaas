@@ -27,7 +27,7 @@ import {
   Edit
 } from "lucide-react";
 import Odontogram from "@/components/dental-chart/odontogram";
-import { AnamneseForm } from "@/components/patients/anamnese-form-safe";
+import AnamneseFormSafe from "@/components/patients/anamnese-form-safe";
 import type { Patient, Consultation, Financial } from "@/lib/types";
 
 const patientEditSchema = z.object({
@@ -504,7 +504,7 @@ export default function PatientDetail() {
 
         <TabsContent value="anamnese" className="space-y-4">
           <div className="w-full max-w-none">
-            <AnamneseForm patientId={patientId} />
+            <AnamneseFormSafe patientId={patientId} />
           </div>
         </TabsContent>
 

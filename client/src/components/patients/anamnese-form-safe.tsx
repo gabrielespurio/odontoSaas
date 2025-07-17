@@ -39,20 +39,42 @@ const AnamneseFormSafe = memo(({ patientId }: Props) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch data
+  // Fetch data with better error handling
   const { data: anamnese, isLoading, error } = useQuery({
     queryKey: [`/api/anamnese/${patientId}`],
-    queryFn: () => 
-      fetch(`/api/anamnese/${patientId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+    queryFn: async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
         }
-      }).then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+        
+        const response = await fetch(`/api/anamnese/${patientId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error('Authentication required');
+          }
+          if (response.status === 404) {
+            // Return null for non-existent anamnese (this is expected)
+            return null;
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return res.json();
-      }),
+        
+        const data = await response.json();
+        console.log('Anamnese data received:', data);
+        return data;
+      } catch (err) {
+        console.error('Anamnese fetch error:', err);
+        throw err;
+      }
+    },
     enabled: !!patientId && patientId > 0,
     retry: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -98,115 +120,99 @@ const AnamneseFormSafe = memo(({ patientId }: Props) => {
       };
     }
 
-    // Extract additionalQuestions safely
-    const additionalQuestions = data.additionalQuestions || {};
-
-    return {
-      patientId: data.patientId || patientId,
-      medicalTreatment: Boolean(data.medicalTreatment),
-      medications: String(data.medications || ""),
-      allergies: String(data.allergies || ""),
-      previousDentalTreatment: Boolean(data.previousDentalTreatment),
-      painComplaint: String(data.painComplaint || ""),
-      hasHeartProblems: Boolean(additionalQuestions.hasHeartProblems),
-      hasDiabetes: Boolean(additionalQuestions.hasDiabetes),
-      hasHypertension: Boolean(additionalQuestions.hasHypertension),
-      isPregnant: Boolean(additionalQuestions.isPregnant),
-      smokingHabits: String(additionalQuestions.smokingHabits || ""),
-      bleedingProblems: Boolean(additionalQuestions.bleedingProblems),
-      familyHistory: String(additionalQuestions.familyHistory || ""),
-    };
+    try {
+      return {
+        patientId,
+        medicalTreatment: Boolean(data.medicalTreatment),
+        medications: String(data.medications || ""),
+        allergies: String(data.allergies || ""),
+        previousDentalTreatment: Boolean(data.previousDentalTreatment),
+        painComplaint: String(data.painComplaint || ""),
+        hasHeartProblems: Boolean(data.hasHeartProblems),
+        hasDiabetes: Boolean(data.hasDiabetes),
+        hasHypertension: Boolean(data.hasHypertension),
+        isPregnant: Boolean(data.isPregnant),
+        smokingHabits: String(data.smokingHabits || ""),
+        bleedingProblems: Boolean(data.bleedingProblems),
+        familyHistory: String(data.familyHistory || ""),
+      };
+    } catch (normalizeError) {
+      console.error("Data normalization error:", normalizeError);
+      return {
+        patientId,
+        medicalTreatment: false,
+        medications: "",
+        allergies: "",
+        previousDentalTreatment: false,
+        painComplaint: "",
+        hasHeartProblems: false,
+        hasDiabetes: false,
+        hasHypertension: false,
+        isPregnant: false,
+        smokingHabits: "",
+        bleedingProblems: false,
+        familyHistory: "",
+      };
+    }
   }, [patientId]);
 
-  // Update form when data loads
+  // Update form when data is loaded
   useEffect(() => {
-    if (anamnese) {
+    if (anamnese !== undefined) {
       try {
         const normalizedData = normalizeAnamneseData(anamnese);
         form.reset(normalizedData);
-      } catch (error) {
-        console.error("Error normalizing anamnese data:", error);
+      } catch (resetError) {
+        console.error("Form reset error:", resetError);
       }
     }
   }, [anamnese, form, normalizeAnamneseData]);
 
-  // Transform form data for API
-  const transformForAPI = useCallback((data: FormData) => {
-    return {
-      patientId: data.patientId,
-      medicalTreatment: data.medicalTreatment,
-      medications: data.medications,
-      allergies: data.allergies,
-      previousDentalTreatment: data.previousDentalTreatment,
-      painComplaint: data.painComplaint,
-      additionalQuestions: {
-        hasHeartProblems: data.hasHeartProblems,
-        hasDiabetes: data.hasDiabetes,
-        hasHypertension: data.hasHypertension,
-        isPregnant: data.isPregnant,
-        smokingHabits: data.smokingHabits,
-        bleedingProblems: data.bleedingProblems,
-        familyHistory: data.familyHistory,
-      },
-    };
-  }, []);
+  // Mutation for saving/updating
+  const saveMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
 
-  // Mutations
-  const createMutation = useMutation({
-    mutationFn: (data: FormData) => apiRequest("POST", "/api/anamnese", transformForAPI(data)),
+        if (anamnese?.id) {
+          // Update existing
+          return await apiRequest("PUT", `/api/anamnese/${anamnese.id}`, data);
+        } else {
+          // Create new
+          return await apiRequest("POST", "/api/anamnese", data);
+        }
+      } catch (mutationError) {
+        console.error("Mutation error:", mutationError);
+        throw mutationError;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/anamnese/${patientId}`] });
       toast({
         title: "Sucesso",
-        description: "Anamnese criada com sucesso",
+        description: "Anamnese salva com sucesso.",
       });
     },
-    onError: (error) => {
-      console.error("Create anamnese error:", error);
+    onError: (error: any) => {
+      console.error("Save anamnese error:", error);
       toast({
         title: "Erro",
-        description: "Erro ao criar anamnese",
+        description: "Erro ao salvar anamnese.",
         variant: "destructive",
       });
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: (data: FormData) => apiRequest("PUT", `/api/anamnese/${anamnese?.id}`, transformForAPI(data)),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/anamnese/${patientId}`] });
-      toast({
-        title: "Sucesso",
-        description: "Anamnese atualizada com sucesso",
-      });
-    },
-    onError: (error) => {
-      console.error("Update anamnese error:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar anamnese",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Submit handler
   const onSubmit = useCallback((data: FormData) => {
     try {
-      if (anamnese?.id) {
-        updateMutation.mutate(data);
-      } else {
-        createMutation.mutate(data);
-      }
-    } catch (error) {
-      console.error("Submit error:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao processar formulário",
-        variant: "destructive",
-      });
+      saveMutation.mutate(data);
+    } catch (submitError) {
+      console.error("Submit error:", submitError);
     }
-  }, [anamnese?.id, createMutation, updateMutation, toast]);
+  }, [saveMutation]);
 
   // Loading state
   if (isLoading) {
@@ -220,10 +226,10 @@ const AnamneseFormSafe = memo(({ patientId }: Props) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
+            {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                <div className="h-10 bg-gray-200 rounded"></div>
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded"></div>
               </div>
             ))}
           </div>
@@ -234,6 +240,7 @@ const AnamneseFormSafe = memo(({ patientId }: Props) => {
 
   // Error state
   if (error) {
+    console.error("Anamnese error state:", error);
     return (
       <Card>
         <CardHeader>
@@ -245,16 +252,22 @@ const AnamneseFormSafe = memo(({ patientId }: Props) => {
         <CardContent>
           <div className="text-center py-8">
             <AlertCircle className="w-8 h-8 mx-auto mb-4 text-red-500" />
-            <p className="text-neutral-600">Erro ao carregar anamnese</p>
+            <p className="text-neutral-600 mb-2">Erro ao carregar anamnese</p>
+            <p className="text-sm text-neutral-500">{error.message}</p>
+            <Button 
+              variant="outline" 
+              className="mt-4" 
+              onClick={() => window.location.reload()}
+            >
+              Tentar novamente
+            </Button>
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  // Get current form values safely
-  const currentValues = form.getValues();
-
+  // Main form render
   return (
     <Card>
       <CardHeader>
@@ -265,196 +278,133 @@ const AnamneseFormSafe = memo(({ patientId }: Props) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Medical History */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-neutral-900">Histórico Médico</h3>
-            
+          {/* Medical Treatment */}
+          <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="medicalTreatment"
-                checked={currentValues.medicalTreatment}
-                onCheckedChange={(checked) => form.setValue("medicalTreatment", Boolean(checked))}
+                checked={form.watch("medicalTreatment")}
+                onCheckedChange={(checked) => form.setValue("medicalTreatment", !!checked)}
               />
-              <Label htmlFor="medicalTreatment" className="text-sm leading-relaxed">
-                Está em tratamento médico atualmente?
-              </Label>
+              <Label htmlFor="medicalTreatment">Está fazendo algum tratamento médico?</Label>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="medications" className="text-sm font-medium">
-                Medicamentos em uso
-              </Label>
+            {form.watch("medicalTreatment") && (
               <Textarea
-                id="medications"
-                value={currentValues.medications}
+                placeholder="Descreva o tratamento..."
+                value={form.watch("medications")}
                 onChange={(e) => form.setValue("medications", e.target.value)}
-                placeholder="Liste os medicamentos que está tomando"
-                rows={3}
-                className="resize-none"
               />
-            </div>
+            )}
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="allergies" className="text-sm font-medium">
-                Alergias
-              </Label>
-              <Textarea
-                id="allergies"
-                value={currentValues.allergies}
-                onChange={(e) => form.setValue("allergies", e.target.value)}
-                placeholder="Descreva alergias conhecidas"
-                rows={2}
-                className="resize-none"
-              />
-            </div>
+          {/* Allergies */}
+          <div className="space-y-2">
+            <Label>Tem alguma alergia conhecida?</Label>
+            <Textarea
+              placeholder="Descreva as alergias..."
+              value={form.watch("allergies")}
+              onChange={(e) => form.setValue("allergies", e.target.value)}
+            />
+          </div>
 
+          {/* Previous Dental Treatment */}
+          <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="previousDentalTreatment"
-                checked={currentValues.previousDentalTreatment}
-                onCheckedChange={(checked) => form.setValue("previousDentalTreatment", Boolean(checked))}
+                checked={form.watch("previousDentalTreatment")}
+                onCheckedChange={(checked) => form.setValue("previousDentalTreatment", !!checked)}
               />
-              <Label htmlFor="previousDentalTreatment" className="text-sm leading-relaxed">
-                Já fez tratamento odontológico anteriormente?
-              </Label>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="painComplaint" className="text-sm font-medium">
-                Queixa de dor
-              </Label>
-              <Textarea
-                id="painComplaint"
-                value={currentValues.painComplaint}
-                onChange={(e) => form.setValue("painComplaint", e.target.value)}
-                placeholder="Descreva qualquer dor ou desconforto"
-                rows={3}
-                className="resize-none"
-              />
+              <Label htmlFor="previousDentalTreatment">Já fez tratamento odontológico anterior?</Label>
             </div>
           </div>
 
-          {/* Additional Questions */}
-          <div className="space-y-4 border-t pt-6">
-            <h3 className="text-lg font-semibold text-neutral-900">Informações Complementares</h3>
+          {/* Pain Complaint */}
+          <div className="space-y-2">
+            <Label>Queixa de dor atual</Label>
+            <Textarea
+              placeholder="Descreva a dor ou desconforto..."
+              value={form.watch("painComplaint")}
+              onChange={(e) => form.setValue("painComplaint", e.target.value)}
+            />
+          </div>
+
+          {/* Health Conditions */}
+          <div className="space-y-4">
+            <Label className="text-base font-medium">Condições de Saúde</Label>
             
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="hasHeartProblems"
-                  checked={currentValues.hasHeartProblems}
-                  onCheckedChange={(checked) => form.setValue("hasHeartProblems", Boolean(checked))}
+                  checked={form.watch("hasHeartProblems")}
+                  onCheckedChange={(checked) => form.setValue("hasHeartProblems", !!checked)}
                 />
-                <Label htmlFor="hasHeartProblems" className="text-sm leading-relaxed">
-                  Possui problemas cardíacos?
-                </Label>
+                <Label htmlFor="hasHeartProblems">Problemas cardíacos</Label>
               </div>
 
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="hasDiabetes"
-                  checked={currentValues.hasDiabetes}
-                  onCheckedChange={(checked) => form.setValue("hasDiabetes", Boolean(checked))}
+                  checked={form.watch("hasDiabetes")}
+                  onCheckedChange={(checked) => form.setValue("hasDiabetes", !!checked)}
                 />
-                <Label htmlFor="hasDiabetes" className="text-sm leading-relaxed">
-                  É diabético(a)?
-                </Label>
+                <Label htmlFor="hasDiabetes">Diabetes</Label>
               </div>
 
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="hasHypertension"
-                  checked={currentValues.hasHypertension}
-                  onCheckedChange={(checked) => form.setValue("hasHypertension", Boolean(checked))}
+                  checked={form.watch("hasHypertension")}
+                  onCheckedChange={(checked) => form.setValue("hasHypertension", !!checked)}
                 />
-                <Label htmlFor="hasHypertension" className="text-sm leading-relaxed">
-                  Possui hipertensão?
-                </Label>
+                <Label htmlFor="hasHypertension">Hipertensão</Label>
               </div>
 
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="isPregnant"
-                  checked={currentValues.isPregnant}
-                  onCheckedChange={(checked) => form.setValue("isPregnant", Boolean(checked))}
+                  checked={form.watch("isPregnant")}
+                  onCheckedChange={(checked) => form.setValue("isPregnant", !!checked)}
                 />
-                <Label htmlFor="isPregnant" className="text-sm leading-relaxed">
-                  Está grávida?
-                </Label>
+                <Label htmlFor="isPregnant">Gestante</Label>
               </div>
 
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="bleedingProblems"
-                  checked={currentValues.bleedingProblems}
-                  onCheckedChange={(checked) => form.setValue("bleedingProblems", Boolean(checked))}
+                  checked={form.watch("bleedingProblems")}
+                  onCheckedChange={(checked) => form.setValue("bleedingProblems", !!checked)}
                 />
-                <Label htmlFor="bleedingProblems" className="text-sm leading-relaxed">
-                  Possui problemas de coagulação?
-                </Label>
+                <Label htmlFor="bleedingProblems">Problemas de coagulação</Label>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="smokingHabits" className="text-sm font-medium">
-                Hábitos de fumo
-              </Label>
-              <Textarea
-                id="smokingHabits"
-                value={currentValues.smokingHabits}
-                onChange={(e) => form.setValue("smokingHabits", e.target.value)}
-                placeholder="Descreva hábitos de fumo"
-                rows={2}
-                className="resize-none"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="familyHistory" className="text-sm font-medium">
-                Histórico familiar relevante
-              </Label>
-              <Textarea
-                id="familyHistory"
-                value={currentValues.familyHistory}
-                onChange={(e) => form.setValue("familyHistory", e.target.value)}
-                placeholder="Descreva problemas de saúde na família"
-                rows={3}
-                className="resize-none"
-              />
             </div>
           </div>
 
-          {/* Important Alerts */}
-          {(currentValues.allergies || currentValues.hasHeartProblems || currentValues.hasDiabetes || currentValues.bleedingProblems) && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-start">
-                <AlertCircle className="w-5 h-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="text-sm font-medium text-yellow-800 mb-2">
-                    Atenção - Informações importantes identificadas:
-                  </h4>
-                  <ul className="text-sm text-yellow-700 space-y-1">
-                    {currentValues.allergies && <li>• Paciente possui alergias relatadas</li>}
-                    {currentValues.hasHeartProblems && <li>• Paciente possui problemas cardíacos</li>}
-                    {currentValues.hasDiabetes && <li>• Paciente é diabético</li>}
-                    {currentValues.bleedingProblems && <li>• Paciente possui problemas de coagulação</li>}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <div className="flex justify-end pt-4">
-            <Button
-              type="submit"
-              disabled={createMutation.isPending || updateMutation.isPending}
-              className="flex items-center gap-2"
-            >
-              <Save className="w-4 h-4" />
-              {createMutation.isPending || updateMutation.isPending ? "Salvando..." : "Salvar Anamnese"}
-            </Button>
+          {/* Smoking Habits */}
+          <div className="space-y-2">
+            <Label>Hábitos de fumo</Label>
+            <Textarea
+              placeholder="Descreva os hábitos de fumo..."
+              value={form.watch("smokingHabits")}
+              onChange={(e) => form.setValue("smokingHabits", e.target.value)}
+            />
           </div>
+
+          {/* Family History */}
+          <div className="space-y-2">
+            <Label>Histórico familiar</Label>
+            <Textarea
+              placeholder="Descreva o histórico familiar relevante..."
+              value={form.watch("familyHistory")}
+              onChange={(e) => form.setValue("familyHistory", e.target.value)}
+            />
+          </div>
+
+          <Button type="submit" disabled={saveMutation.isPending} className="w-full">
+            <Save className="w-4 h-4 mr-2" />
+            {saveMutation.isPending ? "Salvando..." : "Salvar Anamnese"}
+          </Button>
         </form>
       </CardContent>
     </Card>
@@ -463,4 +413,4 @@ const AnamneseFormSafe = memo(({ patientId }: Props) => {
 
 AnamneseFormSafe.displayName = "AnamneseFormSafe";
 
-export { AnamneseFormSafe as AnamneseForm };
+export default AnamneseFormSafe;
