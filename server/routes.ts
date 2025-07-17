@@ -1121,6 +1121,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/consultations/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Verificar se a consulta existe
+      const consultation = await storage.getConsultation(id);
+      if (!consultation) {
+        return res.status(404).json({ message: "Consulta não encontrada" });
+      }
+      
+      // Verificar se o usuário tem permissão para excluir
+      const user = req.user;
+      if (user.role !== "admin" && user.dataScope === "own" && consultation.dentistId !== user.id) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+      
+      // Excluir a consulta
+      await storage.deleteConsultation(id);
+      
+      res.json({ success: true, message: "Consulta excluída com sucesso" });
+    } catch (error) {
+      console.error("Delete consultation error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Dental Chart
   app.get("/api/dental-chart/:patientId", async (req, res) => {
     try {

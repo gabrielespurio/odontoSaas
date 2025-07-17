@@ -86,6 +86,8 @@ export default function Consultations() {
   const [timeConflictError, setTimeConflictError] = useState<string>("");
   const [showGenerateReceivable, setShowGenerateReceivable] = useState(false);
   const [consultationForReceivable, setConsultationForReceivable] = useState<Consultation | null>(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [consultationToDelete, setConsultationToDelete] = useState<Consultation | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -209,6 +211,19 @@ export default function Consultations() {
     },
   });
 
+  // Function to handle delete consultation
+  const handleDeleteConsultation = (consultation: Consultation) => {
+    setConsultationToDelete(consultation);
+    setShowDeleteConfirmation(true);
+  };
+
+  // Function to confirm deletion
+  const confirmDeleteConsultation = () => {
+    if (consultationToDelete) {
+      deleteConsultationMutation.mutate(consultationToDelete.id);
+    }
+  };
+
   const form = useForm<ConsultationFormData>({
     resolver: zodResolver(consultationSchema),
     defaultValues: {
@@ -239,6 +254,30 @@ export default function Consultations() {
       toast({
         title: "Erro",
         description: "Erro ao atualizar status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete consultation mutation
+  const deleteConsultationMutation = useMutation({
+    mutationFn: (id: number) =>
+      apiRequest("DELETE", `/api/consultations/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
+      setShowDeleteConfirmation(false);
+      setConsultationToDelete(null);
+      toast({
+        title: "Sucesso",
+        description: "Consulta excluída com sucesso",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao excluir consulta",
         variant: "destructive",
       });
     },
@@ -1116,12 +1155,7 @@ export default function Consultations() {
                               Editar
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                              onClick={() => {
-                                toast({
-                                  title: "Em desenvolvimento",
-                                  description: "Funcionalidade de exclusão em desenvolvimento",
-                                });
-                              }}
+                              onClick={() => handleDeleteConsultation(consultation)}
                               className="text-red-600 hover:text-red-700"
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
@@ -1448,12 +1482,7 @@ export default function Consultations() {
                       Editar
                     </DropdownMenuItem>
                     <DropdownMenuItem 
-                      onClick={() => {
-                        toast({
-                          title: "Em desenvolvimento",
-                          description: "Funcionalidade de exclusão em desenvolvimento",
-                        });
-                      }}
+                      onClick={() => handleDeleteConsultation(consultation)}
                       className="text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
@@ -1778,6 +1807,53 @@ export default function Consultations() {
           }
         }}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-neutral-600">
+              Tem certeza que deseja excluir esta consulta? Esta ação não pode ser desfeita.
+            </p>
+            {consultationToDelete && (
+              <div className="bg-neutral-50 p-3 rounded-lg border">
+                <p className="text-sm">
+                  <strong>Paciente:</strong> {consultationToDelete.patient?.name}
+                </p>
+                <p className="text-sm">
+                  <strong>Data:</strong> {formatDate(consultationToDelete.date)}
+                </p>
+                <p className="text-sm">
+                  <strong>Dentista:</strong> {consultationToDelete.dentist?.name}
+                </p>
+              </div>
+            )}
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setShowDeleteConfirmation(false);
+                  setConsultationToDelete(null);
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="button" 
+                variant="destructive" 
+                onClick={confirmDeleteConsultation}
+                disabled={deleteConsultationMutation.isPending}
+              >
+                {deleteConsultationMutation.isPending ? "Excluindo..." : "Excluir"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

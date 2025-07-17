@@ -85,6 +85,7 @@ export interface IStorage {
   getConsultation(id: number): Promise<Consultation | undefined>;
   createConsultation(consultation: InsertConsultation): Promise<Consultation>;
   updateConsultation(id: number, consultation: Partial<InsertConsultation>): Promise<Consultation>;
+  deleteConsultation(id: number): Promise<void>;
   
   // Dental Chart
   getDentalChart(patientId: number): Promise<DentalChart[]>;
@@ -489,6 +490,10 @@ export class DatabaseStorage implements IStorage {
     delete (updateData as any).attendanceNumber;
     const [consultation] = await db.update(consultations).set(updateData).where(eq(consultations.id, id)).returning();
     return consultation;
+  }
+
+  async deleteConsultation(id: number): Promise<void> {
+    await db.delete(consultations).where(eq(consultations.id, id));
   }
 
   // Dental Chart
