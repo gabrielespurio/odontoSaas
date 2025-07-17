@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/use-pagination";
 
 type Payable = {
   id: number;
@@ -139,6 +141,12 @@ export default function FinancialPayables() {
     
     return matchesSearch;
   }) || [];
+
+  // Paginação
+  const pagination = usePagination({
+    data: filteredPayables,
+    itemsPerPage: 10,
+  });
 
   const totalPending = filteredPayables
     .filter(p => p.status === "pending")
@@ -325,7 +333,7 @@ export default function FinancialPayables() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPayables.map((payable) => {
+                  {pagination.currentData.map((payable) => {
                     const user = users?.find(u => u.id === payable.createdBy);
                     
                     return (
@@ -444,6 +452,22 @@ export default function FinancialPayables() {
                   })}
                 </TableBody>
               </Table>
+            </div>
+          )}
+          
+          {/* Paginação */}
+          {filteredPayables.length > 0 && (
+            <div className="px-6 pb-6">
+              <TablePagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={pagination.goToPage}
+                canGoPrevious={pagination.canGoPrevious}
+                canGoNext={pagination.canGoNext}
+                startIndex={pagination.startIndex}
+                endIndex={pagination.endIndex}
+                totalItems={pagination.totalItems}
+              />
             </div>
           )}
         </CardContent>

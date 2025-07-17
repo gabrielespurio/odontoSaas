@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -33,6 +33,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { usePagination } from "@/hooks/use-pagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/hooks/use-auth";
 import GenerateReceivableModal from "@/components/financial/generate-receivable-modal";
 import type { Consultation, Patient, User, Procedure } from "@/lib/types";
@@ -558,7 +560,7 @@ export default function Consultations() {
     const matchesPatient = selectedPatient === "all" || consultation.patientId === parseInt(selectedPatient);
     
     return matchesSearch && matchesPatient;
-  });
+  }) || [];
 
   // Filtrar agendamentos sem consulta
   const filteredAppointmentsWithoutConsultation = appointmentsWithoutConsultation?.filter(appointment => {
@@ -570,6 +572,18 @@ export default function Consultations() {
     const matchesPatient = selectedPatient === "all" || appointment.patientId === parseInt(selectedPatient);
     
     return matchesSearch && matchesPatient;
+  }) || [];
+
+  // Paginação para consultas
+  const consultationsPagination = usePagination({
+    data: filteredConsultations,
+    itemsPerPage: 8,
+  });
+
+  // Paginação para agendamentos sem consulta
+  const appointmentsPagination = usePagination({
+    data: filteredAppointmentsWithoutConsultation,
+    itemsPerPage: 2,
   });
 
   if (consultationsLoading) {
@@ -917,8 +931,8 @@ export default function Consultations() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* Agendamentos sem consulta (consultas pendentes) */}
-                {filteredAppointmentsWithoutConsultation?.map((appointment) => (
+                {/* Agendamentos sem consulta */}
+                {appointmentsPagination.currentData.map((appointment) => (
                   <TableRow key={`appointment-${appointment.id}`} className="hover:bg-neutral-50 bg-yellow-50 border-l-4 border-yellow-400">
                     <TableCell>
                       <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
@@ -988,8 +1002,8 @@ export default function Consultations() {
                 ))}
                 
                 {/* Consultas existentes */}
-                {filteredConsultations?.map((consultation) => (
-                  <>
+                {consultationsPagination.currentData.map((consultation) => (
+                  <React.Fragment key={consultation.id}>
                     <TableRow key={consultation.id} className="hover:bg-neutral-50">
                       <TableCell>
                         <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
@@ -1134,10 +1148,41 @@ export default function Consultations() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
+          </div>
+          
+          {/* Paginação */}
+          <div className="px-6 pb-6">
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">Agendamentos sem consulta:</h4>
+              <TablePagination
+                currentPage={appointmentsPagination.currentPage}
+                totalPages={appointmentsPagination.totalPages}
+                onPageChange={appointmentsPagination.goToPage}
+                canGoPrevious={appointmentsPagination.canGoPrevious}
+                canGoNext={appointmentsPagination.canGoNext}
+                startIndex={appointmentsPagination.startIndex}
+                endIndex={appointmentsPagination.endIndex}
+                totalItems={appointmentsPagination.totalItems}
+              />
+            </div>
+            
+            <div>
+              <h4 className="text-sm font-medium text-gray-600 mb-2">Consultas:</h4>
+              <TablePagination
+                currentPage={consultationsPagination.currentPage}
+                totalPages={consultationsPagination.totalPages}
+                onPageChange={consultationsPagination.goToPage}
+                canGoPrevious={consultationsPagination.canGoPrevious}
+                canGoNext={consultationsPagination.canGoNext}
+                startIndex={consultationsPagination.startIndex}
+                endIndex={consultationsPagination.endIndex}
+                totalItems={consultationsPagination.totalItems}
+              />
+            </div>
           </div>
           
           {(!filteredConsultations || filteredConsultations.length === 0) && 

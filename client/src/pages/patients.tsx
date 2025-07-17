@@ -11,6 +11,8 @@ import { Plus, Search, Eye, Edit, Wrench, Filter, MoreHorizontal, Trash2, AlertT
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import PatientForm from "@/components/patients/patient-form";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/use-pagination";
 import type { Patient } from "@/lib/types";
 
 export default function Patients() {
@@ -52,6 +54,12 @@ export default function Patients() {
       
       return response.json();
     },
+  });
+
+  // Paginação
+  const pagination = usePagination({
+    data: patients || [],
+    itemsPerPage: 10,
   });
 
   console.log("Patients data:", patients);
@@ -195,7 +203,7 @@ export default function Patients() {
                 </tr>
               </thead>
               <tbody>
-                {patients?.map((patient) => (
+                {pagination.currentData.map((patient) => (
                   <tr key={patient.id} className="border-b hover:bg-neutral-50/50 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
@@ -250,7 +258,7 @@ export default function Patients() {
 
           {/* Mobile Card View */}
           <div className="lg:hidden space-y-3 p-4">
-            {patients?.map((patient) => (
+            {pagination.currentData.map((patient) => (
               <div key={patient.id} className="bg-white border border-neutral-200 rounded-lg p-4 shadow-sm">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -313,6 +321,20 @@ export default function Patients() {
             <div className="text-center py-8">
               <p className="text-neutral-600">Nenhum paciente encontrado</p>
             </div>
+          )}
+
+          {/* Paginação */}
+          {patients && patients.length > 0 && (
+            <TablePagination
+              currentPage={pagination.currentPage}
+              totalPages={pagination.totalPages}
+              onPageChange={pagination.goToPage}
+              canGoPrevious={pagination.canGoPrevious}
+              canGoNext={pagination.canGoNext}
+              startIndex={pagination.startIndex}
+              endIndex={pagination.endIndex}
+              totalItems={pagination.totalItems}
+            />
           )}
         </CardContent>
       </Card>

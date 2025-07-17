@@ -27,6 +27,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import ReceivableForm from "@/components/financial/receivable-form";
 import PaymentForm from "@/components/financial/payment-form";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/use-pagination";
 
 type Receivable = {
   id: number;
@@ -160,6 +162,12 @@ export default function FinancialReceivables() {
       receivable.description?.toLowerCase().includes(search.toLowerCase());
     return matchesSearch;
   }) || [];
+
+  // Paginação
+  const pagination = usePagination({
+    data: filteredReceivables,
+    itemsPerPage: 10,
+  });
 
   const handlePayment = (receivable: Receivable) => {
     setPayingReceivable(receivable);
@@ -395,7 +403,7 @@ export default function FinancialReceivables() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredReceivables.map((receivable) => {
+                    {pagination.currentData.map((receivable) => {
                       const dentist = dentists?.find(d => 
                         d.id === receivable.consultationDentistId || 
                         d.id === receivable.appointmentDentistId
@@ -476,6 +484,22 @@ export default function FinancialReceivables() {
                     })}
                   </TableBody>
                 </Table>
+              </div>
+            )}
+            
+            {/* Paginação */}
+            {filteredReceivables.length > 0 && (
+              <div className="px-6 pb-6">
+                <TablePagination
+                  currentPage={pagination.currentPage}
+                  totalPages={pagination.totalPages}
+                  onPageChange={pagination.goToPage}
+                  canGoPrevious={pagination.canGoPrevious}
+                  canGoNext={pagination.canGoNext}
+                  startIndex={pagination.startIndex}
+                  endIndex={pagination.endIndex}
+                  totalItems={pagination.totalItems}
+                />
               </div>
             )}
           </CardContent>

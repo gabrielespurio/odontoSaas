@@ -20,6 +20,8 @@ import { z } from "zod";
 import { Plus, Users, Settings2, Edit, MoreHorizontal, Trash2, FolderPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/use-pagination";
 import type { User, ProcedureCategory, UserProfile } from "@/lib/types";
 
 // User form schema
@@ -75,6 +77,12 @@ export default function Settings() {
   // Fetch users
   const { data: users, isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
+  });
+
+  // Paginação para usuários
+  const usersPagination = usePagination({
+    data: users || [],
+    itemsPerPage: 10,
   });
 
   // Fetch procedure categories
@@ -603,7 +611,7 @@ export default function Settings() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {users?.map((user) => (
+                        {usersPagination.currentData.map((user) => (
                           <TableRow key={user.id}>
                             <TableCell className="font-medium">{user.name}</TableCell>
                             <TableCell>{user.username}</TableCell>
