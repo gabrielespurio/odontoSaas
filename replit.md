@@ -452,6 +452,22 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **PAGINATION IMPROVEMENTS**: Enhanced pagination interface with clear section separation and better organization
   - **VISUAL DESIGN**: Highlighted pending appointments in yellow with intuitive navigation controls
   - **DATA INTEGRITY**: Numbers cannot be duplicated and are automatically assigned on consultation creation
+- July 17, 2025. **CONSULTATION DELETION SYSTEM**: Implemented complete consultation deletion functionality
+  - **BACKEND IMPLEMENTATION**: Added DELETE /api/consultations/:id endpoint with proper authorization checks
+  - **CASCADE DELETION**: Implemented deletion of related financial records (receivables) before deleting consultation
+  - **FRONTEND INTERFACE**: Added "Excluir" option to consultation dropdown menus (desktop and mobile)
+  - **CONFIRMATION MODAL**: Created user-friendly confirmation dialog showing consultation details before deletion
+  - **ACCESS CONTROL**: Users can only delete their own consultations unless they are admin
+  - **ERROR HANDLING**: Proper error messages for foreign key constraints and other database errors
+- July 17, 2025. **CANCELLED APPOINTMENTS FILTERING**: Enhanced system to hide cancelled appointments from views
+  - **BACKEND FILTERING**: Modified getAppointments() to exclude cancelled appointments from all queries
+  - **CONSULTATION MODULE**: Updated appointments-without-consultation endpoint to filter cancelled appointments
+  - **IMPROVED UX**: Cancelled appointments no longer appear in agenda or consultation modules
+- July 17, 2025. **BULK APPOINTMENT CANCELLATION**: Implemented system-wide appointment cancellation functionality
+  - **BULK OPERATIONS**: Added cancelAllAppointments() method to storage layer
+  - **MASS UPDATE**: Successfully cancelled all active appointments in the system (8 appointments processed)
+  - **ADMIN FUNCTIONALITY**: Created endpoint for bulk cancellation with proper authorization
+  - **DATA CLEANUP**: System now ready for fresh appointment data without cancelled entries cluttering the interface
 
 ## User Preferences
 

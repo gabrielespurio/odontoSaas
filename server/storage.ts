@@ -79,6 +79,7 @@ export interface IStorage {
   getAppointment(id: number): Promise<Appointment | undefined>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment & { patient: Patient; dentist: User; procedure: Procedure }>;
   updateAppointment(id: number, appointment: Partial<InsertAppointment>): Promise<Appointment>;
+  cancelAllAppointments(): Promise<{ count: number }>;
   
   // Consultations
   getConsultations(patientId?: number, dentistId?: number): Promise<(Consultation & { patient: Patient; dentist: User })[]>;
@@ -355,6 +356,14 @@ export class DatabaseStorage implements IStorage {
   async updateAppointment(id: number, insertAppointment: Partial<InsertAppointment>): Promise<Appointment> {
     const [appointment] = await db.update(appointments).set(insertAppointment).where(eq(appointments.id, id)).returning();
     return appointment;
+  }
+
+  async cancelAllAppointments(): Promise<{ count: number }> {
+    const result = await db.update(appointments)
+      .set({ status: 'cancelado' })
+      .where(sql`${appointments.status} != 'cancelado'`)
+      .returning();
+    return { count: result.length };
   }
 
   // Consultations

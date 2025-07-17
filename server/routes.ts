@@ -807,6 +807,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint para cancelar todos os agendamentos
+  app.post("/api/appointments/cancel-all", async (req, res) => {
+    try {
+      const result = await storage.cancelAllAppointments();
+      
+      res.json({ 
+        success: true, 
+        message: `${result.count} agendamentos foram cancelados com sucesso`,
+        count: result.count
+      });
+    } catch (error) {
+      console.error("Cancel all appointments error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Endpoint para buscar agendamentos que não têm consulta correspondente
   app.get("/api/appointments-without-consultation", authenticateToken, async (req, res) => {
     try {
