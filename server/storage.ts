@@ -355,7 +355,54 @@ export class DatabaseStorage implements IStorage {
 
   // Consultations
   async getConsultations(patientId?: number, dentistId?: number): Promise<(Consultation & { patient: Patient; dentist: User })[]> {
-    let query = db.select().from(consultations)
+    let query = db.select({
+      // Consultation fields
+      id: consultations.id,
+      attendanceNumber: consultations.attendanceNumber,
+      patientId: consultations.patientId,
+      dentistId: consultations.dentistId,
+      appointmentId: consultations.appointmentId,
+      date: consultations.date,
+      procedures: consultations.procedures,
+      clinicalNotes: consultations.clinicalNotes,
+      observations: consultations.observations,
+      status: consultations.status,
+      createdAt: consultations.createdAt,
+      updatedAt: consultations.updatedAt,
+      // Patient info
+      patient: {
+        id: patients.id,
+        name: patients.name,
+        cpf: patients.cpf,
+        phone: patients.phone,
+        email: patients.email,
+        birthDate: patients.birthDate,
+        address: patients.address,
+        isActive: patients.isActive,
+        clinicalNotes: patients.clinicalNotes,
+        createdAt: patients.createdAt,
+        updatedAt: patients.updatedAt,
+        cep: patients.cep,
+        street: patients.street,
+        number: patients.number,
+        neighborhood: patients.neighborhood,
+        city: patients.city,
+        state: patients.state,
+      },
+      // Dentist info
+      dentist: {
+        id: users.id,
+        username: users.username,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        isActive: users.isActive,
+        forcePasswordChange: users.forcePasswordChange,
+        dataScope: users.dataScope,
+        createdAt: users.createdAt,
+        password: users.password,
+      }
+    }).from(consultations)
       .innerJoin(patients, eq(consultations.patientId, patients.id))
       .innerJoin(users, eq(consultations.dentistId, users.id));
     
@@ -375,9 +422,20 @@ export class DatabaseStorage implements IStorage {
     const result = await query.orderBy(desc(consultations.date));
     
     return result.map(row => ({
-      ...row.consultations,
-      patient: row.patients,
-      dentist: row.users
+      id: row.id,
+      attendanceNumber: row.attendanceNumber,
+      patientId: row.patientId,
+      dentistId: row.dentistId,
+      appointmentId: row.appointmentId,
+      date: row.date,
+      procedures: row.procedures,
+      clinicalNotes: row.clinicalNotes,
+      observations: row.observations,
+      status: row.status,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      patient: row.patient,
+      dentist: row.dentist
     }));
   }
 
