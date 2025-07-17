@@ -125,10 +125,13 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     
     try {
       const result = await checkTimeConflict(date, dentist, procedure, appointment?.id);
+      console.log("Resultado da validação:", result);
       
       if (result.hasConflict) {
+        console.log("Conflito detectado:", result.message);
         setValidationError(result.message || "Este horário não está disponível");
       } else {
+        console.log("Horário disponível");
         setValidationError(null);
       }
     } catch (error) {
@@ -239,7 +242,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
 
   const onSubmit = (data: AppointmentFormData) => {
     // Verificar conflito antes de submeter
-    if (timeConflictError) {
+    if (validationError) {
       toast({
         title: "Erro",
         description: "Não é possível agendar no horário selecionado. Escolha outro horário.",
