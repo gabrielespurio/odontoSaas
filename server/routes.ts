@@ -818,7 +818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint para verificar disponibilidade de slot
-  app.post("/api/appointments/check-availability", async (req, res) => {
+  app.post("/api/appointments/check-availability", authenticateToken, async (req, res) => {
     try {
       const { dentistId, scheduledDate, procedureId, excludeId } = req.body;
       
