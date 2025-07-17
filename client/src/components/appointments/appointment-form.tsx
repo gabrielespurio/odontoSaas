@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,17 +36,9 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [conflictState, setConflictState] = useState<{
-    isValidating: boolean;
-    hasConflict: boolean;
-    message: string;
-    lastValidatedKey: string;
-  }>({
-    isValidating: false,
-    hasConflict: false,
-    message: '',
-    lastValidatedKey: ''
-  });
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
 
   const { data: patients } = useQuery<Patient[]>({
@@ -122,49 +114,57 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const watchedDentist = form.watch("dentistId");
   const watchedProcedures = form.watch("procedureIds");
 
+  const validateConflict = useCallback(async (date: string, dentist: number, procedure: number) => {
+    if (!date || !dentist || !procedure) {
+      setValidationError(null);
+      setIsValidating(false);
+      return;
+    }
+
+    setIsValidating(true);
+    
+    try {
+      const result = await checkTimeConflict(date, dentist, procedure, appointment?.id);
+      
+      if (result.hasConflict) {
+        setValidationError(result.message || "Este horário não está disponível");
+      } else {
+        setValidationError(null);
+      }
+    } catch (error) {
+      console.error("Erro ao verificar conflito:", error);
+      setValidationError(null);
+    } finally {
+      setIsValidating(false);
+    }
+  }, [appointment?.id, checkTimeConflict]);
+
   useEffect(() => {
-    // Create a unique key for this validation combination
-    const validationKey = `${watchedDate || ''}-${watchedDentist || ''}-${watchedProcedures?.[0] || ''}`;
+    // Clear any existing timeout
+    if (validationTimeoutRef.current) {
+      clearTimeout(validationTimeoutRef.current);
+    }
     
-    // Reset conflict state completely when inputs change
-    setConflictState({
-      isValidating: false,
-      hasConflict: false,
-      message: '',
-      lastValidatedKey: ''
-    });
+    // Reset validation state immediately
+    setValidationError(null);
+    setIsValidating(false);
     
-    // Check if all required fields are filled
+    // If fields are not complete, exit early
     if (!watchedDate || !watchedDentist || !watchedProcedures || watchedProcedures.length === 0 || watchedProcedures[0] <= 0) {
       return;
     }
 
-    const validateTimeSlot = async () => {
-      try {
-        const conflictResult = await checkTimeConflict(watchedDate, watchedDentist, watchedProcedures[0], appointment?.id);
-        
-        // Set the final state based on result
-        setConflictState({
-          isValidating: false,
-          hasConflict: conflictResult.hasConflict,
-          message: conflictResult.hasConflict ? (conflictResult.message || "Este horário não está disponível") : '',
-          lastValidatedKey: validationKey
-        });
-        
-      } catch (error) {
-        console.error("Erro ao verificar conflito:", error);
-        setConflictState({
-          isValidating: false,
-          hasConflict: false,
-          message: '',
-          lastValidatedKey: validationKey
-        });
+    // Set new timeout for validation
+    validationTimeoutRef.current = setTimeout(() => {
+      validateConflict(watchedDate, watchedDentist, watchedProcedures[0]);
+    }, 300);
+
+    return () => {
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
       }
     };
-
-    const timeoutId = setTimeout(validateTimeSlot, 500);
-    return () => clearTimeout(timeoutId);
-  }, [watchedDate, watchedDentist, watchedProcedures, appointment?.id]);
+  }, [watchedDate, watchedDentist, watchedProcedures, validateConflict]);
 
   // Initialize procedures when editing or creating
   useEffect(() => {
@@ -436,9 +436,9 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
               type="datetime-local"
               {...form.register("scheduledDate")}
               min={new Date().toISOString().slice(0, 16)}
-              className={`${conflictState.hasConflict ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : ''}`}
+              className={`${validationError ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : ''}`}
             />
-            {conflictState.hasConflict && (
+            {validationError && (
               <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                 <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -449,7 +449,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
           {form.formState.errors.scheduledDate && (
             <p className="text-sm text-red-600">{form.formState.errors.scheduledDate.message}</p>
           )}
-          {conflictState.hasConflict && (
+          {validationError && (
             <div className="bg-red-50 border border-red-200 rounded-md p-3">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -462,7 +462,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
                     Horário não disponível
                   </h3>
                   <div className="mt-1 text-sm text-red-700">
-                    {conflictState.message}
+                    {validationError}
                   </div>
                 </div>
               </div>
@@ -571,8 +571,8 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
           </Button>
           <Button 
             type="submit" 
-            disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending || conflictState.hasConflict}
-            className={`${conflictState.hasConflict ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending || !!validationError}
+            className={`${validationError ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {createAppointmentMutation.isPending || updateAppointmentMutation.isPending 
               ? "Salvando..." 
