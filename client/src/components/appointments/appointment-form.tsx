@@ -65,18 +65,11 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     }
     
     try {
-      // Converter o horário local para UTC antes de enviar para a API
-      const [dateStr, timeStr] = scheduledDate.split('T');
-      const [year, month, day] = dateStr.split('-').map(Number);
-      const [hour, minute] = timeStr.split(':').map(Number);
-      
-      // Criar data no horário de Brasília e adicionar 3 horas para UTC
-      const brasiliaDate = new Date(year, month - 1, day, hour, minute);
-      const utcDate = new Date(brasiliaDate.getTime() + (3 * 60 * 60 * 1000));
-      
+      // Enviar o horário diretamente como string, sem conversão
+      // O backend irá lidar com a conversão apropriada
       const response = await apiRequest("POST", "/api/appointments/check-availability", {
         dentistId, 
-        scheduledDate: utcDate.toISOString(), 
+        scheduledDate, 
         procedureId, 
         excludeId
       });
@@ -272,20 +265,13 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     // Para compatibilidade com o backend atual, usamos apenas o primeiro procedimento
     
     // Converter a data do input datetime-local para o formato correto
-    // O input retorna no formato "YYYY-MM-DDTHH:MM" em horário local
-    // Precisamos adicionar 3 horas para converter de Brasília para UTC
-    const [dateStr, timeStr] = data.scheduledDate.split('T');
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const [hour, minute] = timeStr.split(':').map(Number);
-    
-    // Criar data no horário de Brasília e adicionar 3 horas para UTC
-    const brasiliaDate = new Date(year, month - 1, day, hour, minute);
-    const utcDate = new Date(brasiliaDate.getTime() + (3 * 60 * 60 * 1000));
+    // O input retorna no formato "YYYY-MM-DDTHH:MM" e precisamos tratar como hora local
+    const localDate = new Date(data.scheduledDate);
     
     const appointmentData = {
       ...data,
       procedureId: data.procedureIds[0] || 0, // Pega o primeiro procedimento
-      scheduledDate: utcDate.toISOString(),
+      scheduledDate: localDate.toISOString(),
     };
     delete (appointmentData as any).procedureIds; // Remove o array
 
