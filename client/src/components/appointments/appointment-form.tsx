@@ -77,7 +77,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
       
       return {
         hasConflict: !response.available,
-        message: response.conflictMessage || ''
+        message: response.conflictMessage || (response.available ? '' : 'Este horário não está disponível')
       };
     } catch (error) {
       console.error("Error checking time conflict:", error);
@@ -136,8 +136,10 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
           console.log("Conflict result:", conflictResult);
           
           if (conflictResult.hasConflict) {
+            console.log("Setting conflict error:", conflictResult.message);
             setTimeConflictError(conflictResult.message || "Este horário não está disponível");
           } else {
+            console.log("Clearing conflict error - slot is available");
             setTimeConflictError(null);
           }
         } catch (error) {
