@@ -45,6 +45,7 @@ const AnamneseFormSafe = memo(({ patientId }: Props) => {
     queryFn: async () => {
       try {
         const token = localStorage.getItem('token');
+        console.log('Token found:', !!token);
         if (!token) {
           throw new Error('No authentication token found');
         }
@@ -56,19 +57,45 @@ const AnamneseFormSafe = memo(({ patientId }: Props) => {
           }
         });
         
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
         if (!response.ok) {
+          const errorText = await response.text();
+          console.log('Error response text:', errorText);
+          
           if (response.status === 401) {
             throw new Error('Authentication required');
+          }
+          if (response.status === 403) {
+            throw new Error('Invalid or expired token');
           }
           if (response.status === 404) {
             // Return null for non-existent anamnese (this is expected)
             return null;
           }
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
         
-        const data = await response.json();
-        console.log('Anamnese data received:', data);
+        // Check if response has content
+        const contentLength = response.headers.get('content-length');
+        console.log('Content length:', contentLength);
+        
+        if (contentLength === '0' || !contentLength) {
+          console.log('Empty response, returning null');
+          return null;
+        }
+        
+        const responseText = await response.text();
+        console.log('Raw response text:', responseText);
+        
+        if (!responseText || responseText.trim() === '') {
+          console.log('Empty response text, returning null');
+          return null;
+        }
+        
+        const data = JSON.parse(responseText);
+        console.log('Parsed anamnese data:', data);
         return data;
       } catch (err) {
         console.error('Anamnese fetch error:', err);

@@ -1163,8 +1163,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/anamnese/:patientId", authenticateToken, async (req, res) => {
     try {
       const patientId = parseInt(req.params.patientId);
+      console.log(`Getting anamnese for patient ${patientId}`);
       const anamnese = await storage.getAnamnese(patientId);
-      res.json(anamnese);
+      console.log(`Anamnese result:`, anamnese);
+      
+      // If no anamnese found, return null instead of undefined
+      if (!anamnese) {
+        console.log(`No anamnese found for patient ${patientId}, returning null`);
+        res.json(null);
+      } else {
+        res.json(anamnese);
+      }
     } catch (error) {
       console.error("Get anamnese error:", error);
       res.status(500).json({ message: "Internal server error" });
