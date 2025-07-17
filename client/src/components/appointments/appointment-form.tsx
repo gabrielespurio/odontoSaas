@@ -36,8 +36,17 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [timeConflictError, setTimeConflictError] = useState<string | null>(null);
-  const validationIdRef = useRef(0);
+  const [conflictState, setConflictState] = useState<{
+    isValidating: boolean;
+    hasConflict: boolean;
+    message: string;
+    lastValidatedKey: string;
+  }>({
+    isValidating: false,
+    hasConflict: false,
+    message: '',
+    lastValidatedKey: ''
+  });
   const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
 
   const { data: patients } = useQuery<Patient[]>({
@@ -114,45 +123,60 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const watchedProcedures = form.watch("procedureIds");
 
   useEffect(() => {
-    // Generate unique ID for this validation
-    const currentValidationId = ++validationIdRef.current;
+    // Create a unique key for this validation combination
+    const validationKey = `${watchedDate || ''}-${watchedDentist || ''}-${watchedProcedures?.[0] || ''}`;
     
-    // Always clear error when inputs change
-    setTimeConflictError(null);
+    // Reset conflict state immediately when inputs change
+    setConflictState(prev => ({
+      ...prev,
+      isValidating: false,
+      hasConflict: false,
+      message: '',
+      lastValidatedKey: ''
+    }));
     
     // Check if all required fields are filled
     if (!watchedDate || !watchedDentist || !watchedProcedures || watchedProcedures.length === 0 || watchedProcedures[0] <= 0) {
       return;
     }
 
+    // Set validating state
+    setConflictState(prev => ({
+      ...prev,
+      isValidating: true
+    }));
+
     const validateTimeSlot = async () => {
       try {
         const conflictResult = await checkTimeConflict(watchedDate, watchedDentist, watchedProcedures[0], appointment?.id);
         
-        // Only update state if this is still the latest validation
-        if (currentValidationId === validationIdRef.current) {
-          if (conflictResult.hasConflict) {
-            setTimeConflictError(conflictResult.message || "Este horário não está disponível");
-          } else {
-            setTimeConflictError(null);
+        // Only update if this validation is still relevant
+        setConflictState(prev => {
+          if (prev.lastValidatedKey === validationKey) {
+            return prev; // Already processed this validation
           }
-        }
+          
+          return {
+            isValidating: false,
+            hasConflict: conflictResult.hasConflict,
+            message: conflictResult.hasConflict ? (conflictResult.message || "Este horário não está disponível") : '',
+            lastValidatedKey: validationKey
+          };
+        });
+        
       } catch (error) {
         console.error("Erro ao verificar conflito:", error);
-        if (currentValidationId === validationIdRef.current) {
-          setTimeConflictError(null);
-        }
+        setConflictState(prev => ({
+          ...prev,
+          isValidating: false,
+          hasConflict: false,
+          message: ''
+        }));
       }
     };
 
-    const timeoutId = setTimeout(validateTimeSlot, 500);
-    return () => {
-      clearTimeout(timeoutId);
-      // If this validation is cancelled, ensure we don't have stale errors
-      if (currentValidationId === validationIdRef.current) {
-        setTimeConflictError(null);
-      }
-    };
+    const timeoutId = setTimeout(validateTimeSlot, 300);
+    return () => clearTimeout(timeoutId);
   }, [watchedDate, watchedDentist, watchedProcedures, appointment?.id]);
 
   // Initialize procedures when editing or creating
@@ -425,9 +449,9 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
               type="datetime-local"
               {...form.register("scheduledDate")}
               min={new Date().toISOString().slice(0, 16)}
-              className={`${timeConflictError ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : ''}`}
+              className={`${conflictState.hasConflict ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : ''}`}
             />
-            {timeConflictError && (
+            {conflictState.hasConflict && (
               <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                 <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -438,7 +462,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
           {form.formState.errors.scheduledDate && (
             <p className="text-sm text-red-600">{form.formState.errors.scheduledDate.message}</p>
           )}
-          {timeConflictError && (
+          {conflictState.hasConflict && (
             <div className="bg-red-50 border border-red-200 rounded-md p-3">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -451,7 +475,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
                     Horário não disponível
                   </h3>
                   <div className="mt-1 text-sm text-red-700">
-                    {timeConflictError}
+                    {conflictState.message}
                   </div>
                 </div>
               </div>
