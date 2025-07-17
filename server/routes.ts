@@ -749,20 +749,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send WhatsApp message to patient
       try {
+        console.log("Appointment created:", JSON.stringify(appointment, null, 2));
+        console.log("Patient info:", appointment.patient);
+        console.log("Patient phone:", appointment.patient?.phone);
+        
         if (appointment.patient?.phone) {
           const message = formatAppointmentMessage(
             appointment.patient.name, 
             new Date(appointment.scheduledDate)
           );
           
-          await sendWhatsAppMessage(appointment.patient.phone, message);
-          console.log(`WhatsApp notification sent for appointment ${appointment.id}`);
+          console.log("Sending WhatsApp message:", message);
+          console.log("To phone:", appointment.patient.phone);
+          
+          const success = await sendWhatsAppMessage(appointment.patient.phone, message);
+          if (success) {
+            console.log(`WhatsApp notification sent successfully for appointment ${appointment.id}`);
+          } else {
+            console.log(`WhatsApp notification failed for appointment ${appointment.id}`);
+          }
         } else {
-          console.log(`No phone number found for patient ${appointment.patient?.name}`);
+          console.log(`No phone number found for patient ${appointment.patient?.name} (ID: ${appointment.patient?.id})`);
         }
       } catch (whatsappError) {
         // Don't fail the appointment creation if WhatsApp fails
-        console.error("WhatsApp notification failed:", whatsappError);
+        console.error("WhatsApp notification error:", whatsappError);
       }
       
       res.json(appointment);

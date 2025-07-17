@@ -77,7 +77,7 @@ export interface IStorage {
   // Appointments
   getAppointments(date?: Date, dentistId?: number, startDate?: Date, endDate?: Date): Promise<(Appointment & { patient: Patient; dentist: User; procedure: Procedure })[]>;
   getAppointment(id: number): Promise<Appointment | undefined>;
-  createAppointment(appointment: InsertAppointment): Promise<Appointment>;
+  createAppointment(appointment: InsertAppointment): Promise<Appointment & { patient: Patient; dentist: User; procedure: Procedure }>;
   updateAppointment(id: number, appointment: Partial<InsertAppointment>): Promise<Appointment>;
   
   // Consultations
@@ -321,9 +321,31 @@ export class DatabaseStorage implements IStorage {
     return appointment || undefined;
   }
 
-  async createAppointment(insertAppointment: InsertAppointment): Promise<Appointment> {
+  async createAppointment(insertAppointment: InsertAppointment): Promise<Appointment & { patient: Patient; dentist: User; procedure: Procedure }> {
     const [appointment] = await db.insert(appointments).values(insertAppointment).returning();
-    return appointment;
+    
+    // Fetch the complete appointment with related data
+    const completeAppointment = await db.select({
+      id: appointments.id,
+      patientId: appointments.patientId,
+      dentistId: appointments.dentistId,
+      procedureId: appointments.procedureId,
+      scheduledDate: appointments.scheduledDate,
+      status: appointments.status,
+      notes: appointments.notes,
+      createdAt: appointments.createdAt,
+      updatedAt: appointments.updatedAt,
+      patient: patients,
+      dentist: users,
+      procedure: procedures,
+    })
+    .from(appointments)
+    .innerJoin(patients, eq(appointments.patientId, patients.id))
+    .innerJoin(users, eq(appointments.dentistId, users.id))
+    .innerJoin(procedures, eq(appointments.procedureId, procedures.id))
+    .where(eq(appointments.id, appointment.id));
+    
+    return completeAppointment[0];
   }
 
   async updateAppointment(id: number, insertAppointment: Partial<InsertAppointment>): Promise<Appointment> {
