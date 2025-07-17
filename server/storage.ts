@@ -355,47 +355,30 @@ export class DatabaseStorage implements IStorage {
 
   // Consultations
   async getConsultations(patientId?: number, dentistId?: number): Promise<(Consultation & { patient: Patient; dentist: User })[]> {
-    // Use raw SQL to handle the attendance_number column properly
-    let whereClause = '';
-    const params: any[] = [];
+    let query = db.select().from(consultations)
+      .innerJoin(patients, eq(consultations.patientId, patients.id))
+      .innerJoin(users, eq(consultations.dentistId, users.id));
     
-    if (patientId || dentistId) {
-      const conditions = [];
-      if (patientId) {
-        conditions.push('c.patient_id = $' + (params.length + 1));
-        params.push(patientId);
-      }
-      if (dentistId) {
-        conditions.push('c.dentist_id = $' + (params.length + 1));
-        params.push(dentistId);
-      }
-      whereClause = 'WHERE ' + conditions.join(' AND ');
+    // Apply filters
+    const conditions = [];
+    if (patientId) {
+      conditions.push(eq(consultations.patientId, patientId));
     }
-
-    const result = await db.execute(sql`
-      SELECT 
-        c.id,
-        c.attendance_number as "attendanceNumber",
-        c.patient_id as "patientId",
-        c.dentist_id as "dentistId", 
-        c.appointment_id as "appointmentId",
-        c.date,
-        c.procedures,
-        c.clinical_notes as "clinicalNotes",
-        c.observations,
-        c.status,
-        c.created_at as "createdAt",
-        c.updated_at as "updatedAt",
-        row_to_json(p.*) as patient,
-        row_to_json(u.*) as dentist
-      FROM consultations c
-      JOIN patients p ON c.patient_id = p.id  
-      JOIN users u ON c.dentist_id = u.id
-      ${whereClause ? sql.raw(whereClause) : sql``}
-      ORDER BY c.date DESC
-    `);
-
-    return result.rows as any[];
+    if (dentistId) {
+      conditions.push(eq(consultations.dentistId, dentistId));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    const result = await query.orderBy(desc(consultations.date));
+    
+    return result.map(row => ({
+      ...row.consultations,
+      patient: row.patients,
+      dentist: row.users
+    }));
   }
 
   async getConsultation(id: number): Promise<Consultation | undefined> {
@@ -409,24 +392,25 @@ export class DatabaseStorage implements IStorage {
     // Remove attendanceNumber if it exists to avoid conflicts
     delete (consultationData as any).attendanceNumber;
     
-    // Use raw SQL to handle the insertion properly
-    const result = await db.execute(sql`
-      INSERT INTO consultations (
-        patient_id, dentist_id, appointment_id, date, 
-        procedures, clinical_notes, observations, status
-      ) VALUES (
-        ${consultationData.patientId}, 
-        ${consultationData.dentistId}, 
-        ${consultationData.appointmentId}, 
-        ${consultationData.date}, 
-        ${consultationData.procedures}, 
-        ${consultationData.clinicalNotes}, 
-        ${consultationData.observations}, 
-        ${consultationData.status}
-      ) RETURNING *
-    `);
+    // Ensure procedures is an array
+    let procedures = consultationData.procedures;
+    if (typeof procedures === 'string') {
+      procedures = [procedures];
+    }
     
-    return result.rows[0] as Consultation;
+    // Use Drizzle ORM for safe insertion
+    const [consultation] = await db.insert(consultations).values({
+      patientId: consultationData.patientId,
+      dentistId: consultationData.dentistId,
+      appointmentId: consultationData.appointmentId,
+      date: consultationData.date,
+      procedures: procedures,
+      clinicalNotes: consultationData.clinicalNotes,
+      observations: consultationData.observations,
+      status: consultationData.status
+    }).returning();
+    
+    return consultation;
   }
 
   async updateConsultation(id: number, insertConsultation: Partial<InsertConsultation>): Promise<Consultation> {
