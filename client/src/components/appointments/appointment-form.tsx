@@ -584,8 +584,8 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
           </Button>
           <Button 
             type="submit" 
-            disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending || !!timeConflictError}
-            className={`${timeConflictError ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending || conflictState.hasConflict}
+            className={`${conflictState.hasConflict ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {createAppointmentMutation.isPending || updateAppointmentMutation.isPending 
               ? "Salvando..." 
