@@ -1143,7 +1143,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, message: "Consulta excluída com sucesso" });
     } catch (error) {
       console.error("Delete consultation error:", error);
-      res.status(500).json({ message: "Erro interno do servidor" });
+      
+      // Handle specific database constraint errors
+      if (error.code === '23503') {
+        res.status(400).json({ 
+          message: "Não é possível excluir esta consulta pois existem registros financeiros relacionados" 
+        });
+      } else {
+        res.status(500).json({ message: "Erro interno do servidor" });
+      }
     }
   });
 

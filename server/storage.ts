@@ -493,6 +493,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteConsultation(id: number): Promise<void> {
+    // First, delete related receivables
+    await db.delete(receivables).where(eq(receivables.consultationId, id));
+    
+    // Then delete the consultation
     await db.delete(consultations).where(eq(consultations.id, id));
   }
 
