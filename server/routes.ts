@@ -6,6 +6,7 @@ import { eq, and, or, sql, isNull, desc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
+import { sendWhatsAppMessage, formatAppointmentMessage } from "./whatsapp";
 import { 
   insertUserSchema, 
   insertPatientSchema, 
@@ -745,6 +746,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const appointment = await storage.createAppointment(appointmentData);
+      
+      // Send WhatsApp message to patient
+      try {
+        if (appointment.patient?.phone) {
+          const message = formatAppointmentMessage(
+            appointment.patient.name, 
+            new Date(appointment.scheduledDate)
+          );
+          
+          await sendWhatsAppMessage(appointment.patient.phone, message);
+          console.log(`WhatsApp notification sent for appointment ${appointment.id}`);
+        } else {
+          console.log(`No phone number found for patient ${appointment.patient?.name}`);
+        }
+      } catch (whatsappError) {
+        // Don't fail the appointment creation if WhatsApp fails
+        console.error("WhatsApp notification failed:", whatsappError);
+      }
+      
       res.json(appointment);
     } catch (error) {
       console.error("Create appointment error:", error);

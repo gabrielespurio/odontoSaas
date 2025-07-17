@@ -415,6 +415,14 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Added proper absolute positioning with calculated height (`slotSpan * 60px`) for correct visual spanning
   - Fixed continuation slot indicators for appointments that occupy multiple time slots
   - Maintained all existing functionality including dropdown menus and status management
+- July 17, 2025. **WHATSAPP INTEGRATION**: Implemented automatic WhatsApp notifications for new appointments
+  - Created WhatsApp service module with Evolution API integration
+  - Automatic message sending when appointments are created
+  - Phone number formatting for Brazilian numbers (adds 55 country code if missing)
+  - Personalized messages with patient name and appointment date/time
+  - Error handling that doesn't affect appointment creation if WhatsApp fails
+  - Uses WHATSAPP_API_KEY environment variable for secure API access
+  - Message format: "Olá [nome], sua consulta está marcada para o dia [data] às [hora]."
 
 ## User Preferences
 
