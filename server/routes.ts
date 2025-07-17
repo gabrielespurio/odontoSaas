@@ -822,12 +822,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { dentistId, scheduledDate, procedureId, excludeId } = req.body;
       
+      console.log("=== CHECK AVAILABILITY REQUEST ===");
+      console.log("Received data:", { dentistId, scheduledDate, procedureId, excludeId });
+      console.log("Parsed date:", new Date(scheduledDate));
+      
       const result = await storage.isSlotAvailable(
         dentistId, 
         new Date(scheduledDate), 
         procedureId, 
         excludeId
       );
+      
+      console.log("Availability result:", result);
+      console.log("=== END CHECK AVAILABILITY ===");
       
       res.json(result);
     } catch (error) {
