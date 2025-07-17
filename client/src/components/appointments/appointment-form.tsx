@@ -57,13 +57,23 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
 
   // Enhanced conflict checking using API
   const checkTimeConflict = async (scheduledDate: string, dentistId: number, procedureId: number, excludeId?: number) => {
-    if (!scheduledDate || !dentistId || !procedureId) return { hasConflict: false, message: '' };
+    console.log("checkTimeConflict called with:", { scheduledDate, dentistId, procedureId, excludeId });
+    
+    if (!scheduledDate || !dentistId || !procedureId) {
+      console.log("Missing required parameters for conflict check");
+      return { hasConflict: false, message: '' };
+    }
     
     try {
-      const response = await apiRequest("/api/appointments/check-availability", {
-        method: "POST",
-        body: { dentistId, scheduledDate, procedureId, excludeId }
+      console.log("Making API call to check availability...");
+      const response = await apiRequest("POST", "/api/appointments/check-availability", {
+        dentistId, 
+        scheduledDate, 
+        procedureId, 
+        excludeId
       });
+      
+      console.log("API response:", response);
       
       return {
         hasConflict: !response.available,
@@ -109,10 +119,22 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const watchedProcedures = form.watch("procedureIds");
 
   useEffect(() => {
+    console.log("useEffect triggered with:", { 
+      watchedDate, 
+      watchedDentist, 
+      watchedProcedures, 
+      appointmentId: appointment?.id 
+    });
+    
     if (watchedDate && watchedDentist && watchedProcedures && watchedProcedures.length > 0 && watchedProcedures[0] > 0) {
+      console.log("All conditions met, setting up validation...");
+      
       const validateConflict = async () => {
+        console.log("validateConflict executing...");
         try {
           const conflictResult = await checkTimeConflict(watchedDate, watchedDentist, watchedProcedures[0], appointment?.id);
+          console.log("Conflict result:", conflictResult);
+          
           if (conflictResult.hasConflict) {
             setTimeConflictError(conflictResult.message || "Este horário não está disponível");
           } else {
@@ -128,6 +150,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
       const timeoutId = setTimeout(validateConflict, 300);
       return () => clearTimeout(timeoutId);
     } else {
+      console.log("Conditions not met, clearing error");
       setTimeConflictError(null);
     }
   }, [watchedDate, watchedDentist, watchedProcedures, appointment?.id]);
