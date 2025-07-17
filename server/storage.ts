@@ -430,16 +430,6 @@ export class DatabaseStorage implements IStorage {
     .innerJoin(procedures, eq(appointments.procedureId, procedures.id))
     .where(and(...whereConditions));
     
-    // Debug log
-    console.log('Conflict check:', {
-      newStartTime: newStartTime.toISOString(),
-      newEndTime: newEndTime.toISOString(),
-      dentistId: appointmentData.dentistId,
-      procedureId: appointmentData.procedureId,
-      excludeId,
-      existingCount: existingAppointments.length
-    });
-    
     // Check for time conflicts
     for (const existingAppt of existingAppointments) {
       const existingStartTime = new Date(existingAppt.scheduledDate);
@@ -447,12 +437,6 @@ export class DatabaseStorage implements IStorage {
       
       // Check if time periods overlap
       const hasOverlap = (newStartTime < existingEndTime && newEndTime > existingStartTime);
-      
-      console.log('Checking overlap:', {
-        existingStart: existingStartTime.toISOString(),
-        existingEnd: existingEndTime.toISOString(),
-        hasOverlap
-      });
       
       if (hasOverlap) {
         const conflictStart = existingStartTime.toLocaleTimeString('pt-BR', { 
