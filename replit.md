@@ -425,6 +425,15 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Message format: "Olá [nome], sua consulta está marcada para o dia [data] às [hora]."
   - Fixed timezone issue to use Brazil timezone (America/Sao_Paulo GMT-3)
   - Updated createAppointment method to return complete patient data for WhatsApp integration
+- July 17, 2025. **APPOINTMENT REMINDERS SYSTEM**: Implemented automated daily reminders for next-day appointments
+  - Created scheduler module with node-cron for daily task execution
+  - Automated reminder system runs daily at 8:00 AM Brazil time (America/Sao_Paulo GMT-3)
+  - Sends WhatsApp reminders to patients with appointments scheduled for the next day
+  - Reminder message format: "Olá [nome do paciente], passando para lembrar que você tem uma consulta marcada para amanhã às [horário da consulta]"
+  - Filters appointments with status "agendado" or "confirmed" for reminder sending
+  - Includes rate limiting (1 second delay between messages) to avoid API overload
+  - Added manual test endpoint `/api/test-reminders` for testing reminder functionality
+  - Proper error handling that doesn't stop the system if individual reminders fail
 
 ## User Preferences
 

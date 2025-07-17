@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { sendWhatsAppMessage, formatAppointmentMessage } from "./whatsapp";
+import { sendDailyReminders } from "./scheduler";
 import { 
   insertUserSchema, 
   insertPatientSchema, 
@@ -943,6 +944,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Update appointment error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Test endpoint for manual reminder sending
+  app.post("/api/test-reminders", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      console.log("Manual reminder test triggered");
+      await sendDailyReminders();
+      res.json({ message: "Daily reminders test completed successfully" });
+    } catch (error) {
+      console.error("Error in manual reminder test:", error);
+      res.status(500).json({ message: "Error testing reminders", error: error.message });
     }
   });
 
