@@ -123,7 +123,8 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
       watchedDate, 
       watchedDentist, 
       watchedProcedures, 
-      appointmentId: appointment?.id 
+      appointmentId: appointment?.id,
+      currentError: timeConflictError
     });
     
     if (watchedDate && watchedDentist && watchedProcedures && watchedProcedures.length > 0 && watchedProcedures[0] > 0) {
@@ -135,13 +136,14 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
           const conflictResult = await checkTimeConflict(watchedDate, watchedDentist, watchedProcedures[0], appointment?.id);
           console.log("Conflict result:", conflictResult);
           
-          if (conflictResult.hasConflict) {
-            console.log("Setting conflict error:", conflictResult.message);
-            setTimeConflictError(conflictResult.message || "Este horário não está disponível");
-          } else {
-            console.log("Clearing conflict error - slot is available");
-            setTimeConflictError(null);
-          }
+          // Force state update
+          setTimeConflictError(prev => {
+            const newValue = conflictResult.hasConflict 
+              ? (conflictResult.message || "Este horário não está disponível")
+              : null;
+            console.log("State update: prev =", prev, "new =", newValue);
+            return newValue;
+          });
         } catch (error) {
           console.error("Erro ao verificar conflito:", error);
           setTimeConflictError(null);
