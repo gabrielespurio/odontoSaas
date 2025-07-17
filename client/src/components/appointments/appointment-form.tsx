@@ -39,6 +39,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const [isValidating, setIsValidating] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastValidationRef = useRef<string>('');
   const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
 
   const { data: patients } = useQuery<Patient[]>({
@@ -115,30 +116,46 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const watchedProcedures = form.watch("procedureIds");
 
   const validateConflict = useCallback(async (date: string, dentist: number, procedure: number) => {
+    const validationKey = `${date}-${dentist}-${procedure}`;
+    
+    // Evitar validações duplicadas
+    if (lastValidationRef.current === validationKey) {
+      return;
+    }
+    
     if (!date || !dentist || !procedure) {
       setValidationError(null);
       setIsValidating(false);
+      lastValidationRef.current = '';
       return;
     }
 
     setIsValidating(true);
+    lastValidationRef.current = validationKey;
     
     try {
       const result = await checkTimeConflict(date, dentist, procedure, appointment?.id);
       console.log("Resultado da validação:", result);
       
-      if (result.hasConflict) {
-        console.log("Conflito detectado:", result.message);
-        setValidationError(result.message || "Este horário não está disponível");
-      } else {
-        console.log("Horário disponível");
-        setValidationError(null);
+      // Só atualizar se ainda for a validação mais recente
+      if (lastValidationRef.current === validationKey) {
+        if (result.hasConflict) {
+          console.log("Conflito detectado:", result.message);
+          setValidationError(result.message || "Este horário não está disponível");
+        } else {
+          console.log("Horário disponível");
+          setValidationError(null);
+        }
       }
     } catch (error) {
       console.error("Erro ao verificar conflito:", error);
-      setValidationError(null);
+      if (lastValidationRef.current === validationKey) {
+        setValidationError(null);
+      }
     } finally {
-      setIsValidating(false);
+      if (lastValidationRef.current === validationKey) {
+        setIsValidating(false);
+      }
     }
   }, [appointment?.id, checkTimeConflict]);
 
@@ -148,19 +165,18 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
       clearTimeout(validationTimeoutRef.current);
     }
     
-    // Reset validation state immediately
-    setValidationError(null);
-    setIsValidating(false);
-    
-    // If fields are not complete, exit early
+    // If fields are not complete, reset and exit early
     if (!watchedDate || !watchedDentist || !watchedProcedures || watchedProcedures.length === 0 || watchedProcedures[0] <= 0) {
+      setValidationError(null);
+      setIsValidating(false);
+      lastValidationRef.current = '';
       return;
     }
 
-    // Set new timeout for validation
+    // Set new timeout for validation with longer delay to avoid flickering
     validationTimeoutRef.current = setTimeout(() => {
       validateConflict(watchedDate, watchedDentist, watchedProcedures[0]);
-    }, 300);
+    }, 800);
 
     return () => {
       if (validationTimeoutRef.current) {
