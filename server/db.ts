@@ -5,7 +5,12 @@ import * as schema from "@shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
-const DATABASE_URL = process.env.DATABASE_URL;
+// Clean the DATABASE_URL by removing any psql command prefixes/suffixes
+let DATABASE_URL = process.env.DATABASE_URL;
+if (DATABASE_URL) {
+  // Remove 'psql ' prefix and surrounding quotes if they exist
+  DATABASE_URL = DATABASE_URL.replace(/^psql\s+['"]?/, '').replace(/['"]?$/, '');
+}
 
 if (!DATABASE_URL) {
   throw new Error(
