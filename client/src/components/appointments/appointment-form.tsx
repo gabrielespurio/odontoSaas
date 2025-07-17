@@ -106,17 +106,29 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   // Validação em tempo real do horário
   const watchedDate = form.watch("scheduledDate");
   const watchedDentist = form.watch("dentistId");
+  const watchedProcedures = form.watch("procedureIds");
 
   useEffect(() => {
-    if (watchedDate && watchedDentist) {
-      const hasConflict = checkTimeConflict(watchedDate, watchedDentist, appointment?.id);
-      if (hasConflict) {
-        setTimeConflictError("Este horário conflita com outro procedimento em andamento");
-      } else {
-        setTimeConflictError(null);
-      }
+    if (watchedDate && watchedDentist && watchedProcedures && watchedProcedures.length > 0 && watchedProcedures[0] > 0) {
+      const validateConflict = async () => {
+        try {
+          const conflictResult = await checkTimeConflict(watchedDate, watchedDentist, watchedProcedures[0], appointment?.id);
+          if (conflictResult.hasConflict) {
+            setTimeConflictError("Este horário conflita com outro procedimento em andamento");
+          } else {
+            setTimeConflictError(null);
+          }
+        } catch (error) {
+          console.error("Erro ao verificar conflito:", error);
+          setTimeConflictError(null);
+        }
+      };
+      
+      validateConflict();
+    } else {
+      setTimeConflictError(null);
     }
-  }, [watchedDate, watchedDentist, appointments, appointment?.id, procedures]);
+  }, [watchedDate, watchedDentist, watchedProcedures, appointment?.id]);
 
   // Initialize procedures when editing or creating
   useEffect(() => {

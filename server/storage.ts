@@ -407,6 +407,18 @@ export class DatabaseStorage implements IStorage {
     const newStartTime = new Date(appointmentData.scheduledDate);
     const newEndTime = new Date(newStartTime.getTime() + (procedureDuration * 60 * 1000));
     
+    // Build where conditions
+    let whereConditions = [
+      eq(appointments.dentistId, appointmentData.dentistId),
+      sql`${appointments.status} != 'cancelado'`,
+      sql`DATE(${appointments.scheduledDate}) = DATE(${newStartTime.toISOString()})`
+    ];
+    
+    // Add exclude condition only if excludeId is provided
+    if (excludeId) {
+      whereConditions.push(sql`${appointments.id} != ${excludeId}`);
+    }
+    
     // Check for conflicts with existing appointments
     const existingAppointments = await dbConnection.select({
       id: appointments.id,
@@ -416,14 +428,17 @@ export class DatabaseStorage implements IStorage {
     })
     .from(appointments)
     .innerJoin(procedures, eq(appointments.procedureId, procedures.id))
-    .where(
-      and(
-        eq(appointments.dentistId, appointmentData.dentistId),
-        sql`${appointments.status} != 'cancelado'`,
-        sql`DATE(${appointments.scheduledDate}) = DATE(${newStartTime})`,
-        excludeId ? sql`${appointments.id} != ${excludeId}` : sql`true`
-      )
-    );
+    .where(and(...whereConditions));
+    
+    // Debug log
+    console.log('Conflict check:', {
+      newStartTime: newStartTime.toISOString(),
+      newEndTime: newEndTime.toISOString(),
+      dentistId: appointmentData.dentistId,
+      procedureId: appointmentData.procedureId,
+      excludeId,
+      existingCount: existingAppointments.length
+    });
     
     // Check for time conflicts
     for (const existingAppt of existingAppointments) {
@@ -432,6 +447,12 @@ export class DatabaseStorage implements IStorage {
       
       // Check if time periods overlap
       const hasOverlap = (newStartTime < existingEndTime && newEndTime > existingStartTime);
+      
+      console.log('Checking overlap:', {
+        existingStart: existingStartTime.toISOString(),
+        existingEnd: existingEndTime.toISOString(),
+        hasOverlap
+      });
       
       if (hasOverlap) {
         const conflictStart = existingStartTime.toLocaleTimeString('pt-BR', { 
