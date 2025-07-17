@@ -812,7 +812,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Apply data scope control
       const user = req.user;
-      let whereConditions = [isNull(consultations.id)];
+      let whereConditions = [
+        isNull(consultations.id),
+        sql`${appointments.status} != 'cancelado'` // Filter out cancelled appointments
+      ];
       
       if (user.role !== "admin" && user.dataScope === "own") {
         // Users with "own" scope can only see their own appointments

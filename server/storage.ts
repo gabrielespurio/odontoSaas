@@ -290,6 +290,9 @@ export class DatabaseStorage implements IStorage {
       whereConditions.push(eq(appointments.dentistId, dentistId));
     }
 
+    // Filter out cancelled appointments
+    whereConditions.push(sql`${appointments.status} != 'cancelado'`);
+
     let query = db.select({
       id: appointments.id,
       patientId: appointments.patientId,
