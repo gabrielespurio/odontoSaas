@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,6 +37,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [timeConflictError, setTimeConflictError] = useState<string | null>(null);
+  const validationIdRef = useRef(0);
   const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
 
   const { data: patients } = useQuery<Patient[]>({
@@ -113,29 +114,45 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const watchedProcedures = form.watch("procedureIds");
 
   useEffect(() => {
-    // Simple validation logic
-    const validateTimeSlot = async () => {
-      // Clear error first
-      setTimeConflictError(null);
-      
-      // Check if all required fields are filled
-      if (!watchedDate || !watchedDentist || !watchedProcedures || watchedProcedures.length === 0 || watchedProcedures[0] <= 0) {
-        return;
-      }
+    // Generate unique ID for this validation
+    const currentValidationId = ++validationIdRef.current;
+    
+    // Always clear error when inputs change
+    setTimeConflictError(null);
+    
+    // Check if all required fields are filled
+    if (!watchedDate || !watchedDentist || !watchedProcedures || watchedProcedures.length === 0 || watchedProcedures[0] <= 0) {
+      return;
+    }
 
+    const validateTimeSlot = async () => {
       try {
         const conflictResult = await checkTimeConflict(watchedDate, watchedDentist, watchedProcedures[0], appointment?.id);
         
-        if (conflictResult.hasConflict) {
-          setTimeConflictError(conflictResult.message || "Este horário não está disponível");
+        // Only update state if this is still the latest validation
+        if (currentValidationId === validationIdRef.current) {
+          if (conflictResult.hasConflict) {
+            setTimeConflictError(conflictResult.message || "Este horário não está disponível");
+          } else {
+            setTimeConflictError(null);
+          }
         }
       } catch (error) {
         console.error("Erro ao verificar conflito:", error);
+        if (currentValidationId === validationIdRef.current) {
+          setTimeConflictError(null);
+        }
       }
     };
 
-    const timeoutId = setTimeout(validateTimeSlot, 300);
-    return () => clearTimeout(timeoutId);
+    const timeoutId = setTimeout(validateTimeSlot, 500);
+    return () => {
+      clearTimeout(timeoutId);
+      // If this validation is cancelled, ensure we don't have stale errors
+      if (currentValidationId === validationIdRef.current) {
+        setTimeConflictError(null);
+      }
+    };
   }, [watchedDate, watchedDentist, watchedProcedures, appointment?.id]);
 
   // Initialize procedures when editing or creating
