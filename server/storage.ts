@@ -402,19 +402,24 @@ export class DatabaseStorage implements IStorage {
     
     console.log('Creating consultation with procedures:', procedures);
     
-    // Use Drizzle ORM for safe insertion
-    const [consultation] = await db.insert(consultations).values({
-      patientId: consultationData.patientId,
-      dentistId: consultationData.dentistId,
-      appointmentId: consultationData.appointmentId,
-      date: consultationData.date,
-      procedures: procedures,
-      clinicalNotes: consultationData.clinicalNotes,
-      observations: consultationData.observations,
-      status: consultationData.status
-    }).returning();
+    // Use raw SQL with proper array formatting for PostgreSQL
+    const result = await db.execute(sql`
+      INSERT INTO consultations (
+        patient_id, dentist_id, appointment_id, date, 
+        procedures, clinical_notes, observations, status
+      ) VALUES (
+        ${consultationData.patientId}, 
+        ${consultationData.dentistId}, 
+        ${consultationData.appointmentId || null}, 
+        ${consultationData.date}, 
+        ${sql`ARRAY[${sql.join(procedures.map(p => sql`${p}`), sql`, `)}]`}, 
+        ${consultationData.clinicalNotes || null}, 
+        ${consultationData.observations || null}, 
+        ${consultationData.status}
+      ) RETURNING *
+    `);
     
-    return consultation;
+    return result.rows[0] as Consultation;
   }
 
   async updateConsultation(id: number, insertConsultation: Partial<InsertConsultation>): Promise<Consultation> {
