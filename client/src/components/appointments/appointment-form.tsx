@@ -37,6 +37,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [timeConflictError, setTimeConflictError] = useState<string | null>(null);
+  const [isCheckingConflict, setIsCheckingConflict] = useState(false);
   const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
 
   const { data: patients } = useQuery<Patient[]>({
@@ -57,23 +58,17 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
 
   // Enhanced conflict checking using API
   const checkTimeConflict = async (scheduledDate: string, dentistId: number, procedureId: number, excludeId?: number) => {
-    console.log("checkTimeConflict called with:", { scheduledDate, dentistId, procedureId, excludeId });
-    
     if (!scheduledDate || !dentistId || !procedureId) {
-      console.log("Missing required parameters for conflict check");
       return { hasConflict: false, message: '' };
     }
     
     try {
-      console.log("Making API call to check availability...");
       const response = await apiRequest("POST", "/api/appointments/check-availability", {
         dentistId, 
         scheduledDate, 
         procedureId, 
         excludeId
       });
-      
-      console.log("API response:", response);
       
       return {
         hasConflict: !response.available,
@@ -119,44 +114,45 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const watchedProcedures = form.watch("procedureIds");
 
   useEffect(() => {
-    console.log("useEffect triggered with:", { 
-      watchedDate, 
-      watchedDentist, 
-      watchedProcedures, 
-      appointmentId: appointment?.id,
-      currentError: timeConflictError
-    });
-    
-    if (watchedDate && watchedDentist && watchedProcedures && watchedProcedures.length > 0 && watchedProcedures[0] > 0) {
-      console.log("All conditions met, setting up validation...");
-      
-      const validateConflict = async () => {
-        console.log("validateConflict executing...");
-        try {
-          const conflictResult = await checkTimeConflict(watchedDate, watchedDentist, watchedProcedures[0], appointment?.id);
-          console.log("Conflict result:", conflictResult);
-          
-          // Force state update
-          setTimeConflictError(prev => {
-            const newValue = conflictResult.hasConflict 
-              ? (conflictResult.message || "Este horário não está disponível")
-              : null;
-            console.log("State update: prev =", prev, "new =", newValue);
-            return newValue;
-          });
-        } catch (error) {
-          console.error("Erro ao verificar conflito:", error);
-          setTimeConflictError(null);
-        }
-      };
-      
-      // Add a small delay to avoid too many API calls while user is typing
-      const timeoutId = setTimeout(validateConflict, 300);
-      return () => clearTimeout(timeoutId);
-    } else {
-      console.log("Conditions not met, clearing error");
+    // Clear error immediately when conditions are not met
+    if (!watchedDate || !watchedDentist || !watchedProcedures || watchedProcedures.length === 0 || watchedProcedures[0] <= 0) {
       setTimeConflictError(null);
+      setIsCheckingConflict(false);
+      return;
     }
+
+    setIsCheckingConflict(true);
+    
+    const validateConflict = async () => {
+      try {
+        const conflictResult = await checkTimeConflict(watchedDate, watchedDentist, watchedProcedures[0], appointment?.id);
+        
+        // Force state update by clearing first
+        setTimeConflictError(null);
+        
+        // Use a small timeout to ensure state is cleared before setting new value
+        setTimeout(() => {
+          const finalError = conflictResult.hasConflict 
+            ? (conflictResult.message || "Este horário não está disponível")
+            : null;
+          
+          setTimeConflictError(finalError);
+          setIsCheckingConflict(false);
+        }, 50);
+        
+      } catch (error) {
+        console.error("Erro ao verificar conflito:", error);
+        setTimeConflictError(null);
+        setIsCheckingConflict(false);
+      }
+    };
+    
+    // Add delay to avoid too many API calls while user is typing
+    const timeoutId = setTimeout(validateConflict, 500);
+    return () => {
+      clearTimeout(timeoutId);
+      setIsCheckingConflict(false);
+    };
   }, [watchedDate, watchedDentist, watchedProcedures, appointment?.id]);
 
   // Initialize procedures when editing or creating
