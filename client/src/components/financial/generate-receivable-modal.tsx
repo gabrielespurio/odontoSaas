@@ -30,6 +30,7 @@ export default function GenerateReceivableModal({
   const [customAmount, setCustomAmount] = useState<string>("");
   const [useCustomAmount, setUseCustomAmount] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>("pix");
+  const [dueDate, setDueDate] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -60,12 +61,14 @@ export default function GenerateReceivableModal({
       setCustomAmount("");
       setUseCustomAmount(false);
       setPaymentMethod("pix");
+      setDueDate(new Date().toISOString().split('T')[0]); // Data atual como padrão
     } else if (!open) {
       setSelectedProcedures([]);
       setInstallments(1);
       setCustomAmount("");
       setUseCustomAmount(false);
       setPaymentMethod("pix");
+      setDueDate("");
     }
   }, [open, consultation, procedures]);
 
@@ -102,6 +105,7 @@ export default function GenerateReceivableModal({
         installments: installments,
         customAmount: useCustomAmount ? customAmount : undefined,
         paymentMethod: paymentMethod,
+        dueDate: dueDate,
       };
 
       return apiRequest("POST", "/api/receivables/from-consultation", payload);
@@ -137,6 +141,15 @@ export default function GenerateReceivableModal({
       toast({
         title: "Erro de validação",
         description: "Digite um valor válido maior que zero",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!dueDate) {
+      toast({
+        title: "Erro de validação",
+        description: "Selecione uma data de vencimento",
         variant: "destructive",
       });
       return;
@@ -351,6 +364,23 @@ export default function GenerateReceivableModal({
             </div>
           )}
 
+          {/* Data de Vencimento */}
+          <div className="space-y-2">
+            <Label htmlFor="dueDate" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Data de Vencimento
+            </Label>
+            <Input
+              id="dueDate"
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+              className="w-full"
+              required
+            />
+          </div>
+
           {/* Resumo */}
           {totalAmount > 0 && (
             <Card className="bg-neutral-50">
@@ -382,7 +412,7 @@ export default function GenerateReceivableModal({
                 
                 <div className="flex justify-between items-center text-sm text-neutral-600">
                   <span>Primeira parcela vence em:</span>
-                  <span>{new Date().toLocaleDateString('pt-BR')}</span>
+                  <span>{dueDate ? new Date(dueDate).toLocaleDateString('pt-BR') : 'Selecione uma data'}</span>
                 </div>
               </CardContent>
             </Card>

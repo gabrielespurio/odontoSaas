@@ -528,6 +528,13 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **LAYOUT OPTIMIZATION**: Moved installment field directly below payment method field for better workflow
   - **AUTO-RESET**: Installments automatically reset to "À vista" when payment method changes from credit card to other methods
   - **USER EXPERIENCE**: Cleaner form interface with contextual field visibility based on payment method selection
+- July 18, 2025. **DUE DATE FIELD IMPLEMENTATION**: Added due date field to billing form for payment deadline specification
+  - **FRONTEND IMPLEMENTATION**: Added date input field with Calendar icon and validation
+  - **BACKEND INTEGRATION**: Updated createReceivableFromConsultation method to accept dueDate parameter
+  - **API ENHANCEMENT**: Modified /api/receivables/from-consultation endpoint to process due date
+  - **AUTOMATIC CALCULATION**: For multiple installments, subsequent due dates are calculated monthly from the initial date
+  - **VALIDATION**: Added client-side validation to ensure due date is selected before form submission
+  - **SUMMARY UPDATE**: Billing summary now shows the selected due date instead of current date
 - July 18, 2025. **BUG FIX - APPOINTMENT DISAPPEARING**: Fixed critical issue in consultations module where creating a consultation for one appointment was hiding other appointments
   - **ROOT CAUSE**: LEFT JOIN query between appointments and consultations was too broad, using only DATE comparison
   - **SOLUTION**: Enhanced JOIN condition to compare both DATE and TIME, ensuring appointments are matched with consultations more precisely

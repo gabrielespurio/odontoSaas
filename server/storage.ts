@@ -894,7 +894,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(receivables).where(eq(receivables.id, id));
   }
 
-  async createReceivableFromConsultation(consultationId: number, procedureIds: number[], installments: number = 1, customAmount?: string, paymentMethod: string = 'pix'): Promise<Receivable[]> {
+  async createReceivableFromConsultation(consultationId: number, procedureIds: number[], installments: number = 1, customAmount?: string, paymentMethod: string = 'pix', dueDate?: string): Promise<Receivable[]> {
     // Buscar consulta
     const consultation = await this.getConsultation(consultationId);
     if (!consultation) {
@@ -927,15 +927,22 @@ export class DatabaseStorage implements IStorage {
     const installmentAmount = totalAmount / installments;
 
     for (let i = 1; i <= installments; i++) {
-      const dueDate = new Date();
-      dueDate.setMonth(dueDate.getMonth() + (i - 1));
+      // Usar data de vencimento fornecida ou calcular baseada na data atual
+      let installmentDueDate: Date;
+      if (dueDate) {
+        installmentDueDate = new Date(dueDate);
+        installmentDueDate.setMonth(installmentDueDate.getMonth() + (i - 1));
+      } else {
+        installmentDueDate = new Date();
+        installmentDueDate.setMonth(installmentDueDate.getMonth() + (i - 1));
+      }
 
       const receivableData: InsertReceivable = {
         patientId: consultation.patientId,
         consultationId: consultationId,
         appointmentId: consultation.appointmentId || undefined,
         amount: installmentAmount.toFixed(2),
-        dueDate: dueDate.toISOString().split('T')[0],
+        dueDate: installmentDueDate.toISOString().split('T')[0],
         status: 'pending',
         description: `Consulta - Parcela ${i}/${installments}`,
         installments: installments,
