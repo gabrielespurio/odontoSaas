@@ -596,9 +596,9 @@ export default function Consultations() {
       consultation.dentist?.name.toLowerCase().includes(search.toLowerCase()) ||
       consultation.procedures?.some(proc => proc.toLowerCase().includes(search.toLowerCase()));
     
-    const matchesPatient = selectedPatient === "all" || consultation.patientId === parseInt(selectedPatient);
+    const matchesStatus = selectedStatus === "all" || consultation.status === selectedStatus;
     
-    return matchesSearch && matchesPatient;
+    return matchesSearch && matchesStatus;
   }) || [];
 
   // Filtrar agendamentos sem consulta
@@ -608,9 +608,9 @@ export default function Consultations() {
       appointment.dentist?.name.toLowerCase().includes(search.toLowerCase()) ||
       appointment.procedure?.name.toLowerCase().includes(search.toLowerCase());
     
-    const matchesPatient = selectedPatient === "all" || appointment.patientId === parseInt(selectedPatient);
+    const matchesStatus = selectedStatus === "all" || appointment.status === selectedStatus;
     
-    return matchesSearch && matchesPatient;
+    return matchesSearch && matchesStatus;
   }) || [];
 
   // Paginação para consultas (histórico)
