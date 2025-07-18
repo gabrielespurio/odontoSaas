@@ -64,7 +64,8 @@ export default function PaymentForm({ receivable, onSuccess, onCancel, isLoading
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('pt-BR');
+    // Forçar interpretação como data local para evitar conversão de timezone
+    return new Date(date + 'T00:00:00').toLocaleDateString('pt-BR');
   };
 
   const onSubmit = (data: PaymentFormData) => {
