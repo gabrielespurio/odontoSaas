@@ -961,7 +961,7 @@ export default function Consultations() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12"></TableHead>
-                  <TableHead className="w-24">Nº</TableHead>
+                  <TableHead className="w-24">Identificador</TableHead>
                   <TableHead>Paciente</TableHead>
                   <TableHead>Data/Hora</TableHead>
                   <TableHead>Dentista</TableHead>

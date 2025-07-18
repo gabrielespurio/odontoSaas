@@ -503,6 +503,9 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
 - July 18, 2025. **WHATSAPP INTEGRATION STATUS**: WhatsApp notifications implemented but requires WHATSAPP_API_KEY to function
 - July 18, 2025. **WHATSAPP API CONFIGURED**: WhatsApp API key successfully configured - automatic notifications now active
 - July 18, 2025. **WHATSAPP FEATURES ACTIVE**: System now sends automatic appointment confirmations and daily reminders via WhatsApp
+- July 18, 2025. **TIMEZONE FORMATTING FIXED**: Resolved WhatsApp timezone issue - messages now display correct Brazil time without UTC conversion
+- July 18, 2025. **ZOD VALIDATION ERROR RESOLVED**: Fixed "Expected string, received date" error in appointment creation by adjusting date formatting flow
+- July 18, 2025. **UI IMPROVEMENT**: Changed "Nº" column header to "Identificador" in consultations module table for better clarity
 
 ## User Preferences
 
