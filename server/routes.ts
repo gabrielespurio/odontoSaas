@@ -1469,8 +1469,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Criar contas a receber a partir de consulta
   app.post("/api/receivables/from-consultation", async (req, res) => {
     try {
-      const { consultationId, procedureIds, installments = 1, customAmount } = req.body;
-      const receivables = await storage.createReceivableFromConsultation(consultationId, procedureIds, installments, customAmount);
+      const { consultationId, procedureIds, installments = 1, customAmount, paymentMethod = 'pix' } = req.body;
+      const receivables = await storage.createReceivableFromConsultation(consultationId, procedureIds, installments, customAmount, paymentMethod);
       res.json(receivables);
     } catch (error) {
       console.error("Create receivables from consultation error:", error);

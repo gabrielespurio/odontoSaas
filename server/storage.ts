@@ -894,7 +894,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(receivables).where(eq(receivables.id, id));
   }
 
-  async createReceivableFromConsultation(consultationId: number, procedureIds: number[], installments: number = 1, customAmount?: string): Promise<Receivable[]> {
+  async createReceivableFromConsultation(consultationId: number, procedureIds: number[], installments: number = 1, customAmount?: string, paymentMethod: string = 'pix'): Promise<Receivable[]> {
     // Buscar consulta
     const consultation = await this.getConsultation(consultationId);
     if (!consultation) {
@@ -941,6 +941,7 @@ export class DatabaseStorage implements IStorage {
         installments: installments,
         installmentNumber: i,
         parentReceivableId: i === 1 ? undefined : receivablesList[0]?.id,
+        paymentMethod: paymentMethod,
       };
 
       const receivable = await this.createReceivable(receivableData);

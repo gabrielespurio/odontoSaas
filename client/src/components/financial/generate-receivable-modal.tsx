@@ -29,6 +29,7 @@ export default function GenerateReceivableModal({
   const [installments, setInstallments] = useState<number>(1);
   const [customAmount, setCustomAmount] = useState<string>("");
   const [useCustomAmount, setUseCustomAmount] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<string>("pix");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -58,11 +59,13 @@ export default function GenerateReceivableModal({
       setInstallments(1);
       setCustomAmount("");
       setUseCustomAmount(false);
+      setPaymentMethod("pix");
     } else if (!open) {
       setSelectedProcedures([]);
       setInstallments(1);
       setCustomAmount("");
       setUseCustomAmount(false);
+      setPaymentMethod("pix");
     }
   }, [open, consultation, procedures]);
 
@@ -91,6 +94,7 @@ export default function GenerateReceivableModal({
         procedureIds: selectedProcedures,
         installments: installments,
         customAmount: useCustomAmount ? customAmount : undefined,
+        paymentMethod: paymentMethod,
       };
 
       return apiRequest("POST", "/api/receivables/from-consultation", payload);
@@ -298,6 +302,42 @@ export default function GenerateReceivableModal({
                     {num === 1 ? "À vista" : `${num}x de R$ ${(totalAmount / num).toFixed(2)}`}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Método de Pagamento */}
+          <div className="space-y-2">
+            <Label htmlFor="paymentMethod">Método de Pagamento</Label>
+            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pix">
+                  <div className="flex items-center gap-2">
+                    <span>💳</span>
+                    PIX
+                  </div>
+                </SelectItem>
+                <SelectItem value="dinheiro">
+                  <div className="flex items-center gap-2">
+                    <span>💵</span>
+                    Dinheiro
+                  </div>
+                </SelectItem>
+                <SelectItem value="cartao_credito">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    Cartão de Crédito
+                  </div>
+                </SelectItem>
+                <SelectItem value="cartao_debito">
+                  <div className="flex items-center gap-2">
+                    <span>💳</span>
+                    Cartão de Débito
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
