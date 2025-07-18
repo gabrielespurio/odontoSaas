@@ -69,6 +69,13 @@ export default function GenerateReceivableModal({
     }
   }, [open, consultation, procedures]);
 
+  // Resetar parcelamento quando método de pagamento não for cartão de crédito
+  useEffect(() => {
+    if (paymentMethod !== "credit_card") {
+      setInstallments(1);
+    }
+  }, [paymentMethod]);
+
   // Calcular valor total baseado nos procedimentos selecionados
   const calculateTotalAmount = () => {
     if (useCustomAmount && customAmount) {
@@ -289,23 +296,6 @@ export default function GenerateReceivableModal({
             )}
           </div>
 
-          {/* Parcelamento */}
-          <div className="space-y-2">
-            <Label htmlFor="installments">Parcelamento</Label>
-            <Select value={installments.toString()} onValueChange={(value) => setInstallments(parseInt(value))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
-                  <SelectItem key={num} value={num.toString()}>
-                    {num === 1 ? "À vista" : `${num}x de R$ ${(totalAmount / num).toFixed(2)}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Método de Pagamento */}
           <div className="space-y-2">
             <Label htmlFor="paymentMethod">Método de Pagamento</Label>
@@ -341,6 +331,25 @@ export default function GenerateReceivableModal({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Parcelamento - só aparece se método for cartão de crédito */}
+          {paymentMethod === "credit_card" && (
+            <div className="space-y-2">
+              <Label htmlFor="installments">Parcelamento</Label>
+              <Select value={installments.toString()} onValueChange={(value) => setInstallments(parseInt(value))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => (
+                    <SelectItem key={num} value={num.toString()}>
+                      {num === 1 ? "À vista" : `${num}x de R$ ${(totalAmount / num).toFixed(2)}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Resumo */}
           {totalAmount > 0 && (

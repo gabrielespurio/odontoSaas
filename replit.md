@@ -523,6 +523,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **SOLUTION**: Changed JOIN condition to use direct relationship (appointments.id = consultations.appointmentId)
   - **IMPACT**: Multiple appointments for same patient/dentist/date now properly display independently
   - **VERIFICATION**: Appointments without consultation now show correctly even when other appointments have consultations
+- July 18, 2025. **BILLING FORM UX IMPROVEMENT**: Enhanced payment method and installment logic in charge generation form
+  - **CONDITIONAL INSTALLMENT**: Installment field now only appears when payment method is "Credit Card"
+  - **LAYOUT OPTIMIZATION**: Moved installment field directly below payment method field for better workflow
+  - **AUTO-RESET**: Installments automatically reset to "À vista" when payment method changes from credit card to other methods
+  - **USER EXPERIENCE**: Cleaner form interface with contextual field visibility based on payment method selection
 - July 18, 2025. **BUG FIX - APPOINTMENT DISAPPEARING**: Fixed critical issue in consultations module where creating a consultation for one appointment was hiding other appointments
   - **ROOT CAUSE**: LEFT JOIN query between appointments and consultations was too broad, using only DATE comparison
   - **SOLUTION**: Enhanced JOIN condition to compare both DATE and TIME, ensuring appointments are matched with consultations more precisely
