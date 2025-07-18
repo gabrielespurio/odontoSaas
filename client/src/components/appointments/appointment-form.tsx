@@ -187,6 +187,14 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     setIsChecking(true);
     
     try {
+      // Debug: Log the data being validated
+      console.log("Validating appointment data:", {
+        scheduledDate: data.scheduledDate,
+        dentistId: data.dentistId,
+        procedureIds: data.procedureIds,
+        firstProcedureId: data.procedureIds[0]
+      });
+      
       // Verificar disponibilidade antes de criar/atualizar
       const conflictCheck = await checkTimeConflict(
         data.scheduledDate, 
@@ -194,6 +202,9 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
         data.procedureIds[0], 
         appointment?.id
       );
+      
+      // Debug: Log the conflict check result
+      console.log("Conflict check result:", conflictCheck);
       
       if (conflictCheck.hasConflict) {
         toast({
