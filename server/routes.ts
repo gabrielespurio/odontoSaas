@@ -728,12 +728,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const body = req.body;
       
-      // Format the date for database storage
-      if (typeof body.scheduledDate === 'string') {
-        body.scheduledDate = formatDateForDatabase(body.scheduledDate);
-      }
-      
+      // Keep the date as string for Zod validation, but process it correctly
       const appointmentData = insertAppointmentSchema.parse(body);
+      
+      // Convert to Date object after validation
+      if (typeof appointmentData.scheduledDate === 'string') {
+        appointmentData.scheduledDate = formatDateForDatabase(appointmentData.scheduledDate);
+      }
       
       // Enhanced conflict validation is now handled in storage layer
       const appointment = await storage.createAppointment(appointmentData);

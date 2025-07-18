@@ -6,23 +6,18 @@ export function formatDateForDatabase(dateString: string): Date {
   
   if (!dateString) return new Date();
   
-  // Parse the input as Brazil local time
-  // Create a date object treating the input as Brazil timezone
-  const [datePart, timePart] = dateString.includes('T') 
-    ? dateString.split('T') 
-    : dateString.split(' ');
+  // Parse the input as Brazil local time without timezone conversion
+  // This ensures the time stored is exactly what the user selected
+  const date = new Date(dateString);
   
-  const [year, month, day] = datePart.split('-').map(Number);
-  const [hour, minute] = timePart.split(':').map(Number);
-  
-  // Create date in Brazil timezone (GMT-3)
-  // We create the date with exact values without timezone conversion
+  // Since we want to treat this as local Brazil time (not UTC),
+  // we create a new date with the same time values
   const brazilDate = new Date();
-  brazilDate.setFullYear(year);
-  brazilDate.setMonth(month - 1); // Month is 0-indexed
-  brazilDate.setDate(day);
-  brazilDate.setHours(hour);
-  brazilDate.setMinutes(minute);
+  brazilDate.setFullYear(date.getFullYear());
+  brazilDate.setMonth(date.getMonth());
+  brazilDate.setDate(date.getDate());
+  brazilDate.setHours(date.getHours());
+  brazilDate.setMinutes(date.getMinutes());
   brazilDate.setSeconds(0);
   brazilDate.setMilliseconds(0);
   
