@@ -397,13 +397,6 @@ export class DatabaseStorage implements IStorage {
   async checkAppointmentConflicts(appointmentData: InsertAppointment, tx?: any, excludeId?: number): Promise<{ hasConflict: boolean; message: string }> {
     const dbConnection = tx || db;
     
-    console.log("=== CONFLICT CHECK DEBUG ===");
-    console.log("Input appointment data:", {
-      dentistId: appointmentData.dentistId,
-      scheduledDate: appointmentData.scheduledDate,
-      procedureId: appointmentData.procedureId
-    });
-    
     // Get procedure details to check duration
     const procedure = await dbConnection.select().from(procedures).where(eq(procedures.id, appointmentData.procedureId));
     if (!procedure.length) {
@@ -413,12 +406,6 @@ export class DatabaseStorage implements IStorage {
     const procedureDuration = procedure[0].duration; // in minutes
     const newStartTime = new Date(appointmentData.scheduledDate);
     const newEndTime = new Date(newStartTime.getTime() + (procedureDuration * 60 * 1000));
-    
-    console.log("New appointment details:", {
-      startTime: newStartTime.toISOString(),
-      endTime: newEndTime.toISOString(),
-      duration: procedureDuration
-    });
     
     // Build where conditions para buscar agendamentos do mesmo dentista que não estão cancelados
     let whereConditions = [
@@ -442,44 +429,29 @@ export class DatabaseStorage implements IStorage {
     .innerJoin(procedures, eq(appointments.procedureId, procedures.id))
     .where(and(...whereConditions));
     
-    console.log("Found existing appointments:", existingAppointments.length);
-    
     // Check for time conflicts
     for (const existingAppt of existingAppointments) {
       const existingStartTime = new Date(existingAppt.scheduledDate);
       const existingEndTime = new Date(existingStartTime.getTime() + (existingAppt.procedure.duration * 60 * 1000));
       
-      console.log("Checking against existing appointment:", {
-        id: existingAppt.id,
-        startTime: existingStartTime.toISOString(),
-        endTime: existingEndTime.toISOString(),
-        procedure: existingAppt.procedure.name
-      });
-      
       // Check if time periods overlap
       const hasOverlap = (newStartTime < existingEndTime && newEndTime > existingStartTime);
       
-      console.log("Overlap check:", {
-        newStart: newStartTime.toISOString(),
-        newEnd: newEndTime.toISOString(),
-        existingStart: existingStartTime.toISOString(),
-        existingEnd: existingEndTime.toISOString(),
-        hasOverlap
-      });
-      
       if (hasOverlap) {
-        // Converter UTC para horário de Brasília para exibição
-        const displayStart = new Date(existingAppt.scheduledDate);
-        const displayEnd = new Date(displayStart.getTime() + (existingAppt.procedure.duration * 60 * 1000));
+        // Format the time for display in Brazilian timezone
+        const formatBrazilTime = (date: Date) => {
+          // Create a formatter for Brazil timezone
+          const formatter = new Intl.DateTimeFormat('pt-BR', {
+            timeZone: 'America/Sao_Paulo',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
+          return formatter.format(date);
+        };
         
-        // Ajustar para horário de Brasília (-3 UTC)
-        const brStartHour = (displayStart.getUTCHours() - 3 + 24) % 24;
-        const brEndHour = (displayEnd.getUTCHours() - 3 + 24) % 24;
-        
-        const conflictStart = `${String(brStartHour).padStart(2, '0')}:${String(displayStart.getUTCMinutes()).padStart(2, '0')}`;
-        const conflictEnd = `${String(brEndHour).padStart(2, '0')}:${String(displayEnd.getUTCMinutes()).padStart(2, '0')}`;
-        
-        console.log("=== END CONFLICT CHECK (CONFLICT FOUND) ===");
+        const conflictStart = formatBrazilTime(existingStartTime);
+        const conflictEnd = formatBrazilTime(existingEndTime);
         
         return {
           hasConflict: true,
@@ -487,8 +459,6 @@ export class DatabaseStorage implements IStorage {
         };
       }
     }
-    
-    console.log("=== END CONFLICT CHECK (NO CONFLICT) ===");
     
     return { hasConflict: false, message: '' };
   }

@@ -65,11 +65,17 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     }
     
     try {
-      // Enviar o horário diretamente como string, sem conversão
-      // O backend irá lidar com a conversão apropriada
+      // Converter a data do datetime-local para ISO string com timezone correto
+      const [dateStr, timeStr] = scheduledDate.split('T');
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const [hour, minute] = timeStr.split(':').map(Number);
+      
+      // Criar a data diretamente com os valores fornecidos (horário local)
+      const localDate = new Date(year, month - 1, day, hour, minute);
+      
       const response = await apiRequest("POST", "/api/appointments/check-availability", {
         dentistId, 
-        scheduledDate, 
+        scheduledDate: localDate.toISOString(), 
         procedureId, 
         excludeId
       });
@@ -265,8 +271,14 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     // Para compatibilidade com o backend atual, usamos apenas o primeiro procedimento
     
     // Converter a data do input datetime-local para o formato correto
-    // O input retorna no formato "YYYY-MM-DDTHH:MM" e precisamos tratar como hora local
-    const localDate = new Date(data.scheduledDate);
+    // O input retorna no formato "YYYY-MM-DDTHH:MM" em horário local
+    // Precisamos garantir que seja tratado como horário de Brasília
+    const [dateStr, timeStr] = data.scheduledDate.split('T');
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hour, minute] = timeStr.split(':').map(Number);
+    
+    // Criar a data diretamente com os valores fornecidos
+    const localDate = new Date(year, month - 1, day, hour, minute);
     
     const appointmentData = {
       ...data,
