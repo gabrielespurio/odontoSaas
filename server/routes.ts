@@ -718,7 +718,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/appointments", async (req, res) => {
     try {
-      const appointmentData = insertAppointmentSchema.parse(req.body);
+      const body = req.body;
+      
+      // Se recebemos uma string no formato "YYYY-MM-DDTHH:MM", tratar como horário local
+      if (typeof body.scheduledDate === 'string' && body.scheduledDate.length === 16) {
+        const [dateStr, timeStr] = body.scheduledDate.split('T');
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const [hour, minute] = timeStr.split(':').map(Number);
+        body.scheduledDate = new Date(year, month - 1, day, hour, minute).toISOString();
+      }
+      
+      const appointmentData = insertAppointmentSchema.parse(body);
       
       // Enhanced conflict validation is now handled in storage layer
       const appointment = await storage.createAppointment(appointmentData);
@@ -822,9 +832,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { dentistId, scheduledDate, procedureId, excludeId } = req.body;
       
+      // Se recebemos uma string no formato "YYYY-MM-DDTHH:MM", tratar como horário local
+      let dateToCheck: Date;
+      if (typeof scheduledDate === 'string' && scheduledDate.length === 16) {
+        // Formato "YYYY-MM-DDTHH:MM" - horário local
+        const [dateStr, timeStr] = scheduledDate.split('T');
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const [hour, minute] = timeStr.split(':').map(Number);
+        dateToCheck = new Date(year, month - 1, day, hour, minute);
+      } else {
+        dateToCheck = new Date(scheduledDate);
+      }
+      
       const result = await storage.isSlotAvailable(
         dentistId, 
-        new Date(scheduledDate), 
+        dateToCheck, 
         procedureId, 
         excludeId
       );

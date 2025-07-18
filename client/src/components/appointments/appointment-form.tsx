@@ -62,17 +62,10 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     }
     
     try {
-      // Converter a data do datetime-local para ISO string com timezone correto
-      const [dateStr, timeStr] = scheduledDate.split('T');
-      const [year, month, day] = dateStr.split('-').map(Number);
-      const [hour, minute] = timeStr.split(':').map(Number);
-      
-      // Criar a data diretamente com os valores fornecidos (horário local)
-      const localDate = new Date(year, month - 1, day, hour, minute);
-      
+      // Enviar a data exatamente como está no input (horário local)
       const response = await apiRequest("POST", "/api/appointments/check-availability", {
         dentistId, 
-        scheduledDate: localDate.toISOString(), 
+        scheduledDate, // Enviar como string "YYYY-MM-DDTHH:MM"
         procedureId, 
         excludeId
       });
@@ -214,20 +207,11 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
       
       // Para compatibilidade com o backend atual, usamos apenas o primeiro procedimento
       
-      // Converter a data do input datetime-local para o formato correto
-      // O input retorna no formato "YYYY-MM-DDTHH:MM" em horário local
-      // Precisamos garantir que seja tratado como horário de Brasília
-      const [dateStr, timeStr] = data.scheduledDate.split('T');
-      const [year, month, day] = dateStr.split('-').map(Number);
-      const [hour, minute] = timeStr.split(':').map(Number);
-      
-      // Criar a data diretamente com os valores fornecidos
-      const localDate = new Date(year, month - 1, day, hour, minute);
-      
+      // Manter o horário exatamente como selecionado pelo usuário
       const appointmentData = {
         ...data,
         procedureId: data.procedureIds[0] || 0, // Pega o primeiro procedimento
-        scheduledDate: localDate.toISOString(),
+        scheduledDate: data.scheduledDate, // Enviar como string "YYYY-MM-DDTHH:MM"
       };
       delete (appointmentData as any).procedureIds; // Remove o array
 
