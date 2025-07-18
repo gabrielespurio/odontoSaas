@@ -89,6 +89,36 @@ export default function FinancialCashFlow() {
     return new Date(date).toLocaleDateString('pt-BR');
   };
 
+  // Função para traduzir categorias para português
+  const translateCategory = (category: string) => {
+    const categoryMap: Record<string, string> = {
+      // Categorias de receita
+      "receivable": "Recebimento",
+      "consultation": "Consulta",
+      "appointment": "Agendamento",
+      "other_income": "Outras Receitas",
+      
+      // Categorias de despesa (expense categories do schema)
+      "payable": "Pagamento",
+      "rent": "Aluguel",
+      "salaries": "Salários",
+      "materials": "Materiais",
+      "equipment": "Equipamentos",
+      "utilities": "Utilidades",
+      "marketing": "Marketing",
+      "other": "Outros",
+      "maintenance": "Manutenção",
+      "supplies": "Suprimentos",
+      "insurance": "Seguros",
+      "taxes": "Impostos",
+      "training": "Treinamento",
+      "software": "Software",
+      "professional_services": "Serviços Profissionais"
+    };
+    
+    return categoryMap[category] || category;
+  };
+
   const getTypeIcon = (type: string) => {
     return type === "income" ? ArrowUpCircle : ArrowDownCircle;
   };
@@ -302,7 +332,7 @@ export default function FinancialCashFlow() {
                     </td>
                     <td className="py-4 px-6">
                       {entry.category && (
-                        <Badge variant="outline">{entry.category}</Badge>
+                        <Badge variant="outline">{translateCategory(entry.category)}</Badge>
                       )}
                     </td>
                     <td className="py-4 px-6">
