@@ -546,6 +546,7 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **USER EXPERIENCE**: Users can now create multiple appointments for the same patient/dentist/date without them disappearing after creating one consultation
 - July 18, 2025. **TIMEZONE FIX**: Fixed date formatting issue in payment registration form - due dates now display correctly without timezone conversion
 - July 18, 2025. **PAYABLES FORM FIXES**: Fixed validation errors in accounts payable form by correcting category enum values and paymentMethod validation
+- July 18, 2025. **AMOUNT FIELD TYPE ERROR FIX**: Fixed server validation error when creating payables - corrected amount field type from string to number in both backend schema and frontend form handling
 
 ## User Preferences
 

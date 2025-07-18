@@ -51,7 +51,7 @@ type Payable = {
 };
 
 const payableSchema = z.object({
-  amount: z.string().min(1, "Valor é obrigatório"),
+  amount: z.number().positive("Valor deve ser positivo"),
   dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
   description: z.string().min(1, "Descrição é obrigatória"),
   category: z.enum(["rent", "salaries", "materials", "equipment", "utilities", "marketing", "other"]),
@@ -74,7 +74,7 @@ export default function FinancialPayables() {
   const form = useForm<z.infer<typeof payableSchema>>({
     resolver: zodResolver(payableSchema),
     defaultValues: {
-      amount: "",
+      amount: 0,
       dueDate: "",
       description: "",
       category: undefined,
@@ -90,7 +90,6 @@ export default function FinancialPayables() {
     mutationFn: (data: z.infer<typeof payableSchema>) => {
       const payload = {
         ...data,
-        amount: parseFloat(data.amount),
         // Remove empty paymentMethod if status is not paid
         paymentMethod: data.status === "paid" && data.paymentMethod ? data.paymentMethod : undefined,
       };
@@ -118,7 +117,6 @@ export default function FinancialPayables() {
     mutationFn: ({ id, data }: { id: number; data: z.infer<typeof payableSchema> }) => {
       const payload = {
         ...data,
-        amount: parseFloat(data.amount),
         // Remove empty paymentMethod if status is not paid
         paymentMethod: data.status === "paid" && data.paymentMethod ? data.paymentMethod : undefined,
       };
@@ -154,7 +152,7 @@ export default function FinancialPayables() {
   const openEditForm = (payable: Payable) => {
     setEditingPayable(payable);
     form.reset({
-      amount: payable.amount,
+      amount: parseFloat(payable.amount),
       dueDate: payable.dueDate,
       description: payable.description,
       category: payable.category as any,
@@ -337,7 +335,8 @@ export default function FinancialPayables() {
                             type="number" 
                             step="0.01" 
                             placeholder="0.00" 
-                            {...field} 
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                           />
                         </FormControl>
                         <FormMessage />
