@@ -553,6 +553,13 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Added comprehensive data cleaning in backend routes for optional fields (paymentDate, paymentMethod, supplier, notes)
   - Enhanced frontend mutations to filter empty dates before sending to API
   - System now properly handles all optional fields and prevents "invalid input syntax for type date" errors
+- July 18, 2025. **PAYABLES ACCOUNT TYPE FEATURE**: Added account type classification to payables module:
+  - Added accountType field to payables table: "clinic" (default) or "dentist"
+  - Added dentistId field for linking payables to specific dentists when accountType is "dentist"
+  - Added createdBy field to track who created each payable
+  - Enhanced frontend form with conditional dentist selection field that appears only when "Dentista Específico" is selected
+  - Added validation to make dentist selection required when account type is "dentist"
+  - Updated backend API to properly handle the new fields with data cleaning and validation
 
 ## User Preferences
 

@@ -60,6 +60,16 @@ const payableSchema = z.object({
   status: z.enum(["pending", "paid", "overdue", "cancelled"]).default("pending"),
   paymentDate: z.string().optional(),
   paymentMethod: z.enum(["cash", "credit_card", "debit_card", "pix", "bank_transfer", "check"]).optional(),
+  accountType: z.enum(["clinic", "dentist"]).default("clinic"),
+  dentistId: z.number().optional(),
+}).refine((data) => {
+  if (data.accountType === "dentist" && !data.dentistId) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Dentista é obrigatório quando o tipo de conta é 'Dentista Específico'",
+  path: ["dentistId"],
 });
 
 export default function FinancialPayables() {
@@ -83,6 +93,8 @@ export default function FinancialPayables() {
       status: "pending",
       paymentDate: "",
       paymentMethod: undefined,
+      accountType: "clinic",
+      dentistId: undefined,
     },
   });
 
@@ -165,6 +177,8 @@ export default function FinancialPayables() {
       status: payable.status,
       paymentDate: payable.paymentDate || "",
       paymentMethod: payable.paymentMethod as any,
+      accountType: (payable as any).accountType || "clinic",
+      dentistId: (payable as any).dentistId || undefined,
     });
     setShowForm(true);
   };
@@ -178,6 +192,10 @@ export default function FinancialPayables() {
 
   const { data: users } = useQuery<any[]>({
     queryKey: ["/api/users"],
+  });
+
+  const { data: dentists } = useQuery<any[]>({
+    queryKey: ["/api/users/dentists"],
   });
 
   const markAsPaidMutation = useMutation({
@@ -389,6 +407,56 @@ export default function FinancialPayables() {
                       </FormItem>
                     )}
                   />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="accountType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de Conta *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecionar tipo" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="clinic">Clínica Geral</SelectItem>
+                            <SelectItem value="dentist">Dentista Específico</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {form.watch("accountType") === "dentist" && (
+                    <FormField
+                      control={form.control}
+                      name="dentistId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Dentista *</FormLabel>
+                          <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecionar dentista" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {dentists?.map((dentist) => (
+                                <SelectItem key={dentist.id} value={dentist.id.toString()}>
+                                  {dentist.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

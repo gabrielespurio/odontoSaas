@@ -4,6 +4,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeScheduler } from "./scheduler";
+import { db } from "./db";
+import { sql } from "drizzle-orm";
 
 const app = express();
 app.use(express.json());
@@ -40,6 +42,16 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Apply database migrations
+  try {
+    await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS account_type VARCHAR(20) NOT NULL DEFAULT 'clinic'`);
+    await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS dentist_id INTEGER`);
+    await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS created_by INTEGER`);
+    console.log("Database migrations applied successfully");
+  } catch (error) {
+    console.error("Migration error:", error);
+  }
+
   const server = await registerRoutes(app);
   
   // Initialize the reminder scheduler

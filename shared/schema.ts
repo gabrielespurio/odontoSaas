@@ -179,6 +179,9 @@ export const payables = pgTable("payables", {
   supplier: text("supplier"), // Fornecedor opcional
   notes: text("notes"),
   attachmentPath: text("attachment_path"), // Caminho do comprovante
+  accountType: varchar("account_type", { length: 20 }).notNull().default("clinic"), // "clinic" ou "dentist"
+  dentistId: integer("dentist_id"), // ID do dentista quando accountType = "dentist"
+  createdBy: integer("created_by"), // ID do usuário que criou
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -422,6 +425,8 @@ export const insertPayableSchema = createInsertSchema(payables).omit({
 }).extend({
   amount: z.number().positive("Valor deve ser positivo"),
   paymentDate: z.string().optional().nullable(),
+  accountType: z.enum(["clinic", "dentist"]).default("clinic"),
+  dentistId: z.number().optional().nullable(),
 });
 
 export const insertCashFlowSchema = createInsertSchema(cashFlow).omit({

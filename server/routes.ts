@@ -1577,6 +1577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentMethod: payableData.paymentMethod && payableData.paymentMethod.trim() !== "" ? payableData.paymentMethod : undefined,
         supplier: payableData.supplier && payableData.supplier.trim() !== "" ? payableData.supplier : undefined,
         notes: payableData.notes && payableData.notes.trim() !== "" ? payableData.notes : undefined,
+        dentistId: payableData.accountType === "dentist" ? payableData.dentistId : undefined,
         createdBy: user.id
       };
       
@@ -1600,6 +1601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentMethod: payableData.paymentMethod && payableData.paymentMethod.trim() !== "" ? payableData.paymentMethod : undefined,
         supplier: payableData.supplier && payableData.supplier.trim() !== "" ? payableData.supplier : undefined,
         notes: payableData.notes && payableData.notes.trim() !== "" ? payableData.notes : undefined,
+        dentistId: payableData.accountType === "dentist" ? payableData.dentistId : undefined,
       };
       
       const payable = await storage.updatePayable(id, cleanedData);
