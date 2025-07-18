@@ -410,7 +410,23 @@ export class DatabaseStorage implements IStorage {
     }
     
     const procedureDuration = procedure[0].duration; // in minutes
-    const newStartTime = new Date(appointmentData.scheduledDate);
+    
+    // Parse the scheduled date as a local time string
+    const scheduledDateStr = typeof appointmentData.scheduledDate === 'string' 
+      ? appointmentData.scheduledDate 
+      : appointmentData.scheduledDate.toISOString();
+      
+    // Create date from the string parts to avoid timezone conversion
+    const dateParts = scheduledDateStr.replace('T', ' ').replace('Z', '').split(/[- :]/);
+    const newStartTime = new Date(
+      parseInt(dateParts[0]), // year
+      parseInt(dateParts[1]) - 1, // month (0-indexed)
+      parseInt(dateParts[2]), // day
+      parseInt(dateParts[3] || 0), // hour
+      parseInt(dateParts[4] || 0), // minute
+      parseInt(dateParts[5] || 0) // second
+    );
+    
     const newEndTime = new Date(newStartTime.getTime() + (procedureDuration * 60 * 1000));
     
     // Build where conditions para buscar agendamentos do mesmo dentista que não estão cancelados
@@ -437,27 +453,55 @@ export class DatabaseStorage implements IStorage {
     
     // Check for time conflicts
     for (const existingAppt of existingAppointments) {
-      const existingStartTime = new Date(existingAppt.scheduledDate);
+      // Parse existing appointment date as local time
+      const existingDateStr = typeof existingAppt.scheduledDate === 'string'
+        ? existingAppt.scheduledDate
+        : existingAppt.scheduledDate.toISOString();
+        
+      // For database timestamps, they come as "YYYY-MM-DD HH:MM:SS" format
+      let existingStartTime: Date;
+      if (existingDateStr.includes(' ') && !existingDateStr.includes('T')) {
+        // It's already in local format from database
+        const [datePart, timePart] = existingDateStr.split(' ');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hour, minute, second = 0] = timePart.split(':').map(Number);
+        existingStartTime = new Date(year, month - 1, day, hour, minute, second);
+      } else {
+        // Parse from ISO format
+        const existingParts = existingDateStr.replace('T', ' ').replace('Z', '').split(/[- :]/);
+        existingStartTime = new Date(
+          parseInt(existingParts[0]), // year
+          parseInt(existingParts[1]) - 1, // month (0-indexed)
+          parseInt(existingParts[2]), // day
+          parseInt(existingParts[3] || 0), // hour
+          parseInt(existingParts[4] || 0), // minute
+          parseInt(existingParts[5] || 0) // second
+        );
+      }
+      
       const existingEndTime = new Date(existingStartTime.getTime() + (existingAppt.procedure.duration * 60 * 1000));
       
-      // Check if time periods overlap
-      const hasOverlap = (newStartTime < existingEndTime && newEndTime > existingStartTime);
+      // Check if time periods overlap (exclusive of exact boundaries)
+      // If new appointment starts exactly when existing ends, it's not a conflict
+      const hasOverlap = (newStartTime < existingEndTime && newEndTime > existingStartTime) && 
+                        !(newStartTime.getTime() === existingEndTime.getTime() || newEndTime.getTime() === existingStartTime.getTime());
       
       if (hasOverlap) {
-        // Format the time for display in Brazilian timezone
-        const formatBrazilTime = (date: Date) => {
-          // Create a formatter for Brazil timezone
-          const formatter = new Intl.DateTimeFormat('pt-BR', {
-            timeZone: 'America/Sao_Paulo',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          });
-          return formatter.format(date);
+        // Log debug info
+        console.log('Conflict detected:');
+        console.log('New appointment:', newStartTime.toISOString(), 'to', newEndTime.toISOString());
+        console.log('Existing appointment:', existingStartTime.toISOString(), 'to', existingEndTime.toISOString());
+        console.log('Existing appointment ID:', existingAppt.id);
+        
+        // Format the time for display (already in local time)
+        const formatLocalTime = (date: Date) => {
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          return `${hours}:${minutes}`;
         };
         
-        const conflictStart = formatBrazilTime(existingStartTime);
-        const conflictEnd = formatBrazilTime(existingEndTime);
+        const conflictStart = formatLocalTime(existingStartTime);
+        const conflictEnd = formatLocalTime(existingEndTime);
         
         return {
           hasConflict: true,
