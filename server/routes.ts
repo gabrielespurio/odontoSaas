@@ -917,7 +917,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       .leftJoin(consultations, and(
         eq(appointments.patientId, consultations.patientId),
         eq(appointments.dentistId, consultations.dentistId),
-        sql`DATE(${appointments.scheduledDate}) = DATE(${consultations.date})`
+        sql`DATE(${appointments.scheduledDate}) = DATE(${consultations.date})`,
+        sql`TIME(${appointments.scheduledDate}) = TIME(${consultations.date})`
       ))
       .where(and(...whereConditions))
       .orderBy(desc(appointments.scheduledDate));
