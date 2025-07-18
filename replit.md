@@ -506,6 +506,12 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
 - July 18, 2025. **TIMEZONE FORMATTING FIXED**: Resolved WhatsApp timezone issue - messages now display correct Brazil time without UTC conversion
 - July 18, 2025. **ZOD VALIDATION ERROR RESOLVED**: Fixed "Expected string, received date" error in appointment creation by adjusting date formatting flow
 - July 18, 2025. **UI IMPROVEMENT**: Changed "Nº" column header to "Identificador" in consultations module table for better clarity
+- July 18, 2025. **MIGRATION COMPLETED**: Successfully migrated OdontoSync project from Replit Agent to standard Replit environment
+- July 18, 2025. **PAYABLES TABLE IMPROVEMENT**: Enhanced visualization by removing icons from table columns
+  - Removed Building icon from Supplier column for cleaner look
+  - Removed Calendar icon from Due Date column for better readability
+  - Kept only the action menu icon (MoreHorizontal) in Actions column as requested
+  - Improved table layout with simplified text-only columns
 
 ## User Preferences
 

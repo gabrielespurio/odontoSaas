@@ -673,12 +673,9 @@ export default function FinancialPayables() {
                         </TableCell>
                         
                         <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Building className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-900">
-                              {payable.supplier || "Não informado"}
-                            </span>
-                          </div>
+                          <span className="text-sm text-gray-900">
+                            {payable.supplier || "Não informado"}
+                          </span>
                         </TableCell>
                         
                         <TableCell>
@@ -694,12 +691,9 @@ export default function FinancialPayables() {
                         </TableCell>
                         
                         <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-600">
-                              {formatDate(payable.dueDate)}
-                            </span>
-                          </div>
+                          <span className="text-sm text-gray-600">
+                            {formatDate(payable.dueDate)}
+                          </span>
                         </TableCell>
                         
                         <TableCell>
