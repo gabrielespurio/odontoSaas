@@ -80,6 +80,19 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     }
   };
 
+  // Function to get current time in Brazil timezone for form validation
+  const getBrazilCurrentTime = () => {
+    const now = new Date();
+    // Convert to Brazil timezone
+    const brazilTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    const year = brazilTime.getFullYear();
+    const month = String(brazilTime.getMonth() + 1).padStart(2, '0');
+    const day = String(brazilTime.getDate()).padStart(2, '0');
+    const hours = String(brazilTime.getHours()).padStart(2, '0');
+    const minutes = String(brazilTime.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const getInitialScheduledDate = () => {
     if (appointment?.scheduledDate) {
       const date = new Date(appointment.scheduledDate);
@@ -409,7 +422,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
               id="scheduledDate"
               type="datetime-local"
               {...form.register("scheduledDate")}
-              min={new Date().toISOString().slice(0, 16)}
+              min={getBrazilCurrentTime()}
             />
           </div>
           {form.formState.errors.scheduledDate && (
