@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { sendWhatsAppMessage, formatAppointmentMessage } from "./whatsapp";
 import { sendDailyReminders } from "./scheduler";
+import { formatDateForDatabase, formatDateForFrontend } from "./utils/date-formatter";
 import { 
   insertUserSchema, 
   insertPatientSchema, 
@@ -709,7 +710,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const appointments = await storage.getAppointments(date, dentistId, startDate, endDate);
-      res.json(appointments);
+      
+      // Format dates for frontend
+      const formattedAppointments = appointments.map(appointment => ({
+        ...appointment,
+        scheduledDate: formatDateForFrontend(appointment.scheduledDate)
+      }));
+      
+      res.json(formattedAppointments);
     } catch (error) {
       console.error("Get appointments error:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -720,20 +728,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const body = req.body;
       
-      // Parse the date string as local time
+      // Format the date for database storage
       if (typeof body.scheduledDate === 'string') {
-        // If it's in format "YYYY-MM-DDTHH:MM", parse as local time
-        if (body.scheduledDate.length === 16) {
-          const [dateStr, timeStr] = body.scheduledDate.split('T');
-          const [year, month, day] = dateStr.split('-').map(Number);
-          const [hour, minute] = timeStr.split(':').map(Number);
-          
-          // Create date in local time without timezone conversion
-          const localDate = new Date(year, month - 1, day, hour, minute, 0, 0);
-          
-          // Format back to a string that PostgreSQL will interpret as local time
-          body.scheduledDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
-        }
+        body.scheduledDate = formatDateForDatabase(body.scheduledDate);
       }
       
       const appointmentData = insertAppointmentSchema.parse(body);
@@ -763,7 +760,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("WhatsApp notification error:", whatsappError);
       }
       
-      res.json(appointment);
+      // Format the date for frontend before sending
+      const formattedAppointment = {
+        ...appointment,
+        scheduledDate: formatDateForFrontend(appointment.scheduledDate)
+      };
+      
+      res.json(formattedAppointment);
     } catch (error) {
       console.error("Create appointment error:", error);
       if (error.message.includes("Conflito de horário")) {
@@ -925,7 +928,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/appointments/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const appointmentData = insertAppointmentSchema.partial().parse(req.body);
+      const body = req.body;
+      
+      // Format the date for database storage
+      if (typeof body.scheduledDate === 'string') {
+        body.scheduledDate = formatDateForDatabase(body.scheduledDate);
+      }
+      
+      const appointmentData = insertAppointmentSchema.partial().parse(body);
       
       // Buscar o agendamento atual para comparar status
       const currentAppointment = await storage.getAppointment(id);
