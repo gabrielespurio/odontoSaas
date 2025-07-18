@@ -1174,42 +1174,46 @@ export class DatabaseStorage implements IStorage {
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
+    // Count today's appointments (all status except cancelled)
     const [todayAppointmentsResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(appointments)
       .where(
         and(
-          sql`${appointments.scheduledDate} >= ${startOfDay}`,
-          sql`${appointments.scheduledDate} <= ${endOfDay}`
+          sql`DATE(${appointments.scheduledDate}) = DATE(${today.toISOString()})`,
+          ne(appointments.status, 'cancelado')
         )
       );
 
+    // Count active patients
     const [activePatientsResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(patients)
       .where(eq(patients.isActive, true));
 
+    // Calculate monthly revenue from paid receivables
     const [monthlyRevenueResult] = await db
-      .select({ sum: sql<number>`coalesce(sum(${financial.amount}), 0)` })
-      .from(financial)
+      .select({ sum: sql<number>`coalesce(sum(CAST(${receivables.amount} AS DECIMAL)), 0)` })
+      .from(receivables)
       .where(
         and(
-          eq(financial.status, "paid"),
-          sql`${financial.paymentDate} >= ${startOfMonth}`,
-          sql`${financial.paymentDate} <= ${endOfMonth}`
+          eq(receivables.status, "paid"),
+          sql`${receivables.paymentDate} >= ${startOfMonth.toISOString()}`,
+          sql`${receivables.paymentDate} <= ${endOfMonth.toISOString()}`
         )
       );
 
+    // Calculate pending payments from receivables
     const [pendingPaymentsResult] = await db
-      .select({ sum: sql<number>`coalesce(sum(${financial.amount}), 0)` })
-      .from(financial)
-      .where(eq(financial.status, "pending"));
+      .select({ sum: sql<number>`coalesce(sum(CAST(${receivables.amount} AS DECIMAL)), 0)` })
+      .from(receivables)
+      .where(eq(receivables.status, "pending"));
 
     return {
-      todayAppointments: todayAppointmentsResult.count,
-      activePatients: activePatientsResult.count,
-      monthlyRevenue: monthlyRevenueResult.sum,
-      pendingPayments: pendingPaymentsResult.sum,
+      todayAppointments: Number(todayAppointmentsResult.count) || 0,
+      activePatients: Number(activePatientsResult.count) || 0,
+      monthlyRevenue: Number(monthlyRevenueResult.sum) || 0,
+      pendingPayments: Number(pendingPaymentsResult.sum) || 0,
     };
   }
 
