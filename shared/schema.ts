@@ -186,12 +186,13 @@ export const payables = pgTable("payables", {
 // Movimentação de Caixa (Cash Flow)
 export const cashFlow = pgTable("cash_flow", {
   id: serial("id").primaryKey(),
-  type: accountTypeEnum("type").notNull(), // receivable ou payable
-  referenceId: integer("reference_id").notNull(), // ID da conta a receber/pagar
+  type: varchar("type", { length: 20 }).notNull(), // "income" ou "expense"
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  date: date("date").notNull(),
   description: text("description").notNull(),
-  balance: decimal("balance", { precision: 10, scale: 2 }).notNull(), // Saldo após movimentação
+  date: date("date").notNull(),
+  category: varchar("category", { length: 100 }),
+  receivableId: integer("receivable_id"), // FK para receivables
+  payableId: integer("payable_id"), // FK para payables
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -324,12 +325,12 @@ export const payablesRelations = relations(payables, ({ many }) => ({
 }));
 
 export const cashFlowRelations = relations(cashFlow, ({ one }) => ({
-  receivableReference: one(receivables, {
-    fields: [cashFlow.referenceId],
+  receivable: one(receivables, {
+    fields: [cashFlow.receivableId],
     references: [receivables.id],
   }),
-  payableReference: one(payables, {
-    fields: [cashFlow.referenceId],
+  payable: one(payables, {
+    fields: [cashFlow.payableId],
     references: [payables.id],
   }),
 }));

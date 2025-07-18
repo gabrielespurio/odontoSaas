@@ -855,12 +855,12 @@ export class DatabaseStorage implements IStorage {
     // Criar entrada no fluxo de caixa se for um recebimento
     if (insertReceivable.status === 'paid' && insertReceivable.paymentDate) {
       await this.createCashFlowEntry({
-        type: 'receivable',
-        referenceId: record.id,
+        type: 'income',
+        receivableId: record.id,
         amount: insertReceivable.amount,
         date: insertReceivable.paymentDate,
         description: `Recebimento: ${insertReceivable.description || ''}`,
-        balance: '0', // Será calculado dinamicamente
+        category: 'receivable',
       });
     }
     
@@ -874,12 +874,12 @@ export class DatabaseStorage implements IStorage {
     // Se o status mudou para "pago", criar entrada no fluxo de caixa
     if (currentRecord?.status !== 'paid' && insertReceivable.status === 'paid' && insertReceivable.paymentDate) {
       await this.createCashFlowEntry({
-        type: 'receivable',
-        referenceId: record.id,
+        type: 'income',
+        receivableId: record.id,
         amount: record.amount,
         date: insertReceivable.paymentDate,
         description: `Recebimento: ${record.description || ''}`,
-        balance: '0', // Será calculado dinamicamente
+        category: 'receivable',
       });
     }
     
@@ -997,12 +997,12 @@ export class DatabaseStorage implements IStorage {
     // Criar entrada no fluxo de caixa se for um pagamento
     if (insertPayable.status === 'paid' && insertPayable.paymentDate) {
       await this.createCashFlowEntry({
-        type: 'payable',
-        referenceId: record.id,
+        type: 'expense',
+        payableId: record.id,
         amount: `-${insertPayable.amount}`, // Negativo para saída
         date: insertPayable.paymentDate,
         description: `Pagamento: ${insertPayable.description}`,
-        balance: '0', // Será calculado dinamicamente
+        category: 'payable',
       });
     }
     
@@ -1016,12 +1016,12 @@ export class DatabaseStorage implements IStorage {
     // Se o status mudou para "pago", criar entrada no fluxo de caixa
     if (currentRecord?.status !== 'paid' && insertPayable.status === 'paid' && insertPayable.paymentDate) {
       await this.createCashFlowEntry({
-        type: 'payable',
-        referenceId: record.id,
+        type: 'expense',
+        payableId: record.id,
         amount: `-${record.amount}`, // Negativo para saída
         date: insertPayable.paymentDate,
         description: `Pagamento: ${record.description}`,
-        balance: '0', // Será calculado dinamicamente
+        category: 'payable',
       });
     }
     
@@ -1057,26 +1057,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCashFlowEntry(insertCashFlow: InsertCashFlow): Promise<CashFlow> {
-    // Calcular o saldo atual
-    const currentBalance = await this.getCurrentBalance();
-    const newBalance = currentBalance + parseFloat(insertCashFlow.amount);
-
-    const [record] = await db.insert(cashFlow).values({
-      ...insertCashFlow,
-      balance: newBalance.toFixed(2),
-    }).returning();
-    
+    const [record] = await db.insert(cashFlow).values(insertCashFlow).returning();
     return record;
   }
 
   async getCurrentBalance(): Promise<number> {
+    // Calcular saldo atual baseado na soma de todas as transações
     const [result] = await db
-      .select({ balance: sql<number>`coalesce(${cashFlow.balance}, 0)` })
-      .from(cashFlow)
-      .orderBy(desc(cashFlow.createdAt))
-      .limit(1);
+      .select({ 
+        total: sql<number>`coalesce(sum(${cashFlow.amount}), 0)` 
+      })
+      .from(cashFlow);
 
-    return result?.balance || 0;
+    return result?.total || 0;
   }
 
   async getFinancialMetrics(startDate?: Date, endDate?: Date): Promise<{
