@@ -210,48 +210,57 @@ export default function FinancialCashFlow() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-600">Total Entradas</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(totalIncome)}
-                </p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-neutral-600 mb-2">Total Entradas</p>
+                <div className="flex items-center space-x-2">
+                  <p className="text-2xl font-bold text-green-600 truncate">
+                    {formatCurrency(totalIncome)}
+                  </p>
+                  <TrendingUp className="text-green-600 w-5 h-5 flex-shrink-0" />
+                </div>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 ml-3">
                 <TrendingUp className="text-green-600 w-6 h-6" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-600">Total Saídas</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {formatCurrency(totalExpense)}
-                </p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-neutral-600 mb-2">Total Saídas</p>
+                <div className="flex items-center space-x-2">
+                  <p className="text-2xl font-bold text-red-600 truncate">
+                    {formatCurrency(totalExpense)}
+                  </p>
+                  <TrendingDown className="text-red-600 w-5 h-5 flex-shrink-0" />
+                </div>
               </div>
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 ml-3">
                 <TrendingDown className="text-red-600 w-6 h-6" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-600">Saldo Período</p>
-                <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(balance)}
-                </p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-neutral-600 mb-2">Saldo Período</p>
+                <div className="flex items-center space-x-2">
+                  <p className={`text-2xl font-bold truncate ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(balance)}
+                  </p>
+                  <Activity className={`w-5 h-5 flex-shrink-0 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                </div>
               </div>
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ml-3 ${
                 balance >= 0 ? 'bg-green-100' : 'bg-red-100'
               }`}>
                 <Activity className={`w-6 h-6 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`} />
@@ -260,16 +269,19 @@ export default function FinancialCashFlow() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-600">Saldo Atual</p>
-                <p className="text-2xl font-bold text-primary">
-                  {formatCurrency(metrics?.currentBalance || 0)}
-                </p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-neutral-600 mb-2">Saldo Atual</p>
+                <div className="flex items-center space-x-2">
+                  <p className="text-2xl font-bold text-primary truncate">
+                    {formatCurrency(metrics?.currentBalance || 0)}
+                  </p>
+                  <DollarSign className="text-primary w-5 h-5 flex-shrink-0" />
+                </div>
               </div>
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 ml-3">
                 <DollarSign className="text-primary w-6 h-6" />
               </div>
             </div>
