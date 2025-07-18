@@ -1165,56 +1165,58 @@ export class DatabaseStorage implements IStorage {
     monthlyRevenue: number;
     pendingPayments: number;
   }> {
-    const today = new Date();
-    const startOfDay = new Date(today);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(today);
-    endOfDay.setHours(23, 59, 59, 999);
+    try {
+      // Count today's appointments (all status except cancelled)
+      const [todayAppointmentsResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(appointments)
+        .where(
+          and(
+            sql`DATE(${appointments.scheduledDate}) = CURRENT_DATE`,
+            ne(appointments.status, 'cancelado')
+          )
+        );
 
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      // Count active patients
+      const [activePatientsResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(patients)
+        .where(eq(patients.isActive, true));
 
-    // Count today's appointments (all status except cancelled)
-    const [todayAppointmentsResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(appointments)
-      .where(
-        and(
-          sql`DATE(${appointments.scheduledDate}) = DATE(${today.toISOString()})`,
-          ne(appointments.status, 'cancelado')
-        )
-      );
+      // Calculate monthly revenue from paid receivables
+      const [monthlyRevenueResult] = await db
+        .select({ sum: sql<number>`coalesce(sum(${receivables.amount}::decimal), 0)` })
+        .from(receivables)
+        .where(
+          and(
+            eq(receivables.status, "paid"),
+            sql`EXTRACT(MONTH FROM ${receivables.paymentDate}) = EXTRACT(MONTH FROM CURRENT_DATE)`,
+            sql`EXTRACT(YEAR FROM ${receivables.paymentDate}) = EXTRACT(YEAR FROM CURRENT_DATE)`
+          )
+        );
 
-    // Count active patients
-    const [activePatientsResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(patients)
-      .where(eq(patients.isActive, true));
+      // Calculate pending payments from receivables
+      const [pendingPaymentsResult] = await db
+        .select({ sum: sql<number>`coalesce(sum(${receivables.amount}::decimal), 0)` })
+        .from(receivables)
+        .where(eq(receivables.status, "pending"));
 
-    // Calculate monthly revenue from paid receivables
-    const [monthlyRevenueResult] = await db
-      .select({ sum: sql<number>`coalesce(sum(CAST(${receivables.amount} AS DECIMAL)), 0)` })
-      .from(receivables)
-      .where(
-        and(
-          eq(receivables.status, "paid"),
-          sql`${receivables.paymentDate} >= ${startOfMonth.toISOString()}`,
-          sql`${receivables.paymentDate} <= ${endOfMonth.toISOString()}`
-        )
-      );
-
-    // Calculate pending payments from receivables
-    const [pendingPaymentsResult] = await db
-      .select({ sum: sql<number>`coalesce(sum(CAST(${receivables.amount} AS DECIMAL)), 0)` })
-      .from(receivables)
-      .where(eq(receivables.status, "pending"));
-
-    return {
-      todayAppointments: Number(todayAppointmentsResult.count) || 0,
-      activePatients: Number(activePatientsResult.count) || 0,
-      monthlyRevenue: Number(monthlyRevenueResult.sum) || 0,
-      pendingPayments: Number(pendingPaymentsResult.sum) || 0,
-    };
+      return {
+        todayAppointments: Number(todayAppointmentsResult.count) || 0,
+        activePatients: Number(activePatientsResult.count) || 0,
+        monthlyRevenue: Number(monthlyRevenueResult.sum) || 0,
+        pendingPayments: Number(pendingPaymentsResult.sum) || 0,
+      };
+    } catch (error) {
+      console.error("Error in getDashboardMetrics:", error);
+      // Return zeros if there's an error
+      return {
+        todayAppointments: 0,
+        activePatients: 0,
+        monthlyRevenue: 0,
+        pendingPayments: 0,
+      };
+    }
   }
 
   // Reports methods

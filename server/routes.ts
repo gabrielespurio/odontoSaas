@@ -61,6 +61,10 @@ function authenticateToken(req: any, res: any, next: any) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
+
+
+
+
   // Debug endpoint to check users - NO AUTH
   app.get("/debug/users", async (req, res) => {
     try {
@@ -439,7 +443,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
-
 
   // Protected routes
   app.use("/api", authenticateToken);
