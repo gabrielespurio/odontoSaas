@@ -72,7 +72,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug receivables investigation - NO AUTH  
+  app.get("/debug/receivables", async (req, res) => {
+    try {
+      const receivablesData = await storage.getReceivables();
+      const proceduresData = await storage.getProcedures();
+      
+      res.json({
+        receivables: receivablesData,
+        procedures: proceduresData
+      });
+    } catch (error) {
+      console.error("Debug investigation error:", error);
+      res.status(500).json({ message: "Erro na investigação" });
+    }
+  });
 
+  // Debug receivables investigation (temporary public endpoint)
+  app.get("/api/debug/receivables-investigation", async (req, res) => {
+    try {
+      const db = await getDb();
+      
+      // Buscar todas as contas a receber com detalhes
+      const receivablesData = await db.select({
+        receivableId: receivables.id,
+        amount: receivables.amount,
+        description: receivables.description,
+        consultationId: receivables.consultationId,
+        installments: receivables.installments,
+        installmentNumber: receivables.installmentNumber,
+        patientName: patients.name,
+        consultationProcedures: consultations.procedures,
+        consultationTotal: consultations.totalAmount
+      })
+      .from(receivables)
+      .leftJoin(patients, eq(receivables.patientId, patients.id))
+      .leftJoin(consultations, eq(receivables.consultationId, consultations.id))
+      .orderBy(receivables.createdAt);
+      
+      // Buscar todos os procedimentos
+      const proceduresData = await db.select().from(procedures);
+      
+      res.json({
+        receivables: receivablesData,
+        procedures: proceduresData
+      });
+    } catch (error) {
+      console.error("Debug investigation error:", error);
+      res.status(500).json({ message: "Erro na investigação" });
+    }
+  });
 
   // Debug endpoint to create tables (temporary) - NO AUTH
   app.post("/api/debug/create-tables", async (req, res) => {
