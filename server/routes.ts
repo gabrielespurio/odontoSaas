@@ -1071,6 +1071,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reports endpoints
+  app.get("/api/reports/overview", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      
+      const report = await storage.getOverviewReport(user, startDate, endDate);
+      res.json(report);
+    } catch (error) {
+      console.error("Get overview report error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/reports/financial", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      
+      const report = await storage.getFinancialReport(user, startDate, endDate);
+      res.json(report);
+    } catch (error) {
+      console.error("Get financial report error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/reports/appointments", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      
+      const report = await storage.getAppointmentsReport(user, startDate, endDate);
+      res.json(report);
+    } catch (error) {
+      console.error("Get appointments report error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/reports/procedures", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      
+      const report = await storage.getProceduresReport(user, startDate, endDate);
+      res.json(report);
+    } catch (error) {
+      console.error("Get procedures report error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Consultations
   app.get("/api/consultations", authenticateToken, async (req, res) => {
     try {

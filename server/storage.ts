@@ -1209,6 +1209,433 @@ export class DatabaseStorage implements IStorage {
       pendingPayments: pendingPaymentsResult.sum,
     };
   }
+
+  // Reports methods
+  async getOverviewReport(user: any, startDate?: Date, endDate?: Date) {
+    const whereAppointments = [];
+    const whereConsultations = [];
+    const whereReceivables = [];
+    const wherePayables = [];
+    
+    // Date filters
+    if (startDate) {
+      whereAppointments.push(sql`${appointments.scheduledDate} >= ${startDate}`);
+      whereConsultations.push(sql`${consultations.date} >= ${startDate}`);
+      whereReceivables.push(sql`${receivables.dueDate} >= ${startDate}`);
+      wherePayables.push(sql`${payables.dueDate} >= ${startDate}`);
+    }
+    if (endDate) {
+      whereAppointments.push(sql`${appointments.scheduledDate} <= ${endDate}`);
+      whereConsultations.push(sql`${consultations.date} <= ${endDate}`);
+      whereReceivables.push(sql`${receivables.dueDate} <= ${endDate}`);
+      wherePayables.push(sql`${payables.dueDate} <= ${endDate}`);
+    }
+
+    // Data scope filters
+    if (user.role !== "admin" && user.dataScope === "own") {
+      whereAppointments.push(eq(appointments.dentistId, user.id));
+      whereConsultations.push(eq(consultations.dentistId, user.id));
+    }
+
+    // Get appointments
+    let appointmentsQuery = db.select().from(appointments);
+    if (whereAppointments.length > 0) {
+      appointmentsQuery = appointmentsQuery.where(and(...whereAppointments)) as any;
+    }
+    const appointmentsList = await appointmentsQuery;
+
+    // Get consultations
+    let consultationsQuery = db.select().from(consultations);
+    if (whereConsultations.length > 0) {
+      consultationsQuery = consultationsQuery.where(and(...whereConsultations)) as any;
+    }
+    const consultationsList = await consultationsQuery;
+
+    // Get receivables
+    let receivablesQuery = db.select().from(receivables);
+    if (whereReceivables.length > 0) {
+      receivablesQuery = receivablesQuery.where(and(...whereReceivables)) as any;
+    }
+    if (user.role !== "admin" && user.dataScope === "own") {
+      receivablesQuery = receivablesQuery
+        .leftJoin(consultations, eq(receivables.consultationId, consultations.id))
+        .leftJoin(appointments, eq(receivables.appointmentId, appointments.id))
+        .where(
+          and(
+            whereReceivables.length > 0 ? and(...whereReceivables) : undefined,
+            or(
+              eq(consultations.dentistId, user.id),
+              eq(appointments.dentistId, user.id)
+            )
+          )
+        ) as any;
+    }
+    const receivablesList = await receivablesQuery;
+
+    // Get payables (only for admin and "all" scope users)
+    let payablesList = [];
+    if (user.role === "admin" || user.dataScope === "all") {
+      let payablesQuery = db.select().from(payables);
+      if (wherePayables.length > 0) {
+        payablesQuery = payablesQuery.where(and(...wherePayables)) as any;
+      }
+      payablesList = await payablesQuery;
+    }
+
+    // Get patients
+    const patientsList = await db.select().from(patients);
+
+    // Calculate statistics
+    const stats = {
+      totalAppointments: appointmentsList.length,
+      scheduledAppointments: appointmentsList.filter(apt => apt.status === "agendado").length,
+      inProgressAppointments: appointmentsList.filter(apt => apt.status === "em_atendimento").length,
+      completedAppointments: appointmentsList.filter(apt => apt.status === "concluido").length,
+      cancelledAppointments: appointmentsList.filter(apt => apt.status === "cancelado").length,
+      totalConsultations: consultationsList.length,
+      totalRevenue: receivablesList
+        .filter(rec => rec.status === "paid")
+        .reduce((sum, rec) => sum + parseFloat(rec.amount), 0),
+      pendingRevenue: receivablesList
+        .filter(rec => rec.status === "pending")
+        .reduce((sum, rec) => sum + parseFloat(rec.amount), 0),
+      totalExpenses: payablesList
+        .filter(pay => pay.status === "paid")
+        .reduce((sum, pay) => sum + parseFloat(pay.amount), 0),
+      pendingExpenses: payablesList
+        .filter(pay => pay.status === "pending")
+        .reduce((sum, pay) => sum + parseFloat(pay.amount), 0),
+      totalPatients: patientsList.filter(p => p.isActive).length,
+      newPatients: patientsList.filter(p => {
+        if (!p.isActive) return false;
+        const createdDate = new Date(p.createdAt);
+        return (!startDate || createdDate >= startDate) && (!endDate || createdDate <= endDate);
+      }).length,
+    };
+
+    return {
+      period: {
+        startDate: startDate?.toISOString().split('T')[0],
+        endDate: endDate?.toISOString().split('T')[0]
+      },
+      statistics: stats,
+      appointmentsByStatus: {
+        agendado: stats.scheduledAppointments,
+        em_atendimento: stats.inProgressAppointments,
+        concluido: stats.completedAppointments,
+        cancelado: stats.cancelledAppointments
+      }
+    };
+  }
+
+  async getFinancialReport(user: any, startDate?: Date, endDate?: Date) {
+    const whereReceivables = [];
+    const wherePayables = [];
+    
+    if (startDate) {
+      whereReceivables.push(sql`${receivables.dueDate} >= ${startDate}`);
+      wherePayables.push(sql`${payables.dueDate} >= ${startDate}`);
+    }
+    if (endDate) {
+      whereReceivables.push(sql`${receivables.dueDate} <= ${endDate}`);
+      wherePayables.push(sql`${payables.dueDate} <= ${endDate}`);
+    }
+
+    // Get receivables
+    let receivablesQuery = db.select().from(receivables);
+    if (whereReceivables.length > 0) {
+      receivablesQuery = receivablesQuery.where(and(...whereReceivables)) as any;
+    }
+    if (user.role !== "admin" && user.dataScope === "own") {
+      receivablesQuery = receivablesQuery
+        .leftJoin(consultations, eq(receivables.consultationId, consultations.id))
+        .leftJoin(appointments, eq(receivables.appointmentId, appointments.id))
+        .where(
+          and(
+            whereReceivables.length > 0 ? and(...whereReceivables) : undefined,
+            or(
+              eq(consultations.dentistId, user.id),
+              eq(appointments.dentistId, user.id)
+            )
+          )
+        ) as any;
+    }
+    const receivablesList = await receivablesQuery;
+
+    // Get payables (only for admin and "all" scope users)
+    let payablesList = [];
+    if (user.role === "admin" || user.dataScope === "all") {
+      let payablesQuery = db.select().from(payables);
+      if (wherePayables.length > 0) {
+        payablesQuery = payablesQuery.where(and(...wherePayables)) as any;
+      }
+      payablesList = await payablesQuery;
+    }
+
+    // Calculate monthly revenue
+    const monthlyRevenue = receivablesList.reduce((acc, rec) => {
+      const month = new Date(rec.dueDate).toISOString().slice(0, 7); // YYYY-MM
+      if (!acc[month]) acc[month] = { received: 0, pending: 0 };
+      if (rec.status === "paid") {
+        acc[month].received += parseFloat(rec.amount);
+      } else {
+        acc[month].pending += parseFloat(rec.amount);
+      }
+      return acc;
+    }, {} as Record<string, { received: number, pending: number }>);
+
+    // Calculate monthly expenses
+    const monthlyExpenses = payablesList.reduce((acc, pay) => {
+      const month = new Date(pay.dueDate).toISOString().slice(0, 7); // YYYY-MM
+      if (!acc[month]) acc[month] = { paid: 0, pending: 0 };
+      if (pay.status === "paid") {
+        acc[month].paid += parseFloat(pay.amount);
+      } else {
+        acc[month].pending += parseFloat(pay.amount);
+      }
+      return acc;
+    }, {} as Record<string, { paid: number, pending: number }>);
+
+    // Financial statistics
+    const stats = {
+      totalRevenue: receivablesList
+        .filter(rec => rec.status === "paid")
+        .reduce((sum, rec) => sum + parseFloat(rec.amount), 0),
+      pendingRevenue: receivablesList
+        .filter(rec => rec.status === "pending")
+        .reduce((sum, rec) => sum + parseFloat(rec.amount), 0),
+      totalExpenses: payablesList
+        .filter(pay => pay.status === "paid")
+        .reduce((sum, pay) => sum + parseFloat(pay.amount), 0),
+      pendingExpenses: payablesList
+        .filter(pay => pay.status === "pending")
+        .reduce((sum, pay) => sum + parseFloat(pay.amount), 0),
+      netIncome: 0, // Will be calculated below
+      profitMargin: 0 // Will be calculated below
+    };
+
+    stats.netIncome = stats.totalRevenue - stats.totalExpenses;
+    stats.profitMargin = stats.totalRevenue > 0 ? (stats.netIncome / stats.totalRevenue) * 100 : 0;
+
+    return {
+      period: {
+        startDate: startDate?.toISOString().split('T')[0],
+        endDate: endDate?.toISOString().split('T')[0]
+      },
+      statistics: stats,
+      monthlyRevenue,
+      monthlyExpenses,
+      receivablesByStatus: {
+        paid: receivablesList.filter(rec => rec.status === "paid").length,
+        pending: receivablesList.filter(rec => rec.status === "pending").length,
+        overdue: receivablesList.filter(rec => rec.status === "pending" && new Date(rec.dueDate) < new Date()).length
+      },
+      payablesByStatus: {
+        paid: payablesList.filter(pay => pay.status === "paid").length,
+        pending: payablesList.filter(pay => pay.status === "pending").length,
+        overdue: payablesList.filter(pay => pay.status === "pending" && new Date(pay.dueDate) < new Date()).length
+      }
+    };
+  }
+
+  async getAppointmentsReport(user: any, startDate?: Date, endDate?: Date) {
+    const whereAppointments = [];
+    const whereConsultations = [];
+    
+    if (startDate) {
+      whereAppointments.push(sql`${appointments.scheduledDate} >= ${startDate}`);
+      whereConsultations.push(sql`${consultations.date} >= ${startDate}`);
+    }
+    if (endDate) {
+      whereAppointments.push(sql`${appointments.scheduledDate} <= ${endDate}`);
+      whereConsultations.push(sql`${consultations.date} <= ${endDate}`);
+    }
+
+    // Data scope filters
+    if (user.role !== "admin" && user.dataScope === "own") {
+      whereAppointments.push(eq(appointments.dentistId, user.id));
+      whereConsultations.push(eq(consultations.dentistId, user.id));
+    }
+
+    // Get appointments with patient and dentist info
+    let appointmentsQuery = db.select({
+      id: appointments.id,
+      scheduledDate: appointments.scheduledDate,
+      scheduledTime: appointments.scheduledTime,
+      status: appointments.status,
+      patientName: patients.name,
+      dentistName: users.name,
+      procedures: appointments.procedures
+    })
+    .from(appointments)
+    .leftJoin(patients, eq(appointments.patientId, patients.id))
+    .leftJoin(users, eq(appointments.dentistId, users.id));
+
+    if (whereAppointments.length > 0) {
+      appointmentsQuery = appointmentsQuery.where(and(...whereAppointments)) as any;
+    }
+    const appointmentsList = await appointmentsQuery;
+
+    // Get consultations
+    let consultationsQuery = db.select().from(consultations);
+    if (whereConsultations.length > 0) {
+      consultationsQuery = consultationsQuery.where(and(...whereConsultations)) as any;
+    }
+    const consultationsList = await consultationsQuery;
+
+    // Calculate daily statistics
+    const dailyStats = appointmentsList.reduce((acc, apt) => {
+      const date = apt.scheduledDate;
+      if (!acc[date]) {
+        acc[date] = {
+          total: 0,
+          agendado: 0,
+          em_atendimento: 0,
+          concluido: 0,
+          cancelado: 0
+        };
+      }
+      acc[date].total++;
+      acc[date][apt.status]++;
+      return acc;
+    }, {} as Record<string, any>);
+
+    // Calculate dentist statistics
+    const dentistStats = appointmentsList.reduce((acc, apt) => {
+      const dentist = apt.dentistName || "Não informado";
+      if (!acc[dentist]) {
+        acc[dentist] = {
+          total: 0,
+          agendado: 0,
+          em_atendimento: 0,
+          concluido: 0,
+          cancelado: 0
+        };
+      }
+      acc[dentist].total++;
+      acc[dentist][apt.status]++;
+      return acc;
+    }, {} as Record<string, any>);
+
+    const stats = {
+      totalAppointments: appointmentsList.length,
+      scheduledAppointments: appointmentsList.filter(apt => apt.status === "agendado").length,
+      inProgressAppointments: appointmentsList.filter(apt => apt.status === "em_atendimento").length,
+      completedAppointments: appointmentsList.filter(apt => apt.status === "concluido").length,
+      cancelledAppointments: appointmentsList.filter(apt => apt.status === "cancelado").length,
+      totalConsultations: consultationsList.length,
+      attendanceRate: appointmentsList.length > 0 ? 
+        (appointmentsList.filter(apt => apt.status === "concluido").length / appointmentsList.length) * 100 : 0,
+      cancellationRate: appointmentsList.length > 0 ? 
+        (appointmentsList.filter(apt => apt.status === "cancelado").length / appointmentsList.length) * 100 : 0
+    };
+
+    return {
+      period: {
+        startDate: startDate?.toISOString().split('T')[0],
+        endDate: endDate?.toISOString().split('T')[0]
+      },
+      statistics: stats,
+      dailyStats,
+      dentistStats,
+      appointmentsByStatus: {
+        agendado: stats.scheduledAppointments,
+        em_atendimento: stats.inProgressAppointments,
+        concluido: stats.completedAppointments,
+        cancelado: stats.cancelledAppointments
+      }
+    };
+  }
+
+  async getProceduresReport(user: any, startDate?: Date, endDate?: Date) {
+    const whereConsultations = [];
+    
+    if (startDate) {
+      whereConsultations.push(sql`${consultations.date} >= ${startDate}`);
+    }
+    if (endDate) {
+      whereConsultations.push(sql`${consultations.date} <= ${endDate}`);
+    }
+
+    // Data scope filters
+    if (user.role !== "admin" && user.dataScope === "own") {
+      whereConsultations.push(eq(consultations.dentistId, user.id));
+    }
+
+    // Get consultations with procedures
+    let consultationsQuery = db.select({
+      id: consultations.id,
+      date: consultations.date,
+      procedures: consultations.procedures,
+      patientName: patients.name,
+      dentistName: users.name
+    })
+    .from(consultations)
+    .leftJoin(patients, eq(consultations.patientId, patients.id))
+    .leftJoin(users, eq(consultations.dentistId, users.id));
+
+    if (whereConsultations.length > 0) {
+      consultationsQuery = consultationsQuery.where(and(...whereConsultations)) as any;
+    }
+    const consultationsList = await consultationsQuery;
+
+    // Count procedures
+    const procedureCount = consultationsList.reduce((acc, cons) => {
+      if (cons.procedures && Array.isArray(cons.procedures)) {
+        cons.procedures.forEach(proc => {
+          if (typeof proc === 'string') {
+            acc[proc] = (acc[proc] || 0) + 1;
+          }
+        });
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Get top procedures
+    const topProcedures = Object.entries(procedureCount)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 10);
+
+    // Calculate monthly procedure statistics
+    const monthlyProcedures = consultationsList.reduce((acc, cons) => {
+      const month = new Date(cons.date).toISOString().slice(0, 7); // YYYY-MM
+      if (!acc[month]) acc[month] = 0;
+      if (cons.procedures && Array.isArray(cons.procedures)) {
+        acc[month] += cons.procedures.length;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Calculate dentist procedure statistics
+    const dentistProcedures = consultationsList.reduce((acc, cons) => {
+      const dentist = cons.dentistName || "Não informado";
+      if (!acc[dentist]) acc[dentist] = 0;
+      if (cons.procedures && Array.isArray(cons.procedures)) {
+        acc[dentist] += cons.procedures.length;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    const stats = {
+      totalConsultations: consultationsList.length,
+      totalProcedures: Object.values(procedureCount).reduce((sum, count) => sum + count, 0),
+      uniqueProcedures: Object.keys(procedureCount).length,
+      averageProceduresPerConsultation: consultationsList.length > 0 ? 
+        Object.values(procedureCount).reduce((sum, count) => sum + count, 0) / consultationsList.length : 0
+    };
+
+    return {
+      period: {
+        startDate: startDate?.toISOString().split('T')[0],
+        endDate: endDate?.toISOString().split('T')[0]
+      },
+      statistics: stats,
+      topProcedures,
+      monthlyProcedures,
+      dentistProcedures,
+      procedureCount
+    };
+  }
 }
 
 export const storage = new DatabaseStorage();

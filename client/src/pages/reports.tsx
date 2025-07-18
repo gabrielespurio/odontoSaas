@@ -15,9 +15,9 @@ import {
   Clock,
   Wrench,
   FileText,
-  Activity
+  Activity,
+  Loader2
 } from "lucide-react";
-import type { Appointment, Consultation, Financial, Patient } from "@/lib/types";
 
 export default function Reports() {
   const [dateFrom, setDateFrom] = useState(
@@ -25,21 +25,12 @@ export default function Reports() {
   );
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [reportType, setReportType] = useState("overview");
+  const [reportGenerated, setReportGenerated] = useState(false);
 
-  const { data: appointments } = useQuery<Appointment[]>({
-    queryKey: ["/api/appointments"],
-  });
-
-  const { data: consultations } = useQuery<Consultation[]>({
-    queryKey: ["/api/consultations"],
-  });
-
-  const { data: financial } = useQuery<Financial[]>({
-    queryKey: ["/api/financial"],
-  });
-
-  const { data: patients } = useQuery<Patient[]>({
-    queryKey: ["/api/patients"],
+  // Dynamic report data based on selected type
+  const { data: reportData, isLoading, refetch } = useQuery({
+    queryKey: [`/api/reports/${reportType}`, { startDate: dateFrom, endDate: dateTo }],
+    enabled: reportGenerated,
   });
 
   const formatCurrency = (amount: number) => {
@@ -50,98 +41,100 @@ export default function Reports() {
     return new Date(date).toLocaleDateString('pt-BR');
   };
 
-  const isInDateRange = (date: string) => {
-    const checkDate = new Date(date);
-    const from = new Date(dateFrom);
-    const to = new Date(dateTo);
-    return checkDate >= from && checkDate <= to;
+  const formatPercent = (value: number) => {
+    return `${value.toFixed(1)}%`;
   };
 
-  // Filter data by date range
-  const filteredAppointments = appointments?.filter(apt => 
-    isInDateRange(apt.scheduledDate)
-  ) || [];
-
-  const filteredConsultations = consultations?.filter(cons => 
-    isInDateRange(cons.date)
-  ) || [];
-
-  const filteredFinancial = financial?.filter(fin => 
-    isInDateRange(fin.dueDate)
-  ) || [];
-
-  // Calculate statistics
-  const stats = {
-    totalAppointments: filteredAppointments.length,
-    completedAppointments: filteredAppointments.filter(apt => apt.status === "concluido").length,
-    cancelledAppointments: filteredAppointments.filter(apt => apt.status === "cancelado").length,
-    totalRevenue: filteredFinancial
-      .filter(fin => fin.status === "paid")
-      .reduce((sum, fin) => sum + Number(fin.amount), 0),
-    pendingRevenue: filteredFinancial
-      .filter(fin => fin.status === "pending")
-      .reduce((sum, fin) => sum + Number(fin.amount), 0),
-    totalPatients: patients?.filter(p => p.isActive).length || 0,
-    newPatients: patients?.filter(p => 
-      p.isActive && isInDateRange(p.createdAt)
-    ).length || 0,
-  };
-
-  // Most common procedures
-  const procedureCount = filteredConsultations.reduce((acc, cons) => {
-    cons.procedures?.forEach(proc => {
-      acc[proc] = (acc[proc] || 0) + 1;
-    });
-    return acc;
-  }, {} as Record<string, number>);
-
-  const topProcedures = Object.entries(procedureCount)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 5);
-
-  // Appointment status distribution
-  const appointmentStats = {
-    scheduled: filteredAppointments.filter(apt => apt.status === "agendado").length,
-    confirmed: filteredAppointments.filter(apt => apt.status === "em_atendimento").length,
-    attended: filteredAppointments.filter(apt => apt.status === "concluido").length,
-    cancelled: filteredAppointments.filter(apt => apt.status === "cancelado").length,
+  const generateReport = async () => {
+    setReportGenerated(true);
+    await refetch();
   };
 
   const exportReport = () => {
-    // Simple CSV export functionality
+    if (!reportData) return;
+
     const csvData = [
-      ['Relatório de Atividades - OdontoSync'],
+      ['Relatório OdontoSync'],
+      ['Tipo:', getReportTitle(reportType)],
       ['Período:', `${formatDate(dateFrom)} a ${formatDate(dateTo)}`],
+      ['Gerado em:', new Date().toLocaleDateString('pt-BR')],
       [''],
-      ['Resumo Geral'],
-      ['Total de Agendamentos', stats.totalAppointments],
-      ['Atendimentos Realizados', stats.completedAppointments],
-      ['Atendimentos Cancelados', stats.cancelledAppointments],
-      ['Receita Total', formatCurrency(stats.totalRevenue)],
-      ['Receita Pendente', formatCurrency(stats.pendingRevenue)],
-      ['Total de Pacientes', stats.totalPatients],
-      ['Novos Pacientes', stats.newPatients],
-      [''],
-      ['Procedimentos Mais Realizados'],
-      ...topProcedures.map(([proc, count]) => [proc, count]),
     ];
+
+    if (reportType === 'overview') {
+      csvData.push(
+        ['Resumo Geral'],
+        ['Total de Agendamentos', reportData.statistics.totalAppointments],
+        ['Agendamentos Concluídos', reportData.statistics.completedAppointments],
+        ['Agendamentos Cancelados', reportData.statistics.cancelledAppointments],
+        ['Total de Consultas', reportData.statistics.totalConsultations],
+        ['Receita Total', formatCurrency(reportData.statistics.totalRevenue)],
+        ['Receita Pendente', formatCurrency(reportData.statistics.pendingRevenue)],
+        ['Total de Pacientes', reportData.statistics.totalPatients],
+        ['Novos Pacientes', reportData.statistics.newPatients],
+      );
+    } else if (reportType === 'financial') {
+      csvData.push(
+        ['Resumo Financeiro'],
+        ['Receita Total', formatCurrency(reportData.statistics.totalRevenue)],
+        ['Receita Pendente', formatCurrency(reportData.statistics.pendingRevenue)],
+        ['Gastos Totais', formatCurrency(reportData.statistics.totalExpenses)],
+        ['Gastos Pendentes', formatCurrency(reportData.statistics.pendingExpenses)],
+        ['Lucro Líquido', formatCurrency(reportData.statistics.netIncome)],
+        ['Margem de Lucro', formatPercent(reportData.statistics.profitMargin)],
+      );
+    } else if (reportType === 'appointments') {
+      csvData.push(
+        ['Resumo de Agendamentos'],
+        ['Total de Agendamentos', reportData.statistics.totalAppointments],
+        ['Agendados', reportData.statistics.scheduledAppointments],
+        ['Em Atendimento', reportData.statistics.inProgressAppointments],
+        ['Concluídos', reportData.statistics.completedAppointments],
+        ['Cancelados', reportData.statistics.cancelledAppointments],
+        ['Taxa de Comparecimento', formatPercent(reportData.statistics.attendanceRate)],
+        ['Taxa de Cancelamento', formatPercent(reportData.statistics.cancellationRate)],
+      );
+    } else if (reportType === 'procedures') {
+      csvData.push(
+        ['Resumo de Procedimentos'],
+        ['Total de Consultas', reportData.statistics.totalConsultations],
+        ['Total de Procedimentos', reportData.statistics.totalProcedures],
+        ['Procedimentos Únicos', reportData.statistics.uniqueProcedures],
+        ['Média por Consulta', reportData.statistics.averageProceduresPerConsultation.toFixed(1)],
+        [''],
+        ['Procedimentos Mais Realizados'],
+        ...reportData.topProcedures.map(([proc, count]) => [proc, count]),
+      );
+    }
 
     const csvContent = csvData.map(row => row.join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `relatorio_${dateFrom}_${dateTo}.csv`;
+    link.download = `relatorio_${reportType}_${dateFrom}_${dateTo}.csv`;
     link.click();
+  };
+
+  const getReportTitle = (type: string) => {
+    const titles = {
+      overview: 'Visão Geral',
+      financial: 'Financeiro',
+      appointments: 'Agendamentos',
+      procedures: 'Procedimentos'
+    };
+    return titles[type] || 'Relatório';
   };
 
   return (
     <div className="page-container">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-neutral-900">Relatórios</h1>
-        <Button onClick={exportReport}>
-          <Download className="w-4 h-4 mr-2" />
-          Exportar
-        </Button>
+        {reportGenerated && reportData && (
+          <Button onClick={exportReport}>
+            <Download className="w-4 h-4 mr-2" />
+            Exportar
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -187,8 +180,16 @@ export default function Reports() {
               </Select>
             </div>
             <div className="flex items-end">
-              <Button className="w-full">
-                <BarChart3 className="w-4 h-4 mr-2" />
+              <Button 
+                className="w-full" 
+                onClick={generateReport}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                )}
                 Gerar Relatório
               </Button>
             </div>
@@ -196,236 +197,376 @@ export default function Reports() {
         </CardContent>
       </Card>
 
-      {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-600">Total de Agendamentos</p>
-                <p className="text-2xl font-bold text-neutral-900">{stats.totalAppointments}</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <Calendar className="text-blue-600 w-6 h-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <span className="ml-2 text-neutral-600">Gerando relatório...</span>
+        </div>
+      )}
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-600">Atendimentos Realizados</p>
-                <p className="text-2xl font-bold text-neutral-900">{stats.completedAppointments}</p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <Activity className="text-green-600 w-6 h-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-600">Receita Total</p>
-                <p className="text-2xl font-bold text-neutral-900">{formatCurrency(stats.totalRevenue)}</p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <TrendingUp className="text-green-600 w-6 h-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-600">Novos Pacientes</p>
-                <p className="text-2xl font-bold text-neutral-900">{stats.newPatients}</p>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <Users className="text-purple-600 w-6 h-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Appointment Status Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <BarChart3 className="w-5 h-5 mr-2" />
-              Status dos Agendamentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-blue-500 rounded mr-3"></div>
-                  <span className="text-sm text-neutral-700">Agendados</span>
-                </div>
-                <span className="font-semibold">{appointmentStats.scheduled}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-yellow-500 rounded mr-3"></div>
-                  <span className="text-sm text-neutral-700">Em Atendimento</span>
-                </div>
-                <span className="font-semibold">{appointmentStats.confirmed}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-green-500 rounded mr-3"></div>
-                  <span className="text-sm text-neutral-700">Concluídos</span>
-                </div>
-                <span className="font-semibold">{appointmentStats.attended}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-red-500 rounded mr-3"></div>
-                  <span className="text-sm text-neutral-700">Cancelados</span>
-                </div>
-                <span className="font-semibold">{appointmentStats.cancelled}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Procedures */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Wrench className="w-5 h-5 mr-2" />
-              Procedimentos Mais Realizados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {topProcedures.length > 0 ? (
-                topProcedures.map(([procedure, count], index) => (
-                  <div key={procedure} className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">
-                        {index + 1}
+      {/* Report Content */}
+      {reportGenerated && reportData && !isLoading && (
+        <>
+          {/* Overview Report */}
+          {reportType === 'overview' && (
+            <>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-neutral-600">Total de Agendamentos</p>
+                        <p className="text-2xl font-bold text-neutral-900">{reportData.statistics.totalAppointments}</p>
                       </div>
-                      <span className="text-sm text-neutral-700">{procedure}</span>
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Calendar className="text-blue-600 w-6 h-6" />
+                      </div>
                     </div>
-                    <span className="font-semibold">{count}</span>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-neutral-600">Atendimentos Realizados</p>
+                        <p className="text-2xl font-bold text-neutral-900">{reportData.statistics.completedAppointments}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <Activity className="text-green-600 w-6 h-6" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-neutral-600">Receita Total</p>
+                        <p className="text-2xl font-bold text-neutral-900">{formatCurrency(reportData.statistics.totalRevenue)}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <TrendingUp className="text-green-600 w-6 h-6" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-neutral-600">Novos Pacientes</p>
+                        <p className="text-2xl font-bold text-neutral-900">{reportData.statistics.newPatients}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <Users className="text-purple-600 w-6 h-6" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Status Distribution */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <BarChart3 className="w-5 h-5 mr-2" />
+                    Status dos Agendamentos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-blue-500 rounded mr-3"></div>
+                        <span className="text-sm text-neutral-700">Agendados</span>
+                      </div>
+                      <span className="font-semibold">{reportData.appointmentsByStatus.agendado}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-yellow-500 rounded mr-3"></div>
+                        <span className="text-sm text-neutral-700">Em Atendimento</span>
+                      </div>
+                      <span className="font-semibold">{reportData.appointmentsByStatus.em_atendimento}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-green-500 rounded mr-3"></div>
+                        <span className="text-sm text-neutral-700">Concluídos</span>
+                      </div>
+                      <span className="font-semibold">{reportData.appointmentsByStatus.concluido}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-red-500 rounded mr-3"></div>
+                        <span className="text-sm text-neutral-700">Cancelados</span>
+                      </div>
+                      <span className="font-semibold">{reportData.appointmentsByStatus.cancelado}</span>
+                    </div>
                   </div>
-                ))
-              ) : (
-                <p className="text-center text-neutral-600 py-4">
-                  Nenhum procedimento registrado no período
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {/* Financial Report */}
+          {reportType === 'financial' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <DollarSign className="w-5 h-5 mr-2" />
+                    Resumo Financeiro
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-700">Receita Recebida</span>
+                      <span className="font-semibold text-green-600">{formatCurrency(reportData.statistics.totalRevenue)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-700">Receita Pendente</span>
+                      <span className="font-semibold text-yellow-600">{formatCurrency(reportData.statistics.pendingRevenue)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-700">Gastos Pagos</span>
+                      <span className="font-semibold text-red-600">{formatCurrency(reportData.statistics.totalExpenses)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-700">Gastos Pendentes</span>
+                      <span className="font-semibold text-orange-600">{formatCurrency(reportData.statistics.pendingExpenses)}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-t pt-4">
+                      <span className="text-sm font-medium text-neutral-900">Lucro Líquido</span>
+                      <span className={`font-bold ${reportData.statistics.netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(reportData.statistics.netIncome)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-neutral-900">Margem de Lucro</span>
+                      <span className={`font-bold ${reportData.statistics.profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatPercent(reportData.statistics.profitMargin)}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <BarChart3 className="w-5 h-5 mr-2" />
+                    Status das Contas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-neutral-700 mb-2">Contas a Receber</p>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-neutral-600">Pagas</span>
+                          <span className="font-semibold text-green-600">{reportData.receivablesByStatus.paid}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-neutral-600">Pendentes</span>
+                          <span className="font-semibold text-yellow-600">{reportData.receivablesByStatus.pending}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-neutral-600">Vencidas</span>
+                          <span className="font-semibold text-red-600">{reportData.receivablesByStatus.overdue}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-neutral-700 mb-2">Contas a Pagar</p>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-neutral-600">Pagas</span>
+                          <span className="font-semibold text-green-600">{reportData.payablesByStatus.paid}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-neutral-600">Pendentes</span>
+                          <span className="font-semibold text-yellow-600">{reportData.payablesByStatus.pending}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-neutral-600">Vencidas</span>
+                          <span className="font-semibold text-red-600">{reportData.payablesByStatus.overdue}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Appointments Report */}
+          {reportType === 'appointments' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Estatísticas de Agendamentos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-700">Total de Agendamentos</span>
+                      <span className="font-semibold">{reportData.statistics.totalAppointments}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-700">Taxa de Comparecimento</span>
+                      <span className="font-semibold text-green-600">{formatPercent(reportData.statistics.attendanceRate)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-700">Taxa de Cancelamento</span>
+                      <span className="font-semibold text-red-600">{formatPercent(reportData.statistics.cancellationRate)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-700">Total de Consultas</span>
+                      <span className="font-semibold">{reportData.statistics.totalConsultations}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Users className="w-5 h-5 mr-2" />
+                    Desempenho por Dentista
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {Object.entries(reportData.dentistStats || {}).map(([dentist, stats]) => (
+                      <div key={dentist} className="border-b pb-3 last:border-b-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-neutral-700">{dentist}</span>
+                          <span className="font-semibold">{stats.total}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-neutral-600">
+                          <span>Concluídos: {stats.concluido}</span>
+                          <span>Cancelados: {stats.cancelado}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Procedures Report */}
+          {reportType === 'procedures' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Activity className="w-5 h-5 mr-2" />
+                    Estatísticas de Procedimentos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-700">Total de Consultas</span>
+                      <span className="font-semibold">{reportData.statistics.totalConsultations}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-700">Total de Procedimentos</span>
+                      <span className="font-semibold">{reportData.statistics.totalProcedures}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-700">Procedimentos Únicos</span>
+                      <span className="font-semibold">{reportData.statistics.uniqueProcedures}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-neutral-700">Média por Consulta</span>
+                      <span className="font-semibold">{reportData.statistics.averageProceduresPerConsultation.toFixed(1)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Wrench className="w-5 h-5 mr-2" />
+                    Procedimentos Mais Realizados
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {reportData.topProcedures && reportData.topProcedures.length > 0 ? (
+                      reportData.topProcedures.map(([procedure, count], index) => (
+                        <div key={procedure} className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold mr-3">
+                              {index + 1}
+                            </div>
+                            <span className="text-sm text-neutral-700">{procedure}</span>
+                          </div>
+                          <span className="font-semibold">{count}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-center text-neutral-600 py-4">
+                        Nenhum procedimento registrado no período
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Period Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <FileText className="w-5 h-5 mr-2" />
+                Resumo do Período
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                <p className="text-sm text-neutral-600 mb-2">
+                  Relatório de <strong>{getReportTitle(reportType)}</strong> gerado para o período de
                 </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                <p className="text-lg font-semibold text-neutral-900">
+                  {formatDate(dateFrom)} até {formatDate(dateTo)}
+                </p>
+                <p className="text-xs text-neutral-500 mt-2">
+                  Gerado em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
-        {/* Financial Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <DollarSign className="w-5 h-5 mr-2" />
-              Resumo Financeiro
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-neutral-700">Receita Recebida</span>
-                <span className="font-semibold text-green-600">{formatCurrency(stats.totalRevenue)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-neutral-700">Contas a Receber</span>
-                <span className="font-semibold text-yellow-600">{formatCurrency(stats.pendingRevenue)}</span>
-              </div>
-              <div className="flex items-center justify-between border-t pt-4">
-                <span className="text-sm font-medium text-neutral-900">Total Previsto</span>
-                <span className="font-bold text-neutral-900">
-                  {formatCurrency(stats.totalRevenue + stats.pendingRevenue)}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Activity Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Activity className="w-5 h-5 mr-2" />
-              Resumo de Atividades
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-neutral-700">Total de Consultas</span>
-                <span className="font-semibold">{filteredConsultations.length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-neutral-700">Taxa de Comparecimento</span>
-                <span className="font-semibold">
-                  {stats.totalAppointments > 0 
-                    ? `${Math.round((stats.completedAppointments / stats.totalAppointments) * 100)}%`
-                    : "0%"
-                  }
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-neutral-700">Taxa de Cancelamento</span>
-                <span className="font-semibold">
-                  {stats.totalAppointments > 0 
-                    ? `${Math.round((stats.cancelledAppointments / stats.totalAppointments) * 100)}%`
-                    : "0%"
-                  }
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-neutral-700">Pacientes Ativos</span>
-                <span className="font-semibold">{stats.totalPatients}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Period Summary */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <FileText className="w-5 h-5 mr-2" />
-            Resumo do Período ({formatDate(dateFrom)} - {formatDate(dateTo)})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <Clock className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-blue-600">{stats.totalAppointments}</p>
-              <p className="text-sm text-neutral-600">Agendamentos Total</p>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <TrendingUp className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.totalRevenue)}</p>
-              <p className="text-sm text-neutral-600">Receita Realizada</p>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-purple-600">{stats.newPatients}</p>
-              <p className="text-sm text-neutral-600">Novos Pacientes</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Empty State */}
+      {!reportGenerated && (
+        <div className="text-center py-12">
+          <BarChart3 className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-neutral-900 mb-2">
+            Selecione o período e tipo de relatório
+          </h3>
+          <p className="text-neutral-600 mb-4">
+            Configure os filtros acima e clique em "Gerar Relatório" para visualizar os dados
+          </p>
+        </div>
+      )}
     </div>
   );
 }
