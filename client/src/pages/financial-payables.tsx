@@ -222,20 +222,24 @@ export default function FinancialPayables() {
     return new Date(date).toLocaleDateString('pt-BR');
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, dueDate: string) => {
+    // Verificar se está vencido
+    const isOverdue = status === "pending" && new Date(dueDate) < new Date();
+    const actualStatus = isOverdue ? "overdue" : status;
+    
     const statusMap = {
-      paid: { label: "Pago", className: "financial-paid", icon: CheckCircle },
-      pending: { label: "Pendente", className: "financial-pending", icon: Clock },
-      overdue: { label: "Vencido", className: "financial-overdue", icon: AlertTriangle },
-      cancelled: { label: "Cancelado", className: "status-cancelled", icon: AlertTriangle },
+      paid: { label: "Pago", className: "bg-green-100 text-green-800 border-green-200", icon: CheckCircle },
+      pending: { label: "Pendente", className: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: Clock },
+      overdue: { label: "Vencido", className: "bg-red-100 text-red-800 border-red-200", icon: AlertTriangle },
+      cancelled: { label: "Cancelado", className: "bg-gray-100 text-gray-800 border-gray-200", icon: AlertTriangle },
     };
     
-    const statusInfo = statusMap[status as keyof typeof statusMap];
+    const statusInfo = statusMap[actualStatus as keyof typeof statusMap];
     if (!statusInfo) return null;
 
     const Icon = statusInfo.icon;
     return (
-      <Badge className={`status-badge ${statusInfo.className}`}>
+      <Badge className={`${statusInfo.className} border`}>
         <Icon className="w-3 h-3 mr-1" />
         {statusInfo.label}
       </Badge>
@@ -266,7 +270,7 @@ export default function FinancialPayables() {
     .reduce((sum, p) => sum + parseFloat(p.amount), 0);
 
   const totalOverdue = filteredPayables
-    .filter(p => p.status === "overdue")
+    .filter(p => p.status === "pending" && new Date(p.dueDate) < new Date())
     .reduce((sum, p) => sum + parseFloat(p.amount), 0);
 
   if (payablesLoading) {
@@ -697,7 +701,7 @@ export default function FinancialPayables() {
                         </TableCell>
                         
                         <TableCell>
-                          {getStatusBadge(payable.status)}
+                          {getStatusBadge(payable.status, payable.dueDate)}
                         </TableCell>
                         
                         <TableCell className="text-right">
