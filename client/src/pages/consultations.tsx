@@ -1037,10 +1037,9 @@ export default function Consultations() {
                       <Button
                         onClick={() => createConsultationFromAppointment(appointment)}
                         size="sm"
-                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white px-2"
                       >
-                        <Plus className="w-4 h-4 mr-1" />
-                        Criar Consulta
+                        <Plus className="w-4 h-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -1340,10 +1339,10 @@ export default function Consultations() {
                 <Button
                   onClick={() => createConsultationFromAppointment(appointment)}
                   size="sm"
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white px-3"
                 >
                   <Plus className="w-4 h-4 mr-1" />
-                  Criar Consulta
+                  Criar
                 </Button>
               </div>
             </CardContent>
