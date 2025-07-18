@@ -36,10 +36,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [hasConflict, setHasConflict] = useState(false);
-  const [conflictMessage, setConflictMessage] = useState('');
-  const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastValidationKeyRef = useRef('');
+  const [isChecking, setIsChecking] = useState(false);
   const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
 
   const { data: patients } = useQuery<Patient[]>({
@@ -118,71 +115,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     },
   });
 
-  // Validação em tempo real do horário
-  const watchedDate = form.watch("scheduledDate");
-  const watchedDentist = form.watch("dentistId");
-  const watchedProcedures = form.watch("procedureIds");
 
-  // Efeito direto sem useCallback para evitar dependências circulares
-  useEffect(() => {
-    const currentKey = `${watchedDate || ''}-${watchedDentist || ''}-${watchedProcedures?.[0] || ''}`;
-    
-    // Limpar timeout anterior
-    if (validationTimeoutRef.current) {
-      clearTimeout(validationTimeoutRef.current);
-    }
-    
-    // Se campos incompletos, limpar estado
-    if (!watchedDate || !watchedDentist || !watchedProcedures || watchedProcedures.length === 0 || watchedProcedures[0] <= 0) {
-      setHasConflict(false);
-      setConflictMessage('');
-      lastValidationKeyRef.current = '';
-      return;
-    }
-
-    // Evitar validações duplicadas
-    if (lastValidationKeyRef.current === currentKey) {
-      return;
-    }
-
-    // Validação com timeout
-    validationTimeoutRef.current = setTimeout(async () => {
-      try {
-        console.log('🔍 Validando:', currentKey);
-        const result = await checkTimeConflict(watchedDate, watchedDentist, watchedProcedures[0], appointment?.id);
-        console.log('📋 Resultado API:', result);
-        
-        // Só atualizar se ainda é a validação mais recente
-        if (lastValidationKeyRef.current !== currentKey) {
-          lastValidationKeyRef.current = currentKey;
-          
-          if (result.hasConflict) {
-            console.log('❌ Conflito encontrado');
-            setHasConflict(true);
-            setConflictMessage(result.message || "Este horário não está disponível");
-          } else {
-            console.log('✅ Horário disponível');
-            setHasConflict(false);
-            setConflictMessage('');
-          }
-        }
-        
-      } catch (error) {
-        console.error("💥 Erro na validação:", error);
-        if (lastValidationKeyRef.current !== currentKey) {
-          lastValidationKeyRef.current = currentKey;
-          setHasConflict(false);
-          setConflictMessage('');
-        }
-      }
-    }, 400);
-
-    return () => {
-      if (validationTimeoutRef.current) {
-        clearTimeout(validationTimeoutRef.current);
-      }
-    };
-  }, [watchedDate, watchedDentist, watchedProcedures, appointment?.id]);
 
 
 
@@ -257,40 +190,60 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     },
   });
 
-  const onSubmit = (data: AppointmentFormData) => {
-    // Verificar conflito antes de submeter
-    if (hasConflict) {
+  const onSubmit = async (data: AppointmentFormData) => {
+    setIsChecking(true);
+    
+    try {
+      // Verificar disponibilidade antes de criar/atualizar
+      const conflictCheck = await checkTimeConflict(
+        data.scheduledDate, 
+        data.dentistId, 
+        data.procedureIds[0], 
+        appointment?.id
+      );
+      
+      if (conflictCheck.hasConflict) {
+        toast({
+          title: "Horário não disponível",
+          description: conflictCheck.message || "Este horário já está ocupado. Por favor, escolha outro horário.",
+          variant: "destructive",
+        });
+        setIsChecking(false);
+        return;
+      }
+      
+      // Para compatibilidade com o backend atual, usamos apenas o primeiro procedimento
+      
+      // Converter a data do input datetime-local para o formato correto
+      // O input retorna no formato "YYYY-MM-DDTHH:MM" em horário local
+      // Precisamos garantir que seja tratado como horário de Brasília
+      const [dateStr, timeStr] = data.scheduledDate.split('T');
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const [hour, minute] = timeStr.split(':').map(Number);
+      
+      // Criar a data diretamente com os valores fornecidos
+      const localDate = new Date(year, month - 1, day, hour, minute);
+      
+      const appointmentData = {
+        ...data,
+        procedureId: data.procedureIds[0] || 0, // Pega o primeiro procedimento
+        scheduledDate: localDate.toISOString(),
+      };
+      delete (appointmentData as any).procedureIds; // Remove o array
+
+      if (appointment) {
+        updateAppointmentMutation.mutate(appointmentData as any);
+      } else {
+        createAppointmentMutation.mutate(appointmentData as any);
+      }
+    } catch (error) {
       toast({
         title: "Erro",
-        description: "Não é possível agendar no horário selecionado. Escolha outro horário.",
+        description: "Erro ao verificar disponibilidade. Tente novamente.",
         variant: "destructive",
       });
-      return;
-    }
-    
-    // Para compatibilidade com o backend atual, usamos apenas o primeiro procedimento
-    
-    // Converter a data do input datetime-local para o formato correto
-    // O input retorna no formato "YYYY-MM-DDTHH:MM" em horário local
-    // Precisamos garantir que seja tratado como horário de Brasília
-    const [dateStr, timeStr] = data.scheduledDate.split('T');
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const [hour, minute] = timeStr.split(':').map(Number);
-    
-    // Criar a data diretamente com os valores fornecidos
-    const localDate = new Date(year, month - 1, day, hour, minute);
-    
-    const appointmentData = {
-      ...data,
-      procedureId: data.procedureIds[0] || 0, // Pega o primeiro procedimento
-      scheduledDate: localDate.toISOString(),
-    };
-    delete (appointmentData as any).procedureIds; // Remove o array
-
-    if (appointment) {
-      updateAppointmentMutation.mutate(appointmentData as any);
-    } else {
-      createAppointmentMutation.mutate(appointmentData as any);
+    } finally {
+      setIsChecking(false);
     }
   };
 
@@ -462,37 +415,10 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
               type="datetime-local"
               {...form.register("scheduledDate")}
               min={new Date().toISOString().slice(0, 16)}
-              className={`${hasConflict ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : ''}`}
             />
-            {hasConflict && (
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-            )}
           </div>
           {form.formState.errors.scheduledDate && (
             <p className="text-sm text-red-600">{form.formState.errors.scheduledDate.message}</p>
-          )}
-          {hasConflict && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    Horário não disponível
-                  </h3>
-                  <div className="mt-1 text-sm text-red-700">
-                    {conflictMessage}
-                  </div>
-                </div>
-              </div>
-            </div>
           )}
         </div>
 
@@ -597,12 +523,13 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
           </Button>
           <Button 
             type="submit" 
-            disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending || hasConflict}
-            className={`${hasConflict ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending || isChecking}
           >
-            {createAppointmentMutation.isPending || updateAppointmentMutation.isPending 
-              ? "Salvando..." 
-              : appointment ? "Atualizar" : "Agendar"
+            {isChecking 
+              ? "Verificando disponibilidade..." 
+              : createAppointmentMutation.isPending || updateAppointmentMutation.isPending 
+                ? "Salvando..." 
+                : appointment ? "Atualizar" : "Agendar"
             }
           </Button>
         </div>
