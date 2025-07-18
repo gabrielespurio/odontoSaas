@@ -518,6 +518,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Kept only admin user and basic system structure (Administrador profile)
   - Database now ready for fresh deployment testing with zero sample data
   - Final counts: 0 patients, 0 appointments, 0 consultations, 0 financial records, 1 user (admin)
+- July 18, 2025. **CRITICAL BUG FIX**: Fixed appointment disappearing issue in consultations module
+  - **ROOT CAUSE**: LEFT JOIN was incorrectly matching appointments to consultations based on date/time instead of appointmentId
+  - **SOLUTION**: Changed JOIN condition to use direct relationship (appointments.id = consultations.appointmentId)
+  - **IMPACT**: Multiple appointments for same patient/dentist/date now properly display independently
+  - **VERIFICATION**: Appointments without consultation now show correctly even when other appointments have consultations
 - July 18, 2025. **BUG FIX - APPOINTMENT DISAPPEARING**: Fixed critical issue in consultations module where creating a consultation for one appointment was hiding other appointments
   - **ROOT CAUSE**: LEFT JOIN query between appointments and consultations was too broad, using only DATE comparison
   - **SOLUTION**: Enhanced JOIN condition to compare both DATE and TIME, ensuring appointments are matched with consultations more precisely
