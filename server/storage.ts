@@ -321,7 +321,13 @@ export class DatabaseStorage implements IStorage {
       query = query.where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions)!) as any;
     }
 
-    return await query.orderBy(appointments.scheduledDate);
+    const results = await query.orderBy(appointments.scheduledDate);
+    
+    // Ensure dates are returned as local time strings
+    return results.map(appointment => ({
+      ...appointment,
+      scheduledDate: appointment.scheduledDate
+    }));
   }
 
   async getAppointment(id: number): Promise<Appointment | undefined> {

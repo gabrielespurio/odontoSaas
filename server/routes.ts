@@ -720,12 +720,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const body = req.body;
       
-      // Se recebemos uma string no formato "YYYY-MM-DDTHH:MM", tratar como horário local
-      if (typeof body.scheduledDate === 'string' && body.scheduledDate.length === 16) {
-        const [dateStr, timeStr] = body.scheduledDate.split('T');
-        const [year, month, day] = dateStr.split('-').map(Number);
-        const [hour, minute] = timeStr.split(':').map(Number);
-        body.scheduledDate = new Date(year, month - 1, day, hour, minute).toISOString();
+      // Parse the date string as local time
+      if (typeof body.scheduledDate === 'string') {
+        // If it's in format "YYYY-MM-DDTHH:MM", parse as local time
+        if (body.scheduledDate.length === 16) {
+          const [dateStr, timeStr] = body.scheduledDate.split('T');
+          const [year, month, day] = dateStr.split('-').map(Number);
+          const [hour, minute] = timeStr.split(':').map(Number);
+          
+          // Create date in local time without timezone conversion
+          const localDate = new Date(year, month - 1, day, hour, minute, 0, 0);
+          
+          // Format back to a string that PostgreSQL will interpret as local time
+          body.scheduledDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+        }
       }
       
       const appointmentData = insertAppointmentSchema.parse(body);
@@ -832,17 +840,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { dentistId, scheduledDate, procedureId, excludeId } = req.body;
       
-      // Se recebemos uma string no formato "YYYY-MM-DDTHH:MM", tratar como horário local
-      let dateToCheck: Date;
-      if (typeof scheduledDate === 'string' && scheduledDate.length === 16) {
-        // Formato "YYYY-MM-DDTHH:MM" - horário local
-        const [dateStr, timeStr] = scheduledDate.split('T');
-        const [year, month, day] = dateStr.split('-').map(Number);
-        const [hour, minute] = timeStr.split(':').map(Number);
-        dateToCheck = new Date(year, month - 1, day, hour, minute);
-      } else {
-        dateToCheck = new Date(scheduledDate);
-      }
+      // Usar o timezone do Brasil para verificação
+      const dateToCheck = new Date(scheduledDate);
       
       const result = await storage.isSlotAvailable(
         dentistId, 
