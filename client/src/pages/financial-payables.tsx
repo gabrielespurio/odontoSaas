@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Plus, 
   Search, 
@@ -45,6 +50,18 @@ type Payable = {
   createdBy?: number;
 };
 
+const payableSchema = z.object({
+  amount: z.string().min(1, "Valor é obrigatório"),
+  dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
+  description: z.string().min(1, "Descrição é obrigatória"),
+  category: z.string().min(1, "Categoria é obrigatória"),
+  supplier: z.string().optional(),
+  notes: z.string().optional(),
+  status: z.enum(["pending", "paid", "overdue", "cancelled"]).default("pending"),
+  paymentDate: z.string().optional(),
+  paymentMethod: z.string().optional(),
+});
+
 export default function FinancialPayables() {
   const [search, setSearch] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -53,6 +70,98 @@ export default function FinancialPayables() {
   const [editingPayable, setEditingPayable] = useState<Payable | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const form = useForm<z.infer<typeof payableSchema>>({
+    resolver: zodResolver(payableSchema),
+    defaultValues: {
+      amount: "",
+      dueDate: "",
+      description: "",
+      category: "",
+      supplier: "",
+      notes: "",
+      status: "pending",
+      paymentDate: "",
+      paymentMethod: "",
+    },
+  });
+
+  const createPayableMutation = useMutation({
+    mutationFn: (data: z.infer<typeof payableSchema>) => {
+      const payload = {
+        ...data,
+        amount: parseFloat(data.amount),
+      };
+      return apiRequest("POST", "/api/payables", payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/payables"] });
+      toast({
+        title: "Sucesso",
+        description: "Conta a pagar criada com sucesso",
+      });
+      setShowForm(false);
+      form.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao criar conta a pagar",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updatePayableMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: z.infer<typeof payableSchema> }) => {
+      const payload = {
+        ...data,
+        amount: parseFloat(data.amount),
+      };
+      return apiRequest("PUT", `/api/payables/${id}`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/payables"] });
+      toast({
+        title: "Sucesso",
+        description: "Conta a pagar atualizada com sucesso",
+      });
+      setShowForm(false);
+      setEditingPayable(null);
+      form.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao atualizar conta a pagar",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof payableSchema>) => {
+    if (editingPayable) {
+      updatePayableMutation.mutate({ id: editingPayable.id, data });
+    } else {
+      createPayableMutation.mutate(data);
+    }
+  };
+
+  const openEditForm = (payable: Payable) => {
+    setEditingPayable(payable);
+    form.reset({
+      amount: payable.amount,
+      dueDate: payable.dueDate,
+      description: payable.description,
+      category: payable.category,
+      supplier: payable.supplier || "",
+      notes: payable.notes || "",
+      status: payable.status,
+      paymentDate: payable.paymentDate || "",
+      paymentMethod: payable.paymentMethod || "",
+    });
+    setShowForm(true);
+  };
 
   const { data: payables, isLoading: payablesLoading } = useQuery<Payable[]>({
     queryKey: ["/api/payables", {
@@ -187,15 +296,214 @@ export default function FinancialPayables() {
               Nova Conta a Pagar
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingPayable ? "Editar Conta a Pagar" : "Nova Conta a Pagar"}
               </DialogTitle>
             </DialogHeader>
-            <p className="text-center text-neutral-600 py-8">
-              Formulário de contas a pagar será implementado
-            </p>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Descrição *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: Manutenção de equipamentos" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="amount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Valor *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            placeholder="0.00" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Categoria *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecionar categoria" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="rent">Aluguel</SelectItem>
+                            <SelectItem value="utilities">Utilidades</SelectItem>
+                            <SelectItem value="equipment">Equipamentos</SelectItem>
+                            <SelectItem value="supplies">Materiais</SelectItem>
+                            <SelectItem value="maintenance">Manutenção</SelectItem>
+                            <SelectItem value="marketing">Marketing</SelectItem>
+                            <SelectItem value="insurance">Seguros</SelectItem>
+                            <SelectItem value="taxes">Impostos</SelectItem>
+                            <SelectItem value="other">Outros</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="supplier"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Fornecedor</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: TechDental Services" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="dueDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Vencimento *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecionar status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="pending">Pendente</SelectItem>
+                            <SelectItem value="paid">Pago</SelectItem>
+                            <SelectItem value="overdue">Vencido</SelectItem>
+                            <SelectItem value="cancelled">Cancelado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {form.watch("status") === "paid" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="paymentDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data de Pagamento</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="paymentMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Método de Pagamento</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecionar método" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="cash">Dinheiro</SelectItem>
+                              <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
+                              <SelectItem value="debit_card">Cartão de Débito</SelectItem>
+                              <SelectItem value="bank_transfer">Transferência Bancária</SelectItem>
+                              <SelectItem value="pix">PIX</SelectItem>
+                              <SelectItem value="check">Cheque</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Observações adicionais sobre a conta..."
+                          className="resize-none"
+                          rows={3}
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowForm(false);
+                      setEditingPayable(null);
+                      form.reset();
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createPayableMutation.isPending || updatePayableMutation.isPending}
+                  >
+                    {createPayableMutation.isPending || updatePayableMutation.isPending ? "Salvando..." : "Salvar"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
@@ -406,7 +714,7 @@ export default function FinancialPayables() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setEditingPayable(payable)}>
+                              <DropdownMenuItem onClick={() => openEditForm(payable)}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Editar
                               </DropdownMenuItem>
