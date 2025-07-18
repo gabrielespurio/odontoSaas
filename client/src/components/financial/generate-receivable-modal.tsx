@@ -412,7 +412,7 @@ export default function GenerateReceivableModal({
                 
                 <div className="flex justify-between items-center text-sm text-neutral-600">
                   <span>Primeira parcela vence em:</span>
-                  <span>{dueDate ? new Date(dueDate).toLocaleDateString('pt-BR') : 'Selecione uma data'}</span>
+                  <span>{dueDate ? new Date(dueDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Selecione uma data'}</span>
                 </div>
               </CardContent>
             </Card>

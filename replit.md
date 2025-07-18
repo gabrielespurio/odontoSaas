@@ -535,6 +535,7 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **AUTOMATIC CALCULATION**: For multiple installments, subsequent due dates are calculated monthly from the initial date
   - **VALIDATION**: Added client-side validation to ensure due date is selected before form submission
   - **SUMMARY UPDATE**: Billing summary now shows the selected due date instead of current date
+  - **TIMEZONE FIX**: Fixed date display issue in summary by forcing local timezone interpretation (added 'T00:00:00' to prevent UTC conversion)
 - July 18, 2025. **BUG FIX - APPOINTMENT DISAPPEARING**: Fixed critical issue in consultations module where creating a consultation for one appointment was hiding other appointments
   - **ROOT CAUSE**: LEFT JOIN query between appointments and consultations was too broad, using only DATE comparison
   - **SOLUTION**: Enhanced JOIN condition to compare both DATE and TIME, ensuring appointments are matched with consultations more precisely
