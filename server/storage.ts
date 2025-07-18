@@ -397,6 +397,14 @@ export class DatabaseStorage implements IStorage {
   async checkAppointmentConflicts(appointmentData: InsertAppointment, tx?: any, excludeId?: number): Promise<{ hasConflict: boolean; message: string }> {
     const dbConnection = tx || db;
     
+    console.log("=== CONFLICT CHECK DEBUG ===");
+    console.log("Input:", {
+      dentistId: appointmentData.dentistId,
+      scheduledDate: appointmentData.scheduledDate,
+      procedureId: appointmentData.procedureId,
+      excludeId
+    });
+    
     // Get procedure details to check duration
     const procedure = await dbConnection.select().from(procedures).where(eq(procedures.id, appointmentData.procedureId));
     if (!procedure.length) {
@@ -406,6 +414,12 @@ export class DatabaseStorage implements IStorage {
     const procedureDuration = procedure[0].duration; // in minutes
     const newStartTime = new Date(appointmentData.scheduledDate);
     const newEndTime = new Date(newStartTime.getTime() + (procedureDuration * 60 * 1000));
+    
+    console.log("New appointment:", {
+      start: newStartTime.toISOString(),
+      end: newEndTime.toISOString(),
+      duration: procedureDuration
+    });
     
     // Build where conditions para buscar agendamentos do mesmo dentista que não estão cancelados
     let whereConditions = [
@@ -429,6 +443,15 @@ export class DatabaseStorage implements IStorage {
     .innerJoin(procedures, eq(appointments.procedureId, procedures.id))
     .where(and(...whereConditions));
     
+    console.log("Found existing appointments:", existingAppointments.length);
+    existingAppointments.forEach(apt => {
+      console.log("Existing appointment:", {
+        id: apt.id,
+        scheduledDate: apt.scheduledDate,
+        procedure: apt.procedure.name
+      });
+    });
+    
     // Check for time conflicts
     for (const existingAppt of existingAppointments) {
       const existingStartTime = new Date(existingAppt.scheduledDate);
@@ -436,6 +459,14 @@ export class DatabaseStorage implements IStorage {
       
       // Check if time periods overlap
       const hasOverlap = (newStartTime < existingEndTime && newEndTime > existingStartTime);
+      
+      console.log("Checking overlap:", {
+        newStart: newStartTime.toISOString(),
+        newEnd: newEndTime.toISOString(),
+        existingStart: existingStartTime.toISOString(),
+        existingEnd: existingEndTime.toISOString(),
+        hasOverlap
+      });
       
       if (hasOverlap) {
         // Format the time for display in Brazilian timezone
@@ -460,6 +491,7 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
+    console.log("=== END CONFLICT CHECK (NO CONFLICT) ===");
     return { hasConflict: false, message: '' };
   }
 
