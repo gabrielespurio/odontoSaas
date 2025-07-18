@@ -54,12 +54,12 @@ const payableSchema = z.object({
   amount: z.string().min(1, "Valor é obrigatório"),
   dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
   description: z.string().min(1, "Descrição é obrigatória"),
-  category: z.string().min(1, "Categoria é obrigatória"),
+  category: z.enum(["rent", "salaries", "materials", "equipment", "utilities", "marketing", "other"]),
   supplier: z.string().optional(),
   notes: z.string().optional(),
   status: z.enum(["pending", "paid", "overdue", "cancelled"]).default("pending"),
   paymentDate: z.string().optional(),
-  paymentMethod: z.string().optional(),
+  paymentMethod: z.enum(["cash", "credit_card", "debit_card", "pix", "bank_transfer", "check"]).optional(),
 });
 
 export default function FinancialPayables() {
@@ -77,12 +77,12 @@ export default function FinancialPayables() {
       amount: "",
       dueDate: "",
       description: "",
-      category: "",
+      category: undefined,
       supplier: "",
       notes: "",
       status: "pending",
       paymentDate: "",
-      paymentMethod: "",
+      paymentMethod: undefined,
     },
   });
 
@@ -91,6 +91,8 @@ export default function FinancialPayables() {
       const payload = {
         ...data,
         amount: parseFloat(data.amount),
+        // Remove empty paymentMethod if status is not paid
+        paymentMethod: data.status === "paid" && data.paymentMethod ? data.paymentMethod : undefined,
       };
       return apiRequest("POST", "/api/payables", payload);
     },
@@ -117,6 +119,8 @@ export default function FinancialPayables() {
       const payload = {
         ...data,
         amount: parseFloat(data.amount),
+        // Remove empty paymentMethod if status is not paid
+        paymentMethod: data.status === "paid" && data.paymentMethod ? data.paymentMethod : undefined,
       };
       return apiRequest("PUT", `/api/payables/${id}`, payload);
     },
@@ -153,12 +157,12 @@ export default function FinancialPayables() {
       amount: payable.amount,
       dueDate: payable.dueDate,
       description: payable.description,
-      category: payable.category,
+      category: payable.category as any,
       supplier: payable.supplier || "",
       notes: payable.notes || "",
       status: payable.status,
       paymentDate: payable.paymentDate || "",
-      paymentMethod: payable.paymentMethod || "",
+      paymentMethod: payable.paymentMethod as any,
     });
     setShowForm(true);
   };
@@ -357,13 +361,11 @@ export default function FinancialPayables() {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="rent">Aluguel</SelectItem>
-                            <SelectItem value="utilities">Utilidades</SelectItem>
+                            <SelectItem value="salaries">Salários</SelectItem>
+                            <SelectItem value="materials">Materiais</SelectItem>
                             <SelectItem value="equipment">Equipamentos</SelectItem>
-                            <SelectItem value="supplies">Materiais</SelectItem>
-                            <SelectItem value="maintenance">Manutenção</SelectItem>
+                            <SelectItem value="utilities">Utilidades</SelectItem>
                             <SelectItem value="marketing">Marketing</SelectItem>
-                            <SelectItem value="insurance">Seguros</SelectItem>
-                            <SelectItem value="taxes">Impostos</SelectItem>
                             <SelectItem value="other">Outros</SelectItem>
                           </SelectContent>
                         </Select>

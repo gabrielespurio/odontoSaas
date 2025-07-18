@@ -544,6 +544,8 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **IMPACT**: Appointments from same patient/dentist/date now correctly appear separately in the pending consultations list
   - **TECHNICAL DETAILS**: Modified server/routes.ts line 920-924 to include TIME comparison in LEFT JOIN condition
   - **USER EXPERIENCE**: Users can now create multiple appointments for the same patient/dentist/date without them disappearing after creating one consultation
+- July 18, 2025. **TIMEZONE FIX**: Fixed date formatting issue in payment registration form - due dates now display correctly without timezone conversion
+- July 18, 2025. **PAYABLES FORM FIXES**: Fixed validation errors in accounts payable form by correcting category enum values and paymentMethod validation
 
 ## User Preferences
 
