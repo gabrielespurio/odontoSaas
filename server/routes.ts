@@ -72,6 +72,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+
   // Debug endpoint to create tables (temporary) - NO AUTH
   app.post("/api/debug/create-tables", async (req, res) => {
     try {
@@ -388,6 +390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+
 
   // Protected routes
   app.use("/api", authenticateToken);

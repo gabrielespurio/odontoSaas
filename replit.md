@@ -512,6 +512,12 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Removed Calendar icon from Due Date column for better readability
   - Kept only the action menu icon (MoreHorizontal) in Actions column as requested
   - Improved table layout with simplified text-only columns
+- July 18, 2025. **DATABASE CLEANUP FOR DEPLOYMENT**: Successfully cleaned all data from database for deployment testing
+  - Created temporary admin endpoint for database cleanup
+  - Removed all patients, appointments, consultations, financial records, and procedures
+  - Kept only admin user and basic system structure (Administrador profile)
+  - Database now ready for fresh deployment testing with zero sample data
+  - Final counts: 0 patients, 0 appointments, 0 consultations, 0 financial records, 1 user (admin)
 
 ## User Preferences
 
