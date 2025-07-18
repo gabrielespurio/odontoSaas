@@ -215,12 +215,9 @@ export default function FinancialCashFlow() {
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-neutral-600 mb-2">Total Entradas</p>
-                <div className="flex items-center space-x-2">
-                  <p className="text-2xl font-bold text-green-600 truncate">
-                    {formatCurrency(totalIncome)}
-                  </p>
-                  <TrendingUp className="text-green-600 w-5 h-5 flex-shrink-0" />
-                </div>
+                <p className="text-2xl font-bold text-green-600 whitespace-nowrap">
+                  {formatCurrency(totalIncome)}
+                </p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 ml-3">
                 <TrendingUp className="text-green-600 w-6 h-6" />
@@ -234,12 +231,9 @@ export default function FinancialCashFlow() {
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-neutral-600 mb-2">Total Saídas</p>
-                <div className="flex items-center space-x-2">
-                  <p className="text-2xl font-bold text-red-600 truncate">
-                    {formatCurrency(totalExpense)}
-                  </p>
-                  <TrendingDown className="text-red-600 w-5 h-5 flex-shrink-0" />
-                </div>
+                <p className="text-2xl font-bold text-red-600 whitespace-nowrap">
+                  {formatCurrency(totalExpense)}
+                </p>
               </div>
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 ml-3">
                 <TrendingDown className="text-red-600 w-6 h-6" />
@@ -253,12 +247,9 @@ export default function FinancialCashFlow() {
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-neutral-600 mb-2">Saldo Período</p>
-                <div className="flex items-center space-x-2">
-                  <p className={`text-2xl font-bold truncate ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency(balance)}
-                  </p>
-                  <Activity className={`w-5 h-5 flex-shrink-0 ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`} />
-                </div>
+                <p className={`text-2xl font-bold whitespace-nowrap ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(balance)}
+                </p>
               </div>
               <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ml-3 ${
                 balance >= 0 ? 'bg-green-100' : 'bg-red-100'
@@ -274,12 +265,9 @@ export default function FinancialCashFlow() {
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-neutral-600 mb-2">Saldo Atual</p>
-                <div className="flex items-center space-x-2">
-                  <p className="text-2xl font-bold text-primary truncate">
-                    {formatCurrency(metrics?.currentBalance || 0)}
-                  </p>
-                  <DollarSign className="text-primary w-5 h-5 flex-shrink-0" />
-                </div>
+                <p className="text-2xl font-bold text-primary whitespace-nowrap">
+                  {formatCurrency(metrics?.currentBalance || 0)}
+                </p>
               </div>
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 ml-3">
                 <DollarSign className="text-primary w-6 h-6" />
