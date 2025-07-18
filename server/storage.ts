@@ -930,7 +930,8 @@ export class DatabaseStorage implements IStorage {
       // Usar data de vencimento fornecida ou calcular baseada na data atual
       let installmentDueDate: Date;
       if (dueDate) {
-        installmentDueDate = new Date(dueDate);
+        // Forçar interpretação como data local para evitar conversão de timezone
+        installmentDueDate = new Date(dueDate + 'T00:00:00');
         installmentDueDate.setMonth(installmentDueDate.getMonth() + (i - 1));
       } else {
         installmentDueDate = new Date();
