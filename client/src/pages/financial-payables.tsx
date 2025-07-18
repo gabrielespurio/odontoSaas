@@ -92,6 +92,8 @@ export default function FinancialPayables() {
         ...data,
         // Remove empty paymentMethod if status is not paid
         paymentMethod: data.status === "paid" && data.paymentMethod ? data.paymentMethod : undefined,
+        // Remove empty paymentDate (convert empty string to undefined)
+        paymentDate: data.paymentDate && data.paymentDate.trim() !== "" ? data.paymentDate : undefined,
       };
       return apiRequest("POST", "/api/payables", payload);
     },
@@ -119,6 +121,8 @@ export default function FinancialPayables() {
         ...data,
         // Remove empty paymentMethod if status is not paid
         paymentMethod: data.status === "paid" && data.paymentMethod ? data.paymentMethod : undefined,
+        // Remove empty paymentDate (convert empty string to undefined)
+        paymentDate: data.paymentDate && data.paymentDate.trim() !== "" ? data.paymentDate : undefined,
       };
       return apiRequest("PUT", `/api/payables/${id}`, payload);
     },

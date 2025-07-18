@@ -1570,13 +1570,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = (req as any).user;
       const payableData = insertPayableSchema.parse(req.body);
       
-      // Add createdBy field
-      const payableWithCreatedBy = {
+      // Clean up empty strings to undefined/null for optional fields
+      const cleanedData = {
         ...payableData,
+        paymentDate: payableData.paymentDate && payableData.paymentDate.trim() !== "" ? payableData.paymentDate : undefined,
+        paymentMethod: payableData.paymentMethod && payableData.paymentMethod.trim() !== "" ? payableData.paymentMethod : undefined,
+        supplier: payableData.supplier && payableData.supplier.trim() !== "" ? payableData.supplier : undefined,
+        notes: payableData.notes && payableData.notes.trim() !== "" ? payableData.notes : undefined,
         createdBy: user.id
       };
       
-      const payable = await storage.createPayable(payableWithCreatedBy);
+      const payable = await storage.createPayable(cleanedData);
       res.json(payable);
     } catch (error) {
       console.error("Create payable error:", error);
@@ -1588,7 +1592,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const payableData = insertPayableSchema.partial().parse(req.body);
-      const payable = await storage.updatePayable(id, payableData);
+      
+      // Clean up empty strings to undefined/null for optional fields
+      const cleanedData = {
+        ...payableData,
+        paymentDate: payableData.paymentDate && payableData.paymentDate.trim() !== "" ? payableData.paymentDate : undefined,
+        paymentMethod: payableData.paymentMethod && payableData.paymentMethod.trim() !== "" ? payableData.paymentMethod : undefined,
+        supplier: payableData.supplier && payableData.supplier.trim() !== "" ? payableData.supplier : undefined,
+        notes: payableData.notes && payableData.notes.trim() !== "" ? payableData.notes : undefined,
+      };
+      
+      const payable = await storage.updatePayable(id, cleanedData);
       res.json(payable);
     } catch (error) {
       console.error("Update payable error:", error);

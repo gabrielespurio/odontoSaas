@@ -421,6 +421,7 @@ export const insertPayableSchema = createInsertSchema(payables).omit({
   updatedAt: true,
 }).extend({
   amount: z.number().positive("Valor deve ser positivo"),
+  paymentDate: z.string().optional().nullable(),
 });
 
 export const insertCashFlowSchema = createInsertSchema(cashFlow).omit({
