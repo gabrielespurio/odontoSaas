@@ -121,7 +121,7 @@ export default function FinancialReceivables() {
   });
 
   const getStatusBadge = (status: string, dueDate: string) => {
-    const isOverdue = status === "pending" && new Date(dueDate) < new Date();
+    const isOverdue = status === "pending" && new Date(dueDate + 'T00:00:00') < new Date();
     const actualStatus = isOverdue ? "overdue" : status;
     
     const statusMap = {
@@ -148,7 +148,8 @@ export default function FinancialReceivables() {
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('pt-BR');
+    // Forçar interpretação como data local para evitar conversão de timezone
+    return new Date(date + 'T00:00:00').toLocaleDateString('pt-BR');
   };
 
   const getInitials = (name: string) => {
