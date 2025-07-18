@@ -76,7 +76,7 @@ type ConsultationFormData = z.infer<typeof consultationSchema>;
 
 export default function Consultations() {
   const [search, setSearch] = useState("");
-  const [selectedPatient, setSelectedPatient] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
   const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
@@ -157,7 +157,7 @@ export default function Consultations() {
 
   const { data: consultations, isLoading: consultationsLoading } = useQuery<Consultation[]>({
     queryKey: ["/api/consultations", { 
-      patientId: selectedPatient !== "all" ? parseInt(selectedPatient) : undefined,
+      status: selectedStatus !== "all" ? selectedStatus : undefined,
       dentistId: user?.role === "dentist" ? user.id : undefined 
     }],
   });
@@ -936,17 +936,16 @@ export default function Consultations() {
                 className="pl-10"
               />
             </div>
-            <Select value={selectedPatient} onValueChange={setSelectedPatient}>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
               <SelectTrigger className="md:w-48">
-                <SelectValue placeholder="Filtrar por paciente" />
+                <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os Pacientes</SelectItem>
-                {patients?.map((patient) => (
-                  <SelectItem key={patient.id} value={patient.id.toString()}>
-                    {patient.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">Todos os Status</SelectItem>
+                <SelectItem value="agendado">Agendado</SelectItem>
+                <SelectItem value="em_atendimento">Em Atendimento</SelectItem>
+                <SelectItem value="concluido">Concluído</SelectItem>
+                <SelectItem value="cancelado">Cancelado</SelectItem>
               </SelectContent>
             </Select>
           </div>

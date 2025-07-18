@@ -544,7 +544,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Consultations
-  async getConsultations(patientId?: number, dentistId?: number): Promise<(Consultation & { patient: Patient; dentist: User })[]> {
+  async getConsultations(patientId?: number, dentistId?: number, status?: string): Promise<(Consultation & { patient: Patient; dentist: User })[]> {
     let query = db.select({
       // Consultation fields
       id: consultations.id,
@@ -603,6 +603,9 @@ export class DatabaseStorage implements IStorage {
     }
     if (dentistId) {
       conditions.push(eq(consultations.dentistId, dentistId));
+    }
+    if (status) {
+      conditions.push(eq(consultations.status, status));
     }
     
     if (conditions.length > 0) {

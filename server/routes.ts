@@ -1133,6 +1133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const patientId = req.query.patientId ? parseInt(req.query.patientId as string) : undefined;
       let dentistId = req.query.dentistId ? parseInt(req.query.dentistId as string) : undefined;
+      const status = req.query.status as string | undefined;
       
       // Apply data scope control
       const user = req.user;
@@ -1141,7 +1142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dentistId = user.id;
       }
       
-      const consultations = await storage.getConsultations(patientId, dentistId);
+      const consultations = await storage.getConsultations(patientId, dentistId, status);
       res.json(consultations);
     } catch (error) {
       console.error("Get consultations error:", error);

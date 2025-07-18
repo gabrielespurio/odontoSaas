@@ -307,6 +307,9 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
 - July 18, 2025. **CASH FLOW CARDS REDESIGN**: Fixed layout issues in cash flow indicator cards, preventing value text from breaking into multiple lines
 - July 18, 2025. **STANDARDIZED LAYOUT**: Applied consistent card layout with whitespace-nowrap to ensure all financial values display on single lines
 - July 18, 2025. **IMPROVED UX**: Enhanced visual consistency across Total Entradas, Total Saídas, Saldo Período, and Saldo Atual cards
+- July 18, 2025. **CONSULTATIONS FILTER ENHANCEMENT**: Changed filter from patient-based to status-based in consultations module
+- July 18, 2025. **BACKEND STATUS FILTERING**: Added status parameter support to /api/consultations endpoint and storage layer
+- July 18, 2025. **UX IMPROVEMENT**: Users can now filter consultations by status (Agendado, Em Atendimento, Concluído, Cancelado)
 - July 18, 2025. **MIGRATION COMPLETED**: Successfully migrated project from Replit Agent to standard Replit environment
 - July 18, 2025. **CASH FLOW UI IMPROVEMENT**: Enhanced financial indicator cards with consistent layout and improved formatting
 - July 18, 2025. **CARD STANDARDIZATION**: Fixed layout issues in "Total Saídas" card and standardized all financial indicator cards
