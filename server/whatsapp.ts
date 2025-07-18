@@ -52,19 +52,17 @@ export async function sendWhatsAppMessage(phoneNumber: string, message: string):
 }
 
 export function formatAppointmentMessage(patientName: string, appointmentDate: Date): string {
-  // Format date and time using Brazil timezone (GMT-3)
-  const formattedDate = appointmentDate.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    timeZone: 'America/Sao_Paulo'
-  });
+  // Create a new date assuming the stored date is already in Brazil timezone
+  // but we need to display it correctly without timezone conversion
   
-  const formattedTime = appointmentDate.toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'America/Sao_Paulo'
-  });
+  const year = appointmentDate.getFullYear();
+  const month = String(appointmentDate.getMonth() + 1).padStart(2, '0');
+  const day = String(appointmentDate.getDate()).padStart(2, '0');
+  const hours = String(appointmentDate.getHours()).padStart(2, '0');
+  const minutes = String(appointmentDate.getMinutes()).padStart(2, '0');
+  
+  const formattedDate = `${day}/${month}/${year}`;
+  const formattedTime = `${hours}:${minutes}`;
 
   return `Olá ${patientName}, sua consulta está marcada para o dia ${formattedDate} às ${formattedTime}.`;
 }

@@ -1,30 +1,32 @@
 // Utility functions for consistent date formatting in Brazil timezone
 
-export function formatDateForDatabase(dateString: string): string {
-  // Input: "2025-07-18T09:00" or similar
-  // Output: "2025-07-18 09:00:00" (no timezone conversion)
+export function formatDateForDatabase(dateString: string): Date {
+  // Input: "2025-07-18T09:00" (local Brazil time from form)
+  // Output: Date object that represents the exact time in Brazil
   
-  if (!dateString) return dateString;
+  if (!dateString) return new Date();
   
-  // If it already has the correct format, return as-is
-  if (dateString.includes(' ') && dateString.split(' ').length === 2) {
-    const [datePart, timePart] = dateString.split(' ');
-    if (timePart.includes(':')) {
-      // Ensure it has seconds
-      const timeComponents = timePart.split(':');
-      if (timeComponents.length === 2) {
-        return `${datePart} ${timePart}:00`;
-      }
-      return dateString;
-    }
-  }
+  // Parse the input as Brazil local time
+  // Create a date object treating the input as Brazil timezone
+  const [datePart, timePart] = dateString.includes('T') 
+    ? dateString.split('T') 
+    : dateString.split(' ');
   
-  // Handle "YYYY-MM-DDTHH:MM" format
-  if (dateString.includes('T')) {
-    return dateString.replace('T', ' ') + (dateString.split(':').length === 2 ? ':00' : '');
-  }
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute] = timePart.split(':').map(Number);
   
-  return dateString;
+  // Create date in Brazil timezone (GMT-3)
+  // We create the date with exact values without timezone conversion
+  const brazilDate = new Date();
+  brazilDate.setFullYear(year);
+  brazilDate.setMonth(month - 1); // Month is 0-indexed
+  brazilDate.setDate(day);
+  brazilDate.setHours(hour);
+  brazilDate.setMinutes(minute);
+  brazilDate.setSeconds(0);
+  brazilDate.setMilliseconds(0);
+  
+  return brazilDate;
 }
 
 export function formatDateForFrontend(date: Date | string): string {
