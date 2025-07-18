@@ -20,6 +20,7 @@ type Receivable = {
   amount: string;
   dueDate: string;
   description?: string;
+  paymentMethod?: string;
   patient: {
     name: string;
   };
@@ -42,11 +43,19 @@ const PAYMENT_METHODS = [
 ];
 
 export default function PaymentForm({ receivable, onSuccess, onCancel, isLoading = false }: PaymentFormProps) {
+  // Definir método de pagamento padrão baseado na conta a receber
+  const getDefaultPaymentMethod = () => {
+    if (receivable.paymentMethod) {
+      return receivable.paymentMethod;
+    }
+    return "pix"; // Fallback para PIX
+  };
+
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
       paymentDate: new Date().toISOString().split('T')[0],
-      paymentMethod: "",
+      paymentMethod: getDefaultPaymentMethod(),
     },
   });
 

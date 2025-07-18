@@ -320,19 +320,19 @@ export default function GenerateReceivableModal({
                     PIX
                   </div>
                 </SelectItem>
-                <SelectItem value="dinheiro">
+                <SelectItem value="cash">
                   <div className="flex items-center gap-2">
                     <span>💵</span>
                     Dinheiro
                   </div>
                 </SelectItem>
-                <SelectItem value="cartao_credito">
+                <SelectItem value="credit_card">
                   <div className="flex items-center gap-2">
                     <CreditCard className="w-4 h-4" />
                     Cartão de Crédito
                   </div>
                 </SelectItem>
-                <SelectItem value="cartao_debito">
+                <SelectItem value="debit_card">
                   <div className="flex items-center gap-2">
                     <span>💳</span>
                     Cartão de Débito
