@@ -275,8 +275,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Procedure Categories
-  async getProcedureCategories(): Promise<ProcedureCategory[]> {
-    return await db.select().from(procedureCategories).where(eq(procedureCategories.isActive, true)).orderBy(procedureCategories.name);
+  async getProcedureCategories(companyId?: number): Promise<ProcedureCategory[]> {
+    const whereConditions = [eq(procedureCategories.isActive, true)];
+    if (companyId) {
+      whereConditions.push(eq(procedureCategories.companyId, companyId));
+    }
+    return await db.select().from(procedureCategories).where(and(...whereConditions)).orderBy(procedureCategories.name);
   }
 
   async getProcedureCategory(id: number): Promise<ProcedureCategory | undefined> {
@@ -294,9 +298,13 @@ export class DatabaseStorage implements IStorage {
     return category;
   }
 
-  // User Profiles
-  async getUserProfiles(): Promise<UserProfile[]> {
-    return await db.select().from(userProfiles).where(eq(userProfiles.isActive, true)).orderBy(userProfiles.name);
+  // User Profiles  
+  async getUserProfiles(companyId?: number): Promise<UserProfile[]> {
+    const whereConditions = [eq(userProfiles.isActive, true)];
+    if (companyId) {
+      whereConditions.push(eq(userProfiles.companyId, companyId));
+    }
+    return await db.select().from(userProfiles).where(and(...whereConditions)).orderBy(userProfiles.name);
   }
 
   async getUserProfile(id: number): Promise<UserProfile | undefined> {
