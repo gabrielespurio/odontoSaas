@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Building2, Plus, Phone, Mail, MapPin, Eye, MoreHorizontal, Edit } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Building2, Plus, Phone, Mail, MapPin, Eye, MoreHorizontal, Edit, Users, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CompanyForm } from "@/components/companies/company-form";
 import { format } from "date-fns";
@@ -54,6 +55,8 @@ export default function Companies() {
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [createdAdmin, setCreatedAdmin] = useState<CompanyWithAdmin | null>(null);
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
+  const [companyUsers, setCompanyUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -92,6 +95,41 @@ export default function Companies() {
     onError: (error: Error) => {
       toast({
         title: "Erro ao criar empresa",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateCompanyMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const response = await fetch(`/api/companies/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao atualizar empresa");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
+      setIsFormDialogOpen(false);
+      toast({
+        title: "Empresa atualizada com sucesso!",
+        description: "Os dados da empresa foram atualizados.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao atualizar empresa",
         description: error.message,
         variant: "destructive",
       });
@@ -210,8 +248,22 @@ export default function Companies() {
                         Ver Detalhes
                       </DropdownMenuItem>
                       <DropdownMenuItem 
-                        onClick={() => {
+                        onClick={async () => {
                           setSelectedCompany(company);
+                          setLoadingUsers(true);
+                          try {
+                            const token = localStorage.getItem("token");
+                            const response = await fetch(`/api/users?companyId=${company.id}`, {
+                              headers: { Authorization: `Bearer ${token}` }
+                            });
+                            if (response.ok) {
+                              const users = await response.json();
+                              setCompanyUsers(users);
+                            }
+                          } catch (error) {
+                            console.error("Error loading users:", error);
+                          }
+                          setLoadingUsers(false);
                           setIsFormDialogOpen(true);
                         }}
                       >
@@ -290,19 +342,111 @@ export default function Companies() {
 
       {/* Edit Company Dialog */}
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Empresa</DialogTitle>
+            <DialogTitle>Gerenciar Empresa - {selectedCompany?.name}</DialogTitle>
           </DialogHeader>
-          <CompanyForm 
-            company={selectedCompany}
-            onSubmit={(data) => {
-              // TODO: Implement update mutation
-              console.log("Update company:", data);
-              setIsFormDialogOpen(false);
-            }}
-            isLoading={false}
-          />
+          
+          <Tabs defaultValue="company" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="company" className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Dados da Empresa
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Usuários Administrativos
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="company" className="mt-6">
+              <CompanyForm 
+                company={selectedCompany}
+                onSubmit={(data) => {
+                  if (selectedCompany) {
+                    updateCompanyMutation.mutate({ id: selectedCompany.id, data });
+                  }
+                }}
+                isLoading={updateCompanyMutation.isPending}
+              />
+            </TabsContent>
+            
+            <TabsContent value="users" className="mt-6">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-semibold">Usuários Administrativos</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Gerencie os usuários que têm acesso administrativo a esta empresa
+                    </p>
+                  </div>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Novo Usuário Admin
+                  </Button>
+                </div>
+
+                {loadingUsers ? (
+                  <div className="text-center py-8">Carregando usuários...</div>
+                ) : (
+                  <Card>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Perfil</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="w-[100px]">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {companyUsers.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                              Nenhum usuário encontrado para esta empresa
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          companyUsers.map((user) => (
+                            <TableRow key={user.id}>
+                              <TableCell className="font-medium">{user.name}</TableCell>
+                              <TableCell>{user.email}</TableCell>
+                              <TableCell>{user.role || "Administrador"}</TableCell>
+                              <TableCell>
+                                <Badge variant={user.forcePasswordChange ? "secondary" : "default"}>
+                                  {user.forcePasswordChange ? "Trocar Senha" : "Ativo"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem>
+                                      <Edit className="mr-2 h-4 w-4" />
+                                      Editar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-red-600">
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Remover
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 

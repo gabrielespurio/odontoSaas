@@ -543,9 +543,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Users Management
-  app.get("/api/users", async (req, res) => {
+  app.get("/api/users", authenticateToken, async (req, res) => {
     try {
-      const usersData = await db.select({
+      const companyId = req.query.companyId;
+      
+      let query = db.select({
         id: users.id,
         username: users.username,
         name: users.name,
@@ -553,8 +555,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: users.role,
         isActive: users.isActive,
         dataScope: users.dataScope,
+        companyId: users.companyId,
+        forcePasswordChange: users.forcePasswordChange,
         createdAt: users.createdAt,
-      }).from(users).orderBy(users.name);
+      }).from(users);
+      
+      // Filter by company if companyId is provided
+      if (companyId) {
+        query = query.where(eq(users.companyId, parseInt(companyId as string)));
+      }
+      
+      const usersData = await query.orderBy(users.name);
       res.json(usersData);
     } catch (error) {
       console.error("Get users error:", error);
