@@ -13,10 +13,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { insertCompanySchema, type Company } from "@shared/schema";
 
-const formSchema = insertCompanySchema.extend({
-  maxUsers: z.number().min(1, "Deve ter pelo menos 1 usuário"),
-  maxPatients: z.number().min(1, "Deve ter pelo menos 1 paciente"),
-});
+const formSchema = insertCompanySchema;
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -110,9 +107,6 @@ export function CompanyForm({ company, onSubmit, isLoading }: CompanyFormProps) 
       neighborhood: company?.neighborhood || "",
       city: company?.city || "",
       state: company?.state || "",
-      planType: company?.planType || "basic",
-      maxUsers: company?.maxUsers || 5,
-      maxPatients: company?.maxPatients || 500,
       isActive: company?.isActive ?? true,
       trialEndDate: company?.trialEndDate || "",
       subscriptionStartDate: company?.subscriptionStartDate || "",
@@ -126,7 +120,7 @@ export function CompanyForm({ company, onSubmit, isLoading }: CompanyFormProps) 
     onSubmit(data);
   };
 
-  const planType = watch("planType");
+
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">

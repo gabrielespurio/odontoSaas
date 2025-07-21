@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Users, CreditCard, Calendar, Phone, Mail, MapPin, Eye } from "lucide-react";
+import { Building2, Plus, Phone, Mail, MapPin, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CompanyForm } from "@/components/companies/company-form";
 import { format } from "date-fns";
@@ -26,9 +26,6 @@ interface Company {
   neighborhood?: string;
   city?: string;
   state?: string;
-  planType: string;
-  maxUsers: number;
-  maxPatients: number;
   isActive: boolean;
   trialEndDate?: string;
   subscriptionStartDate?: string;
@@ -192,22 +189,7 @@ export default function Companies() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-                <div className="text-center">
-                  <div className="flex items-center justify-center space-x-1">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-semibold">{company.maxUsers}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Max Usuários</p>
-                </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center space-x-1">
-                    <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-semibold capitalize">{company.planType}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Plano</p>
-                </div>
-              </div>
+
 
               <div className="flex justify-end pt-2">
                 <Button
@@ -275,22 +257,12 @@ export default function Companies() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Limites</h3>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Máx. Usuários:</strong> {selectedCompany.maxUsers}</p>
-                    <p><strong>Máx. Pacientes:</strong> {selectedCompany.maxPatients}</p>
-                    <p><strong>Plano:</strong> {selectedCompany.planType}</p>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">Datas</h3>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Fim do Trial:</strong> {formatDate(selectedCompany.trialEndDate)}</p>
-                    <p><strong>Início Assinatura:</strong> {formatDate(selectedCompany.subscriptionStartDate)}</p>
-                    <p><strong>Fim Assinatura:</strong> {formatDate(selectedCompany.subscriptionEndDate)}</p>
-                  </div>
+              <div>
+                <h3 className="font-semibold mb-2">Datas</h3>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Fim do Trial:</strong> {formatDate(selectedCompany.trialEndDate)}</p>
+                  <p><strong>Início Assinatura:</strong> {formatDate(selectedCompany.subscriptionStartDate)}</p>
+                  <p><strong>Fim Assinatura:</strong> {formatDate(selectedCompany.subscriptionEndDate)}</p>
                 </div>
               </div>
             </div>

@@ -42,10 +42,7 @@ export const companies = pgTable("companies", {
   neighborhood: text("neighborhood"),
   city: text("city"),
   state: text("state"),
-  // Plan and billing
-  planType: text("plan_type").notNull().default("basic"), // basic, professional, enterprise
-  maxUsers: integer("max_users").notNull().default(5),
-  maxPatients: integer("max_patients").notNull().default(500),
+  // Status
   isActive: boolean("is_active").notNull().default(true),
   // Dates
   trialEndDate: date("trial_end_date"),
