@@ -22,11 +22,11 @@ type FormData = z.infer<typeof formSchema>;
 
 interface CompanyFormProps {
   company?: Company | null;
-  onSuccess: () => void;
-  onCancel: () => void;
+  onSubmit: (data: any) => void;
+  isLoading?: boolean;
 }
 
-export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFormProps) {
+export function CompanyForm({ company, onSubmit, isLoading }: CompanyFormProps) {
   const { toast } = useToast();
   const isEditing = !!company;
 
@@ -120,43 +120,16 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      const url = isEditing ? `/api/companies/${company.id}` : '/api/companies';
-      const method = isEditing ? 'PUT' : 'POST';
-      
-      return apiRequest(url, {
-        method,
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: isEditing ? "Empresa atualizada" : "Empresa criada",
-        description: `A empresa foi ${isEditing ? 'atualizada' : 'criada'} com sucesso.`,
-      });
-      onSuccess();
-    },
-    onError: (error: any) => {
-      toast({
-        variant: "destructive",
-        title: `Erro ao ${isEditing ? 'atualizar' : 'criar'} empresa`,
-        description: error.message || "Ocorreu um erro inesperado.",
-      });
-    },
-  });
+  // Remove the mutation logic as it's handled by parent
 
-  const onSubmit = (data: FormData) => {
-    mutation.mutate(data);
+  const handleFormSubmit = (data: FormData) => {
+    onSubmit(data);
   };
 
   const planType = watch("planType");
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Informações Básicas</CardTitle>
@@ -377,11 +350,8 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
       </Card>
 
       <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "Salvando..." : isEditing ? "Atualizar" : "Criar"}
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Salvando..." : company ? "Atualizar" : "Criar Empresa"}
         </Button>
       </div>
     </form>

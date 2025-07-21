@@ -2,294 +2,323 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Building2, Plus, Users, CreditCard, Calendar, Phone, Mail, MapPin, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Plus, Search, MoreVertical, Pencil, Trash2, Users, Calendar } from "lucide-react";
-import type { Company } from "@shared/schema";
-import CompanyForm from "@/components/companies/company-form";
+import { CompanyForm } from "@/components/companies/company-form";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+interface Company {
+  id: number;
+  name: string;
+  tradeName?: string;
+  cnpj?: string;
+  email: string;
+  phone: string;
+  responsibleName: string;
+  responsiblePhone: string;
+  cep?: string;
+  street?: string;
+  number?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  planType: string;
+  maxUsers: number;
+  maxPatients: number;
+  isActive: boolean;
+  trialEndDate?: string;
+  subscriptionStartDate?: string;
+  subscriptionEndDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CompanyWithAdmin {
+  company: Company;
+  adminUser: {
+    id: number;
+    username: string;
+    name: string;
+    email: string;
+    generatedPassword: string;
+  };
+}
 
 export default function Companies() {
-  const [search, setSearch] = useState("");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [createdAdmin, setCreatedAdmin] = useState<CompanyWithAdmin | null>(null);
+  const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: companies = [], isLoading, error } = useQuery<Company[]>({
-    queryKey: ['/api/companies'],
+  const { data: companies = [], isLoading } = useQuery({
+    queryKey: ["/api/companies"],
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return apiRequest(`/api/companies/${id}`, {
-        method: 'DELETE',
+  const createCompanyMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("/api/companies", {
+        method: "POST",
+        body: JSON.stringify(data),
       });
     },
-    onSuccess: () => {
+    onSuccess: (data: CompanyWithAdmin) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
+      setIsCreateDialogOpen(false);
+      setCreatedAdmin(data);
+      setIsSuccessDialogOpen(true);
       toast({
-        title: "Empresa excluída",
-        description: "A empresa foi excluída com sucesso.",
+        title: "Empresa criada com sucesso!",
+        description: `Admin criado: ${data.adminUser.username}`,
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
+        title: "Erro ao criar empresa",
+        description: error.message,
         variant: "destructive",
-        title: "Erro ao excluir empresa",
-        description: error.message || "Ocorreu um erro ao excluir a empresa.",
       });
     },
   });
 
-  const filteredCompanies = companies.filter(company =>
-    company.name.toLowerCase().includes(search.toLowerCase()) ||
-    company.email.toLowerCase().includes(search.toLowerCase()) ||
-    (company.cnpj && company.cnpj.includes(search))
-  );
-
-  const handleEdit = (company: Company) => {
-    setSelectedCompany(company);
-    setShowEditDialog(true);
-  };
-
-  const handleDelete = async (company: Company) => {
-    if (confirm(`Tem certeza que deseja excluir a empresa "${company.name}"?`)) {
-      deleteMutation.mutate(company.id);
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Não definido";
+    try {
+      return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
+    } catch {
+      return "Data inválida";
     }
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString('pt-BR');
+  const getStatusBadge = (company: Company) => {
+    if (!company.isActive) {
+      return <Badge variant="destructive">Inativo</Badge>;
+    }
+    
+    const today = new Date();
+    const trialEnd = company.trialEndDate ? new Date(company.trialEndDate) : null;
+    const subscriptionEnd = company.subscriptionEndDate ? new Date(company.subscriptionEndDate) : null;
+    
+    if (trialEnd && trialEnd > today) {
+      return <Badge variant="secondary">Trial</Badge>;
+    }
+    
+    if (subscriptionEnd && subscriptionEnd > today) {
+      return <Badge variant="default">Ativo</Badge>;
+    }
+    
+    return <Badge variant="outline">Período expirado</Badge>;
   };
 
-  const getPlanBadge = (planType: string) => {
-    const colors = {
-      basic: "bg-blue-100 text-blue-800",
-      professional: "bg-green-100 text-green-800",
-      enterprise: "bg-purple-100 text-purple-800",
-    };
-    return colors[planType as keyof typeof colors] || colors.basic;
-  };
-
-  if (error) {
-    return (
-      <div className="page-container">
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center text-red-600">
-              Erro ao carregar empresas. Verifique suas permissões.
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  if (isLoading) {
+    return <div className="p-6">Carregando empresas...</div>;
   }
 
   return (
-    <div className="page-container">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-2">
-          <Building2 className="h-6 w-6 text-teal-600" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Gerenciar Empresas
-          </h1>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Empresas</h1>
+          <p className="text-muted-foreground">
+            Gerencie as empresas cadastradas no sistema
+          </p>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Empresa
-        </Button>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Empresa
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Criar Nova Empresa</DialogTitle>
+            </DialogHeader>
+            <CompanyForm 
+              onSubmit={(data) => createCompanyMutation.mutate(data)}
+              isLoading={createCompanyMutation.isPending}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Buscar empresas por nome, email ou CNPJ..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="text-sm text-gray-500">
-              {filteredCompanies.length} de {companies.length} empresas
-            </div>
-          </div>
-        </CardHeader>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {companies.map((company: Company) => (
+          <Card key={company.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader className="space-y-2">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-2">
+                  <Building2 className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle className="text-lg">{company.name}</CardTitle>
+                </div>
+                {getStatusBadge(company)}
+              </div>
+              {company.tradeName && (
+                <p className="text-sm text-muted-foreground">{company.tradeName}</p>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2 text-sm">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span>{company.email}</span>
+                </div>
+                <div className="flex items-center space-x-2 text-sm">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span>{company.phone}</span>
+                </div>
+                {company.city && company.state && (
+                  <div className="flex items-center space-x-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>{company.city}, {company.state}</span>
+                  </div>
+                )}
+              </div>
 
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
-            </div>
-          ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Empresa</TableHead>
-                    <TableHead>Contato</TableHead>
-                    <TableHead>Plano</TableHead>
-                    <TableHead>Usuários/Pacientes</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Data Criação</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCompanies.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center text-gray-500 py-8">
-                        {companies.length === 0 ? "Nenhuma empresa cadastrada" : "Nenhuma empresa encontrada"}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredCompanies.map((company) => (
-                      <TableRow key={company.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium text-gray-900 dark:text-gray-100">
-                              {company.name}
-                            </div>
-                            {company.tradeName && (
-                              <div className="text-sm text-gray-500">
-                                {company.tradeName}
-                              </div>
-                            )}
-                            {company.cnpj && (
-                              <div className="text-xs text-gray-400">
-                                CNPJ: {company.cnpj}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div>{company.email}</div>
-                            <div className="text-gray-500">{company.phone}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getPlanBadge(company.planType)}>
-                            {company.planType.charAt(0).toUpperCase() + company.planType.slice(1)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div className="flex items-center">
-                              <Users className="w-3 h-3 mr-1" />
-                              {company.maxUsers} usuários
-                            </div>
-                            <div className="flex items-center text-gray-500">
-                              <Calendar className="w-3 h-3 mr-1" />
-                              {company.maxPatients} pacientes
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={company.isActive ? "default" : "destructive"}>
-                            {company.isActive ? "Ativo" : "Inativo"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-500">
-                          {formatDate(company.createdAt)}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEdit(company)}>
-                                <Pencil className="w-4 h-4 mr-2" />
-                                Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => handleDelete(company)}
-                                className="text-red-600"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Excluir
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                <div className="text-center">
+                  <div className="flex items-center justify-center space-x-1">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-semibold">{company.maxUsers}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Max Usuários</p>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center space-x-1">
+                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-semibold capitalize">{company.planType}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Plano</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedCompany(company);
+                    setIsViewDialogOpen(true);
+                  }}
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  Ver Detalhes
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Company Details Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Empresa</DialogTitle>
+          </DialogHeader>
+          {selectedCompany && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Informações Básicas</h3>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Nome:</strong> {selectedCompany.name}</p>
+                    {selectedCompany.tradeName && <p><strong>Nome Fantasia:</strong> {selectedCompany.tradeName}</p>}
+                    {selectedCompany.cnpj && <p><strong>CNPJ:</strong> {selectedCompany.cnpj}</p>}
+                    <p><strong>Email:</strong> {selectedCompany.email}</p>
+                    <p><strong>Telefone:</strong> {selectedCompany.phone}</p>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2">Responsável</h3>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Nome:</strong> {selectedCompany.responsibleName}</p>
+                    <p><strong>Telefone:</strong> {selectedCompany.responsiblePhone}</p>
+                  </div>
+                </div>
+              </div>
+
+              {(selectedCompany.street || selectedCompany.city) && (
+                <div>
+                  <h3 className="font-semibold mb-2">Endereço</h3>
+                  <div className="space-y-2 text-sm">
+                    {selectedCompany.cep && <p><strong>CEP:</strong> {selectedCompany.cep}</p>}
+                    {selectedCompany.street && (
+                      <p><strong>Endereço:</strong> {selectedCompany.street}
+                        {selectedCompany.number && `, ${selectedCompany.number}`}
+                      </p>
+                    )}
+                    {selectedCompany.neighborhood && <p><strong>Bairro:</strong> {selectedCompany.neighborhood}</p>}
+                    {selectedCompany.city && (
+                      <p><strong>Cidade:</strong> {selectedCompany.city}
+                        {selectedCompany.state && `, ${selectedCompany.state}`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Limites</h3>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Máx. Usuários:</strong> {selectedCompany.maxUsers}</p>
+                    <p><strong>Máx. Pacientes:</strong> {selectedCompany.maxPatients}</p>
+                    <p><strong>Plano:</strong> {selectedCompany.planType}</p>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-2">Datas</h3>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Fim do Trial:</strong> {formatDate(selectedCompany.trialEndDate)}</p>
+                    <p><strong>Início Assinatura:</strong> {formatDate(selectedCompany.subscriptionStartDate)}</p>
+                    <p><strong>Fim Assinatura:</strong> {formatDate(selectedCompany.subscriptionEndDate)}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Nova Empresa</DialogTitle>
-            <DialogDescription>
-              Crie uma nova empresa no sistema.
-            </DialogDescription>
-          </DialogHeader>
-          <CompanyForm
-            onSuccess={() => {
-              setShowCreateDialog(false);
-              queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
-            }}
-            onCancel={() => setShowCreateDialog(false)}
-          />
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl">
+      {/* Success Dialog with Admin Credentials */}
+      <Dialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Editar Empresa</DialogTitle>
-            <DialogDescription>
-              Edite as informações da empresa.
-            </DialogDescription>
+            <DialogTitle>Empresa Criada com Sucesso!</DialogTitle>
           </DialogHeader>
-          <CompanyForm
-            company={selectedCompany}
-            onSuccess={() => {
-              setShowEditDialog(false);
-              setSelectedCompany(null);
-              queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
-            }}
-            onCancel={() => {
-              setShowEditDialog(false);
-              setSelectedCompany(null);
-            }}
-          />
+          {createdAdmin && (
+            <div className="space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="font-semibold text-green-800 mb-2">Usuário Admin Criado</h3>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Usuário:</strong> {createdAdmin.adminUser.username}</p>
+                  <p><strong>Senha Temporária:</strong> {createdAdmin.adminUser.generatedPassword}</p>
+                  <p><strong>Email:</strong> {createdAdmin.adminUser.email}</p>
+                </div>
+              </div>
+              
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm text-amber-800">
+                  <strong>Importante:</strong> O usuário admin será forçado a alterar a senha no primeiro login.
+                  Anote estas credenciais e repasse para o responsável da empresa.
+                </p>
+              </div>
+
+              <Button 
+                onClick={() => setIsSuccessDialogOpen(false)}
+                className="w-full"
+              >
+                Entendido
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -96,7 +96,8 @@ export const patients = pgTable("patients", {
 // Procedure Categories table
 export const procedureCategories = pgTable("procedure_categories", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
+  companyId: integer("company_id").notNull(), // FK to companies table
+  name: text("name").notNull(),
   description: text("description"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -105,7 +106,8 @@ export const procedureCategories = pgTable("procedure_categories", {
 // User Profiles table
 export const userProfiles = pgTable("user_profiles", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
+  companyId: integer("company_id").notNull(), // FK to companies table
+  name: text("name").notNull(),
   description: text("description"),
   modules: jsonb("modules").notNull().default('[]'), // Array of module names
   isActive: boolean("is_active").notNull().default(true),
@@ -115,6 +117,7 @@ export const userProfiles = pgTable("user_profiles", {
 // Procedures table
 export const procedures = pgTable("procedures", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(), // FK to companies table
   name: text("name").notNull(),
   description: text("description"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
@@ -127,6 +130,7 @@ export const procedures = pgTable("procedures", {
 // Appointments table
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(), // FK to companies table
   patientId: integer("patient_id").notNull(),
   dentistId: integer("dentist_id").notNull(),
   procedureId: integer("procedure_id").notNull(),
@@ -140,6 +144,7 @@ export const appointments = pgTable("appointments", {
 // Consultations table
 export const consultations = pgTable("consultations", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(), // FK to companies table
   attendanceNumber: varchar("attendance_number", { length: 6 }).unique(),
   patientId: integer("patient_id").notNull(),
   dentistId: integer("dentist_id").notNull(),
@@ -156,6 +161,7 @@ export const consultations = pgTable("consultations", {
 // Dental Chart table
 export const dentalChart = pgTable("dental_chart", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(), // FK to companies table
   patientId: integer("patient_id").notNull(),
   toothNumber: text("tooth_number").notNull(), // FDI numbering
   condition: toothConditionEnum("condition").notNull().default("healthy"),
@@ -168,6 +174,7 @@ export const dentalChart = pgTable("dental_chart", {
 // Anamnese table
 export const anamnese = pgTable("anamnese", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(), // FK to companies table
   patientId: integer("patient_id").notNull(),
   medicalTreatment: boolean("medical_treatment").notNull().default(false),
   medications: text("medications"),
@@ -182,6 +189,7 @@ export const anamnese = pgTable("anamnese", {
 // Contas a Receber (Receivables)
 export const receivables = pgTable("receivables", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(), // FK to companies table
   patientId: integer("patient_id").notNull(),
   consultationId: integer("consultation_id"),
   appointmentId: integer("appointment_id"),
@@ -202,6 +210,7 @@ export const receivables = pgTable("receivables", {
 // Contas a Pagar (Payables)
 export const payables = pgTable("payables", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(), // FK to companies table
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   dueDate: date("due_date").notNull(),
   paymentDate: date("payment_date"),
@@ -222,6 +231,7 @@ export const payables = pgTable("payables", {
 // Movimentação de Caixa (Cash Flow)
 export const cashFlow = pgTable("cash_flow", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(), // FK to companies table
   type: varchar("type", { length: 20 }).notNull(), // "income" ou "expense"
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   description: text("description").notNull(),
@@ -235,6 +245,7 @@ export const cashFlow = pgTable("cash_flow", {
 // Manter tabela financial para compatibilidade (deprecated)
 export const financial = pgTable("financial", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(), // FK to companies table
   patientId: integer("patient_id").notNull(),
   consultationId: integer("consultation_id"),
   appointmentId: integer("appointment_id"),
@@ -276,15 +287,27 @@ export const patientsRelations = relations(patients, ({ one, many }) => ({
   receivables: many(receivables),
 }));
 
-export const procedureCategoriesRelations = relations(procedureCategories, ({ many }) => ({
+export const procedureCategoriesRelations = relations(procedureCategories, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [procedureCategories.companyId],
+    references: [companies.id],
+  }),
   procedures: many(procedures),
 }));
 
-export const proceduresRelations = relations(procedures, ({ many }) => ({
+export const proceduresRelations = relations(procedures, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [procedures.companyId],
+    references: [companies.id],
+  }),
   appointments: many(appointments),
 }));
 
 export const appointmentsRelations = relations(appointments, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [appointments.companyId],
+    references: [companies.id],
+  }),
   patient: one(patients, {
     fields: [appointments.patientId],
     references: [patients.id],
@@ -303,6 +326,10 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
 }));
 
 export const consultationsRelations = relations(consultations, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [consultations.companyId],
+    references: [companies.id],
+  }),
   patient: one(patients, {
     fields: [consultations.patientId],
     references: [patients.id],
@@ -319,6 +346,10 @@ export const consultationsRelations = relations(consultations, ({ one, many }) =
 }));
 
 export const dentalChartRelations = relations(dentalChart, ({ one }) => ({
+  company: one(companies, {
+    fields: [dentalChart.companyId],
+    references: [companies.id],
+  }),
   patient: one(patients, {
     fields: [dentalChart.patientId],
     references: [patients.id],
@@ -326,6 +357,10 @@ export const dentalChartRelations = relations(dentalChart, ({ one }) => ({
 }));
 
 export const anamneseRelations = relations(anamnese, ({ one }) => ({
+  company: one(companies, {
+    fields: [anamnese.companyId],
+    references: [companies.id],
+  }),
   patient: one(patients, {
     fields: [anamnese.patientId],
     references: [patients.id],
@@ -333,6 +368,10 @@ export const anamneseRelations = relations(anamnese, ({ one }) => ({
 }));
 
 export const financialRelations = relations(financial, ({ one }) => ({
+  company: one(companies, {
+    fields: [financial.companyId],
+    references: [companies.id],
+  }),
   patient: one(patients, {
     fields: [financial.patientId],
     references: [patients.id],
@@ -349,6 +388,10 @@ export const financialRelations = relations(financial, ({ one }) => ({
 
 // Relações para as novas tabelas
 export const receivablesRelations = relations(receivables, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [receivables.companyId],
+    references: [companies.id],
+  }),
   patient: one(patients, {
     fields: [receivables.patientId],
     references: [patients.id],
@@ -369,11 +412,19 @@ export const receivablesRelations = relations(receivables, ({ one, many }) => ({
   cashFlowEntries: many(cashFlow),
 }));
 
-export const payablesRelations = relations(payables, ({ many }) => ({
+export const payablesRelations = relations(payables, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [payables.companyId],
+    references: [companies.id],
+  }),
   cashFlowEntries: many(cashFlow),
 }));
 
 export const cashFlowRelations = relations(cashFlow, ({ one }) => ({
+  company: one(companies, {
+    fields: [cashFlow.companyId],
+    references: [companies.id],
+  }),
   receivable: one(receivables, {
     fields: [cashFlow.receivableId],
     references: [receivables.id],

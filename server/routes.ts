@@ -1964,6 +1964,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Companies routes
+  app.get("/api/companies", async (req, res) => {
+    try {
+      const companies = await storage.getCompanies();
+      res.json(companies);
+    } catch (error) {
+      console.error("Get companies error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/companies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const company = await storage.getCompany(id);
+      if (!company) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+      res.json(company);
+    } catch (error) {
+      console.error("Get company error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/companies", async (req, res) => {
+    try {
+      const companyData = insertCompanySchema.parse(req.body);
+      
+      // Convert date strings to Date objects if they exist
+      const processedData = {
+        ...companyData,
+        trialEndDate: companyData.trialEndDate ? companyData.trialEndDate : undefined,
+        subscriptionStartDate: companyData.subscriptionStartDate ? companyData.subscriptionStartDate : undefined,
+        subscriptionEndDate: companyData.subscriptionEndDate ? companyData.subscriptionEndDate : undefined,
+      };
+      
+      // Create company with automatic admin user
+      const result = await storage.createCompanyWithAdmin(processedData);
+      
+      res.status(201).json({
+        company: result.company,
+        adminUser: {
+          id: result.adminUser.id,
+          username: result.adminUser.username,
+          name: result.adminUser.name,
+          email: result.adminUser.email,
+          // Note: Do not return the password in production
+          generatedPassword: `${companyData.name.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10)}123`
+        }
+      });
+    } catch (error) {
+      console.error("Create company error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/companies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const companyData = insertCompanySchema.partial().parse(req.body);
+      
+      // Convert date strings to Date objects if they exist  
+      const processedData = {
+        ...companyData,
+        trialEndDate: companyData.trialEndDate ? companyData.trialEndDate : undefined,
+        subscriptionStartDate: companyData.subscriptionStartDate ? companyData.subscriptionStartDate : undefined,
+        subscriptionEndDate: companyData.subscriptionEndDate ? companyData.subscriptionEndDate : undefined,
+      };
+      
+      const company = await storage.updateCompany(id, processedData);
+      res.json(company);
+    } catch (error) {
+      console.error("Update company error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

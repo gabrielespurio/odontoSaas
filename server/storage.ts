@@ -1,4 +1,5 @@
 import {
+  companies,
   users,
   patients,
   procedures,
@@ -12,6 +13,8 @@ import {
   receivables,
   payables,
   cashFlow,
+  type Company,
+  type InsertCompany,
   type User,
   type InsertUser,
   type Patient,
@@ -43,6 +46,13 @@ import { db } from "./db";
 import { eq, desc, and, or, ilike, sql } from "drizzle-orm";
 
 export interface IStorage {
+  // Companies
+  getCompanies(): Promise<Company[]>;
+  getCompany(id: number): Promise<Company | undefined>;
+  createCompany(company: InsertCompany): Promise<Company>;
+  updateCompany(id: number, company: Partial<InsertCompany>): Promise<Company>;
+  createCompanyWithAdmin(company: InsertCompany): Promise<{ company: Company; adminUser: User }>;
+  
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -144,6 +154,67 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Companies
+  async getCompanies(): Promise<Company[]> {
+    return await db.select().from(companies).orderBy(desc(companies.createdAt));
+  }
+
+  async getCompany(id: number): Promise<Company | undefined> {
+    const [company] = await db.select().from(companies).where(eq(companies.id, id));
+    return company || undefined;
+  }
+
+  async createCompany(company: InsertCompany): Promise<Company> {
+    const [newCompany] = await db.insert(companies).values(company).returning();
+    return newCompany;
+  }
+
+  async updateCompany(id: number, company: Partial<InsertCompany>): Promise<Company> {
+    const [updatedCompany] = await db
+      .update(companies)
+      .set(company)
+      .where(eq(companies.id, id))
+      .returning();
+    return updatedCompany;
+  }
+
+  async createCompanyWithAdmin(company: InsertCompany): Promise<{ company: Company; adminUser: User }> {
+    // Create company first
+    const [newCompany] = await db.insert(companies).values(company).returning();
+    
+    // Create admin profile for this company
+    const [adminProfile] = await db.insert(userProfiles).values({
+      companyId: newCompany.id,
+      name: "Administrador",
+      description: "Perfil administrativo com acesso total ao sistema",
+      modules: ["dashboard", "patients", "appointments", "consultations", "procedures", "financial", "reports", "settings", "companies"],
+      isActive: true,
+    }).returning();
+    
+    // Generate admin username and password based on company
+    const companySlug = company.name.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10);
+    const adminUsername = `admin_${companySlug}`;
+    const adminPassword = `${companySlug}123`;
+    
+    // Hash password
+    const bcrypt = require('bcrypt');
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+    
+    // Create admin user
+    const [adminUser] = await db.insert(users).values({
+      username: adminUsername,
+      password: hashedPassword,
+      name: "Administrador",
+      email: company.email,
+      role: "Administrador",
+      companyId: newCompany.id,
+      isActive: true,
+      forcePasswordChange: true, // Force password change on first login
+      dataScope: "all",
+    }).returning();
+    
+    return { company: newCompany, adminUser };
+  }
   // Users
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
