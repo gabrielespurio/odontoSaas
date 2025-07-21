@@ -6,6 +6,8 @@ export interface User {
   name: string;
   email: string;
   role: string;
+  companyId?: number | null;
+  dataScope?: string;
   forcePasswordChange?: boolean;
 }
 

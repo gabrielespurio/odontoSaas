@@ -247,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const token = jwt.sign(
-        { id: user.id, username: user.username, role: user.role, dataScope: user.dataScope },
+        { id: user.id, username: user.username, role: user.role, companyId: user.companyId, dataScope: user.dataScope },
         JWT_SECRET,
         { expiresIn: '24h' }
       );
@@ -260,6 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: user.name, 
           email: user.email, 
           role: user.role,
+          companyId: user.companyId,
           dataScope: user.dataScope 
         },
         forcePasswordChange: user.forcePasswordChange 
