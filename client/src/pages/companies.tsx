@@ -8,6 +8,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Building2, Plus, Phone, Mail, MapPin, Eye, MoreHorizontal, Edit, Users, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CompanyForm } from "@/components/companies/company-form";
@@ -57,6 +64,8 @@ export default function Companies() {
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const [companyUsers, setCompanyUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -135,6 +144,64 @@ export default function Companies() {
       });
     },
   });
+
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: any) => {
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          ...userData,
+          companyId: selectedCompany?.id,
+          forcePasswordChange: true,
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao criar usuário");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      setIsCreateUserDialogOpen(false);
+      loadCompanyUsers();
+      toast({
+        title: "Usuário criado com sucesso!",
+        description: "O usuário foi adicionado à empresa.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao criar usuário",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const loadCompanyUsers = async () => {
+    if (!selectedCompany) return;
+    
+    setLoadingUsers(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`/api/users?companyId=${selectedCompany.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const users = await response.json();
+        setCompanyUsers(users);
+      }
+    } catch (error) {
+      console.error("Error loading users:", error);
+    }
+    setLoadingUsers(false);
+  };
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Não definido";
@@ -250,20 +317,6 @@ export default function Companies() {
                       <DropdownMenuItem 
                         onClick={async () => {
                           setSelectedCompany(company);
-                          setLoadingUsers(true);
-                          try {
-                            const token = localStorage.getItem("token");
-                            const response = await fetch(`/api/users?companyId=${company.id}`, {
-                              headers: { Authorization: `Bearer ${token}` }
-                            });
-                            if (response.ok) {
-                              const users = await response.json();
-                              setCompanyUsers(users);
-                            }
-                          } catch (error) {
-                            console.error("Error loading users:", error);
-                          }
-                          setLoadingUsers(false);
                           setIsFormDialogOpen(true);
                         }}
                       >
@@ -371,7 +424,7 @@ export default function Companies() {
               />
             </TabsContent>
             
-            <TabsContent value="users" className="mt-6">
+            <TabsContent value="users" className="mt-6" onSelect={() => loadCompanyUsers()}>
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div>
@@ -380,7 +433,7 @@ export default function Companies() {
                       Gerencie os usuários que têm acesso administrativo a esta empresa
                     </p>
                   </div>
-                  <Button>
+                  <Button onClick={() => setIsCreateUserDialogOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     Novo Usuário Admin
                   </Button>
@@ -484,6 +537,174 @@ export default function Companies() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Create User Dialog */}
+      <CreateUserDialog 
+        open={isCreateUserDialogOpen}
+        onOpenChange={setIsCreateUserDialogOpen}
+        onSubmit={(data) => createUserMutation.mutate(data)}
+        isLoading={createUserMutation.isPending}
+        companyName={selectedCompany?.name || ""}
+      />
     </div>
+  );
+}
+
+// User creation form schema
+const createUserSchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório"),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  role: z.string().min(1, "Perfil é obrigatório"),
+  dataScope: z.enum(["all", "own"]).default("all"),
+});
+
+interface CreateUserDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (data: any) => void;
+  isLoading: boolean;
+  companyName: string;
+}
+
+function CreateUserDialog({ open, onOpenChange, onSubmit, isLoading, companyName }: CreateUserDialogProps) {
+  const form = useForm({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "Administrador",
+      dataScope: "all" as "all" | "own",
+    },
+  });
+
+  const handleSubmit = (data: any) => {
+    onSubmit(data);
+    form.reset();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Novo Usuário Administrativo</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Criando usuário para: {companyName}
+          </p>
+        </DialogHeader>
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome Completo</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Digite o nome completo" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="email@exemplo.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Senha Temporária</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Mínimo 6 caracteres" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Perfil</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o perfil" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Administrador">Administrador</SelectItem>
+                      <SelectItem value="Dentista">Dentista</SelectItem>
+                      <SelectItem value="Recepção">Recepção</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="dataScope"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Escopo de Dados</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o escopo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os dados da clínica</SelectItem>
+                      <SelectItem value="own">Apenas seus próprios dados</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-sm text-amber-800">
+                <strong>Nota:</strong> O usuário será forçado a alterar a senha no primeiro login.
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Criando..." : "Criar Usuário"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }

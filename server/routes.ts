@@ -573,7 +573,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/users", async (req, res) => {
+  app.post("/api/users", authenticateToken, async (req, res) => {
     try {
       // Create custom schema for user creation without username field
       const userCreateSchema = z.object({
@@ -583,6 +583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: z.string().min(1), // Changed to accept any string (custom profiles)
         dataScope: z.enum(["all", "own"]).optional().default("all"),
         forcePasswordChange: z.boolean().optional(),
+        companyId: z.number().optional(),
       });
       
       const userData = userCreateSchema.parse(req.body);
@@ -591,12 +592,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate username from email (part before @)
       const username = userData.email.split('@')[0];
       
-      // Create user with forcePasswordChange
+      // Create user with forcePasswordChange and companyId
       const userToCreate = {
         ...userData,
         username,
         password: hashedPassword,
         forcePasswordChange: userData.forcePasswordChange || false,
+        companyId: userData.companyId || null,
       };
       
       const user = await storage.createUser(userToCreate);
@@ -609,6 +611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: user.role,
         isActive: user.isActive,
         dataScope: user.dataScope,
+        companyId: user.companyId,
         forcePasswordChange: user.forcePasswordChange,
         createdAt: user.createdAt,
       });
