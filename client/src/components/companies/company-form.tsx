@@ -251,51 +251,9 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
 
       <Card>
         <CardHeader>
-          <CardTitle>Configurações do Plano</CardTitle>
+          <CardTitle>Configurações da Licença</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="planType">Tipo de Plano</Label>
-              <Select value={planType} onValueChange={(value) => setValue("planType", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o plano" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="basic">Básico</SelectItem>
-                  <SelectItem value="professional">Profissional</SelectItem>
-                  <SelectItem value="enterprise">Empresarial</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="maxUsers">Máximo de Usuários</Label>
-              <Input
-                id="maxUsers"
-                type="number"
-                min="1"
-                {...register("maxUsers", { valueAsNumber: true })}
-                className={errors.maxUsers ? "border-red-500" : ""}
-              />
-              {errors.maxUsers && (
-                <p className="text-sm text-red-500 mt-1">{errors.maxUsers.message}</p>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="maxPatients">Máximo de Pacientes</Label>
-              <Input
-                id="maxPatients"
-                type="number"
-                min="1"
-                {...register("maxPatients", { valueAsNumber: true })}
-                className={errors.maxPatients ? "border-red-500" : ""}
-              />
-              {errors.maxPatients && (
-                <p className="text-sm text-red-500 mt-1">{errors.maxPatients.message}</p>
-              )}
-            </div>
-          </div>
-
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label htmlFor="trialEndDate">Fim do Trial</Label>
