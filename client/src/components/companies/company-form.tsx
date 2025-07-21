@@ -30,6 +30,39 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
   const { toast } = useToast();
   const isEditing = !!company;
 
+  // Formatting functions
+  const formatCNPJ = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    return numbers
+      .replace(/(\d{2})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1/$2')
+      .replace(/(\d{4})(\d)/, '$1-$2')
+      .substring(0, 18);
+  };
+
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 10) {
+      return numbers
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{4})(\d)/, '$1-$2')
+        .substring(0, 14);
+    } else {
+      return numbers
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{5})(\d)/, '$1-$2')
+        .substring(0, 15);
+    }
+  };
+
+  const formatCEP = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    return numbers
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .substring(0, 9);
+  };
+
   const {
     register,
     handleSubmit,
@@ -134,6 +167,10 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
                 {...register("cnpj")}
                 placeholder="00.000.000/0000-00"
                 className={errors.cnpj ? "border-red-500" : ""}
+                onChange={(e) => {
+                  const formatted = formatCNPJ(e.target.value);
+                  setValue("cnpj", formatted);
+                }}
               />
             </div>
             <div>
@@ -143,6 +180,10 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
                 {...register("phone")}
                 placeholder="(11) 99999-9999"
                 className={errors.phone ? "border-red-500" : ""}
+                onChange={(e) => {
+                  const formatted = formatPhone(e.target.value);
+                  setValue("phone", formatted);
+                }}
               />
               {errors.phone && (
                 <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>
@@ -182,6 +223,10 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
                 {...register("responsiblePhone")}
                 placeholder="(11) 99999-9999"
                 className={errors.responsiblePhone ? "border-red-500" : ""}
+                onChange={(e) => {
+                  const formatted = formatPhone(e.target.value);
+                  setValue("responsiblePhone", formatted);
+                }}
               />
               {errors.responsiblePhone && (
                 <p className="text-sm text-red-500 mt-1">{errors.responsiblePhone.message}</p>
@@ -203,6 +248,10 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
                 id="cep"
                 {...register("cep")}
                 placeholder="00000-000"
+                onChange={(e) => {
+                  const formatted = formatCEP(e.target.value);
+                  setValue("cep", formatted);
+                }}
               />
             </div>
             <div>

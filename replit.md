@@ -584,6 +584,14 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Enhanced frontend with dynamic report generation, loading states, and comprehensive data visualization
   - Added CSV export functionality for all report types with formatted data and proper headers
   - Implemented period-based filtering with date range selection for accurate data analysis
+- July 21, 2025. **MIGRATION COMPLETED**: Successfully migrated OdontoSync project from Replit Agent to standard Replit environment
+- July 21, 2025. **COMPANY FORM IMPROVEMENTS**: Enhanced company configuration form with improved UX
+  - Changed "Configurações do Plano" to "Configurações da Licença"
+  - Removed fields: Tipo de Plano, Máximo de Usuários, Máximo de pacientes
+  - Kept only license-related fields: Fim do Trial, Início da Assinatura, Fim da Assinatura
+  - Improved layout with vertical stacking and consistent field sizing
+  - Added input formatting for CNPJ (00.000.000/0000-00), phone numbers ((11) 99999-9999), and CEP (00000-000)
+  - Enhanced user experience with automatic formatting as users type
 
 ## User Preferences
 
