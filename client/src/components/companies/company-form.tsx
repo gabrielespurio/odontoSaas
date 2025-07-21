@@ -63,6 +63,31 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
       .substring(0, 9);
   };
 
+  // ViaCEP API integration
+  const handleCEPChange = async (cep: string) => {
+    const formattedCEP = formatCEP(cep);
+    setValue("cep", formattedCEP);
+    
+    // Remove formatting for API call
+    const numbersOnly = cep.replace(/\D/g, '');
+    
+    if (numbersOnly.length === 8) {
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${numbersOnly}/json/`);
+        const data = await response.json();
+        
+        if (!data.erro) {
+          setValue("street", data.logradouro || "");
+          setValue("neighborhood", data.bairro || "");
+          setValue("city", data.localidade || "");
+          setValue("state", data.uf || "");
+        }
+      } catch (error) {
+        console.error("Erro ao buscar CEP:", error);
+      }
+    }
+  };
+
   const {
     register,
     handleSubmit,
@@ -241,24 +266,14 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
           <CardTitle>Endereço</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="cep">CEP</Label>
               <Input
                 id="cep"
                 {...register("cep")}
                 placeholder="00000-000"
-                onChange={(e) => {
-                  const formatted = formatCEP(e.target.value);
-                  setValue("cep", formatted);
-                }}
-              />
-            </div>
-            <div>
-              <Label htmlFor="city">Cidade</Label>
-              <Input
-                id="city"
-                {...register("city")}
+                onChange={(e) => handleCEPChange(e.target.value)}
               />
             </div>
             <div>
@@ -269,6 +284,15 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
                 placeholder="SP"
               />
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="city">Cidade</Label>
+            <Input
+              id="city"
+              {...register("city")}
+              className="w-full"
+            />
           </div>
 
           <div className="grid grid-cols-4 gap-4">
