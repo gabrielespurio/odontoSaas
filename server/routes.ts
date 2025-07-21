@@ -23,6 +23,7 @@ import {
   insertReceivableSchema,
   insertPayableSchema,
   insertCashFlowSchema,
+  insertCompanySchema,
   users,
   patients,
   appointments,
@@ -35,7 +36,8 @@ import {
   financial,
   receivables,
   payables,
-  cashFlow
+  cashFlow,
+  companies
 } from "@shared/schema";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
@@ -1828,6 +1830,135 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Get current balance error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Companies routes - only accessible to system admin
+  // Check if user is system admin (no companyId)
+  function requireSystemAdmin(req: any, res: any, next: any) {
+    const user = req.user;
+    
+    // Only users with no companyId and admin role can access companies
+    if (!user || user.companyId !== null || user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. System admin required.' });
+    }
+    
+    next();
+  }
+
+  app.get("/api/companies", authenticateToken, requireSystemAdmin, async (req, res) => {
+    try {
+      const companiesList = await db.select().from(companies).orderBy(companies.name);
+      res.json(companiesList);
+    } catch (error) {
+      console.error("Get companies error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/companies/:id", authenticateToken, requireSystemAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const company = await db.select().from(companies).where(eq(companies.id, id)).limit(1);
+      
+      if (company.length === 0) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+      
+      res.json(company[0]);
+    } catch (error) {
+      console.error("Get company error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/companies", authenticateToken, requireSystemAdmin, async (req, res) => {
+    try {
+      const companyData = insertCompanySchema.parse(req.body);
+      
+      // Clean up empty strings to undefined/null for optional fields
+      const cleanedData = {
+        ...companyData,
+        tradeName: companyData.tradeName?.trim() || null,
+        cnpj: companyData.cnpj?.trim() || null,
+        cep: companyData.cep?.trim() || null,
+        street: companyData.street?.trim() || null,
+        number: companyData.number?.trim() || null,
+        neighborhood: companyData.neighborhood?.trim() || null,
+        city: companyData.city?.trim() || null,
+        state: companyData.state?.trim() || null,
+        trialEndDate: companyData.trialEndDate ? new Date(companyData.trialEndDate) : null,
+        subscriptionStartDate: companyData.subscriptionStartDate ? new Date(companyData.subscriptionStartDate) : null,
+        subscriptionEndDate: companyData.subscriptionEndDate ? new Date(companyData.subscriptionEndDate) : null,
+      };
+      
+      const company = await db.insert(companies).values(cleanedData).returning();
+      res.json(company[0]);
+    } catch (error) {
+      console.error("Create company error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/companies/:id", authenticateToken, requireSystemAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const companyData = insertCompanySchema.partial().parse(req.body);
+      
+      // Clean up empty strings to undefined/null for optional fields
+      const cleanedData = {
+        ...companyData,
+        tradeName: companyData.tradeName?.trim() || null,
+        cnpj: companyData.cnpj?.trim() || null,
+        cep: companyData.cep?.trim() || null,
+        street: companyData.street?.trim() || null,
+        number: companyData.number?.trim() || null,
+        neighborhood: companyData.neighborhood?.trim() || null,
+        city: companyData.city?.trim() || null,
+        state: companyData.state?.trim() || null,
+        trialEndDate: companyData.trialEndDate ? new Date(companyData.trialEndDate) : null,
+        subscriptionStartDate: companyData.subscriptionStartDate ? new Date(companyData.subscriptionStartDate) : null,
+        subscriptionEndDate: companyData.subscriptionEndDate ? new Date(companyData.subscriptionEndDate) : null,
+        updatedAt: new Date(),
+      };
+      
+      const company = await db.update(companies).set(cleanedData).where(eq(companies.id, id)).returning();
+      
+      if (company.length === 0) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+      
+      res.json(company[0]);
+    } catch (error) {
+      console.error("Update company error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/companies/:id", authenticateToken, requireSystemAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Check if company has associated users or patients
+      const usersCount = await db.select({ count: sql`count(*)` }).from(users).where(eq(users.companyId, id));
+      const patientsCount = await db.select({ count: sql`count(*)` }).from(patients).where(eq(patients.companyId, id));
+      
+      if (parseInt(usersCount[0].count as string) > 0 || parseInt(patientsCount[0].count as string) > 0) {
+        return res.status(400).json({ 
+          message: "Cannot delete company with associated users or patients. Please transfer or remove them first." 
+        });
+      }
+      
+      const result = await db.delete(companies).where(eq(companies.id, id)).returning();
+      
+      if (result.length === 0) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+      
+      res.json({ message: "Company deleted successfully" });
+    } catch (error) {
+      console.error("Delete company error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

@@ -18,6 +18,11 @@ export function usePermissions() {
   const hasAccess = (module: string): boolean => {
     if (!user) return false;
     
+    // Companies module is only for system admin (admin@odontosync.com)
+    if (module === "companies") {
+      return user.role === "admin" && user.email === "admin@odontosync.com";
+    }
+    
     // Admin role has access to everything (backward compatibility)
     if (user.role === "admin") return true;
     

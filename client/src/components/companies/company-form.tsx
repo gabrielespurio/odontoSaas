@@ -1,0 +1,319 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+// import { Textarea } from "@/components/ui/textarea"; // Not used in this component
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { insertCompanySchema, type Company } from "@shared/schema";
+
+const formSchema = insertCompanySchema.extend({
+  maxUsers: z.number().min(1, "Deve ter pelo menos 1 usuário"),
+  maxPatients: z.number().min(1, "Deve ter pelo menos 1 paciente"),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+interface CompanyFormProps {
+  company?: Company | null;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFormProps) {
+  const { toast } = useToast();
+  const isEditing = !!company;
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: company?.name || "",
+      tradeName: company?.tradeName || "",
+      cnpj: company?.cnpj || "",
+      email: company?.email || "",
+      phone: company?.phone || "",
+      cep: company?.cep || "",
+      street: company?.street || "",
+      number: company?.number || "",
+      neighborhood: company?.neighborhood || "",
+      city: company?.city || "",
+      state: company?.state || "",
+      planType: company?.planType || "basic",
+      maxUsers: company?.maxUsers || 5,
+      maxPatients: company?.maxPatients || 500,
+      isActive: company?.isActive ?? true,
+      trialEndDate: company?.trialEndDate || "",
+      subscriptionStartDate: company?.subscriptionStartDate || "",
+      subscriptionEndDate: company?.subscriptionEndDate || "",
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      const url = isEditing ? `/api/companies/${company.id}` : '/api/companies';
+      const method = isEditing ? 'PUT' : 'POST';
+      
+      return apiRequest(url, {
+        method,
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: isEditing ? "Empresa atualizada" : "Empresa criada",
+        description: `A empresa foi ${isEditing ? 'atualizada' : 'criada'} com sucesso.`,
+      });
+      onSuccess();
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: `Erro ao ${isEditing ? 'atualizar' : 'criar'} empresa`,
+        description: error.message || "Ocorreu um erro inesperado.",
+      });
+    },
+  });
+
+  const onSubmit = (data: FormData) => {
+    mutation.mutate(data);
+  };
+
+  const planType = watch("planType");
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Informações Básicas</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name">Nome da Empresa *</Label>
+              <Input
+                id="name"
+                {...register("name")}
+                className={errors.name ? "border-red-500" : ""}
+              />
+              {errors.name && (
+                <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="tradeName">Nome Fantasia</Label>
+              <Input
+                id="tradeName"
+                {...register("tradeName")}
+                className={errors.tradeName ? "border-red-500" : ""}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="cnpj">CNPJ</Label>
+              <Input
+                id="cnpj"
+                {...register("cnpj")}
+                placeholder="00.000.000/0000-00"
+                className={errors.cnpj ? "border-red-500" : ""}
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone">Telefone *</Label>
+              <Input
+                id="phone"
+                {...register("phone")}
+                placeholder="(11) 99999-9999"
+                className={errors.phone ? "border-red-500" : ""}
+              />
+              {errors.phone && (
+                <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              type="email"
+              {...register("email")}
+              className={errors.email ? "border-red-500" : ""}
+            />
+            {errors.email && (
+              <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Endereço</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="cep">CEP</Label>
+              <Input
+                id="cep"
+                {...register("cep")}
+                placeholder="00000-000"
+              />
+            </div>
+            <div>
+              <Label htmlFor="city">Cidade</Label>
+              <Input
+                id="city"
+                {...register("city")}
+              />
+            </div>
+            <div>
+              <Label htmlFor="state">Estado</Label>
+              <Input
+                id="state"
+                {...register("state")}
+                placeholder="SP"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-4 gap-4">
+            <div className="col-span-3">
+              <Label htmlFor="street">Rua</Label>
+              <Input
+                id="street"
+                {...register("street")}
+              />
+            </div>
+            <div>
+              <Label htmlFor="number">Número</Label>
+              <Input
+                id="number"
+                {...register("number")}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="neighborhood">Bairro</Label>
+            <Input
+              id="neighborhood"
+              {...register("neighborhood")}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Configurações do Plano</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="planType">Tipo de Plano</Label>
+              <Select value={planType} onValueChange={(value) => setValue("planType", value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o plano" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="basic">Básico</SelectItem>
+                  <SelectItem value="professional">Profissional</SelectItem>
+                  <SelectItem value="enterprise">Empresarial</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="maxUsers">Máximo de Usuários</Label>
+              <Input
+                id="maxUsers"
+                type="number"
+                min="1"
+                {...register("maxUsers", { valueAsNumber: true })}
+                className={errors.maxUsers ? "border-red-500" : ""}
+              />
+              {errors.maxUsers && (
+                <p className="text-sm text-red-500 mt-1">{errors.maxUsers.message}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="maxPatients">Máximo de Pacientes</Label>
+              <Input
+                id="maxPatients"
+                type="number"
+                min="1"
+                {...register("maxPatients", { valueAsNumber: true })}
+                className={errors.maxPatients ? "border-red-500" : ""}
+              />
+              {errors.maxPatients && (
+                <p className="text-sm text-red-500 mt-1">{errors.maxPatients.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="trialEndDate">Fim do Trial</Label>
+              <Input
+                id="trialEndDate"
+                type="date"
+                {...register("trialEndDate")}
+              />
+            </div>
+            <div>
+              <Label htmlFor="subscriptionStartDate">Início da Assinatura</Label>
+              <Input
+                id="subscriptionStartDate"
+                type="date"
+                {...register("subscriptionStartDate")}
+              />
+            </div>
+            <div>
+              <Label htmlFor="subscriptionEndDate">Fim da Assinatura</Label>
+              <Input
+                id="subscriptionEndDate"
+                type="date"
+                {...register("subscriptionEndDate")}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="isActive"
+              checked={watch("isActive")}
+              onCheckedChange={(checked) => setValue("isActive", checked)}
+            />
+            <Label htmlFor="isActive">Empresa ativa</Label>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end space-x-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? "Salvando..." : isEditing ? "Atualizar" : "Criar"}
+        </Button>
+      </div>
+    </form>
+  );
+}

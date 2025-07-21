@@ -22,6 +22,7 @@ import FinancialPayables from "@/pages/financial-payables";
 import FinancialCashFlow from "@/pages/financial-cashflow";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
+import Companies from "@/pages/companies";
 import MainLayout from "@/components/layout/main-layout";
 import ProtectedRoute from "@/components/protected-route";
 import NotFound from "@/pages/not-found";
@@ -78,6 +79,7 @@ function Router() {
         <Route path="/financial/cashflow" component={() => <ProtectedRoute module="financial"><FinancialCashFlow /></ProtectedRoute>} />
         <Route path="/reports" component={() => <ProtectedRoute module="reports"><Reports /></ProtectedRoute>} />
         <Route path="/settings" component={() => <ProtectedRoute module="settings"><Settings /></ProtectedRoute>} />
+        <Route path="/companies" component={() => <ProtectedRoute module="companies"><Companies /></ProtectedRoute>} />
         <Route component={NotFound} />
       </Switch>
     </MainLayout>

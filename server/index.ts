@@ -4,6 +4,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeScheduler } from "./scheduler";
+import { runSaasMigration } from "./migrations/saas-migration";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
 
@@ -48,6 +49,9 @@ app.use((req, res, next) => {
     await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS dentist_id INTEGER`);
     await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS created_by INTEGER`);
     console.log("Database migrations applied successfully");
+    
+    // Run SaaS migration
+    await runSaasMigration();
   } catch (error) {
     console.error("Migration error:", error);
   }

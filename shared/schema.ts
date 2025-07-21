@@ -24,6 +24,34 @@ export const paymentMethodEnum = pgEnum("payment_method", ["cash", "credit_card"
 export const expenseCategoryEnum = pgEnum("expense_category", ["rent", "salaries", "materials", "equipment", "utilities", "marketing", "other"]);
 export const toothConditionEnum = pgEnum("tooth_condition", ["healthy", "carie", "restoration", "extraction", "planned_treatment", "completed_treatment"]);
 
+// Companies table for SaaS multi-tenancy
+export const companies = pgTable("companies", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  tradeName: text("trade_name"), // Nome fantasia
+  cnpj: text("cnpj").unique(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  // Address fields
+  cep: text("cep"),
+  street: text("street"),
+  number: text("number"),
+  neighborhood: text("neighborhood"),
+  city: text("city"),
+  state: text("state"),
+  // Plan and billing
+  planType: text("plan_type").notNull().default("basic"), // basic, professional, enterprise
+  maxUsers: integer("max_users").notNull().default(5),
+  maxPatients: integer("max_patients").notNull().default(500),
+  isActive: boolean("is_active").notNull().default(true),
+  // Dates
+  trialEndDate: date("trial_end_date"),
+  subscriptionStartDate: date("subscription_start_date"),
+  subscriptionEndDate: date("subscription_end_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -32,6 +60,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   role: text("role").notNull().default("dentist"), // Changed to text to support custom profiles
+  companyId: integer("company_id"), // Null for system admin, FK for company users
   isActive: boolean("is_active").notNull().default(true),
   forcePasswordChange: boolean("force_password_change").notNull().default(false),
   dataScope: text("data_scope").notNull().default("all"), // "all" or "own" - defines if user can see all clinic data or only own data
@@ -41,6 +70,7 @@ export const users = pgTable("users", {
 // Patients table
 export const patients = pgTable("patients", {
   id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(), // FK to companies table
   name: text("name").notNull(),
   cpf: text("cpf").notNull().unique(),
   birthDate: date("birth_date").notNull(),
@@ -216,12 +246,25 @@ export const financial = pgTable("financial", {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const companiesRelations = relations(companies, ({ many }) => ({
+  users: many(users),
+  patients: many(patients),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [users.companyId],
+    references: [companies.id],
+  }),
   appointments: many(appointments),
   consultations: many(consultations),
 }));
 
-export const patientsRelations = relations(patients, ({ many }) => ({
+export const patientsRelations = relations(patients, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [patients.companyId],
+    references: [companies.id],
+  }),
   appointments: many(appointments),
   consultations: many(consultations),
   dentalChart: many(dentalChart),
@@ -434,7 +477,20 @@ export const insertCashFlowSchema = createInsertSchema(cashFlow).omit({
   createdAt: true,
 });
 
+export const insertCompanySchema = createInsertSchema(companies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  cnpj: z.string().optional(),
+  trialEndDate: z.string().optional(),
+  subscriptionStartDate: z.string().optional(),
+  subscriptionEndDate: z.string().optional(),
+});
+
 // Types
+export type Company = typeof companies.$inferSelect;
+export type InsertCompany = z.infer<typeof insertCompanySchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Patient = typeof patients.$inferSelect;

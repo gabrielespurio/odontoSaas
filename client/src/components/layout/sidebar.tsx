@@ -14,7 +14,8 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
-  X
+  X,
+  Building2
 } from "lucide-react";
 import odontoSyncLogo from "@assets/ChatGPT_Image_10_de_jul._de_2025__12_09_27-removebg-preview_1752160369330.png";
 
@@ -37,6 +38,7 @@ const navigation = [
   },
   { name: "Relatórios", href: "/reports", icon: FileText, module: "reports" },
   { name: "Configurações", href: "/settings", icon: Settings, module: "settings" },
+  { name: "Empresas", href: "/companies", icon: Building2, module: "companies" },
 ];
 
 interface SidebarProps {
