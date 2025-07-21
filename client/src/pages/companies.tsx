@@ -63,10 +63,21 @@ export default function Companies() {
 
   const createCompanyMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("/api/companies", {
+      const response = await fetch("/api/companies", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
         body: JSON.stringify(data),
       });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao criar empresa");
+      }
+      
+      return response.json();
     },
     onSuccess: (data: CompanyWithAdmin) => {
       queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
