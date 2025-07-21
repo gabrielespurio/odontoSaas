@@ -231,8 +231,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = req.body;
       
-      // Try to find user by email first, fallback to username for existing users
-      let user = await storage.getUserByEmail ? await storage.getUserByEmail(email) : null;
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+      
+      // Find user by email
+      let user = await storage.getUserByEmail(email);
+      
+      // If not found by email, try username for backward compatibility
       if (!user) {
         user = await storage.getUserByUsername(email);
       }
@@ -242,6 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const isValidPassword = await bcrypt.compare(password, user.password);
+      
       if (!isValidPassword) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -1875,9 +1882,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/companies", async (req, res) => {
+  app.post("/api/companies", authenticateToken, async (req, res) => {
     try {
-      console.log("Received company data:", req.body);
       const companyData = insertCompanySchema.parse(req.body);
       
       // Clean up empty strings to undefined/null for optional fields
@@ -1896,7 +1902,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionEndDate: companyData.subscriptionEndDate ? companyData.subscriptionEndDate : null,
       };
       
-      console.log("Cleaned company data:", cleanedData);
       const [company] = await db.insert(companies).values(cleanedData).returning();
       res.json(company);
     } catch (error) {
