@@ -253,41 +253,55 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
         <CardHeader>
           <CardTitle>Configurações da Licença</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="trialEndDate">Fim do Trial</Label>
+        <CardContent className="space-y-8 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="space-y-3">
+              <Label htmlFor="trialEndDate" className="text-sm font-medium">
+                Fim do Trial
+              </Label>
               <Input
                 id="trialEndDate"
                 type="date"
                 {...register("trialEndDate")}
+                className="h-12 text-base"
+                placeholder="dd/mm/aaaa"
               />
             </div>
-            <div>
-              <Label htmlFor="subscriptionStartDate">Início da Assinatura</Label>
+            <div className="space-y-3">
+              <Label htmlFor="subscriptionStartDate" className="text-sm font-medium">
+                Início da Assinatura
+              </Label>
               <Input
                 id="subscriptionStartDate"
                 type="date"
                 {...register("subscriptionStartDate")}
+                className="h-12 text-base"
+                placeholder="dd/mm/aaaa"
               />
             </div>
-            <div>
-              <Label htmlFor="subscriptionEndDate">Fim da Assinatura</Label>
+            <div className="space-y-3">
+              <Label htmlFor="subscriptionEndDate" className="text-sm font-medium">
+                Fim da Assinatura
+              </Label>
               <Input
                 id="subscriptionEndDate"
                 type="date"
                 {...register("subscriptionEndDate")}
+                className="h-12 text-base"
+                placeholder="dd/mm/aaaa"
               />
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3 pt-4">
             <Switch
               id="isActive"
               checked={watch("isActive")}
               onCheckedChange={(checked) => setValue("isActive", checked)}
             />
-            <Label htmlFor="isActive">Empresa ativa</Label>
+            <Label htmlFor="isActive" className="text-sm font-medium">
+              Empresa ativa
+            </Label>
           </div>
         </CardContent>
       </Card>
