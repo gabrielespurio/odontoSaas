@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Building2, Plus, Phone, Mail, MapPin, Eye } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Building2, Plus, Phone, Mail, MapPin, Eye, MoreHorizontal, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CompanyForm } from "@/components/companies/company-form";
 import { format } from "date-fns";
@@ -49,6 +51,7 @@ export default function Companies() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [createdAdmin, setCreatedAdmin] = useState<CompanyWithAdmin | null>(null);
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -156,58 +159,73 @@ export default function Companies() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {companies.map((company: Company) => (
-          <Card key={company.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="space-y-2">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-2">
-                  <Building2 className="h-5 w-5 text-muted-foreground" />
-                  <CardTitle className="text-lg">{company.name}</CardTitle>
-                </div>
-                {getStatusBadge(company)}
-              </div>
-              {company.tradeName && (
-                <p className="text-sm text-muted-foreground">{company.tradeName}</p>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span>{company.email}</span>
-                </div>
-                <div className="flex items-center space-x-2 text-sm">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{company.phone}</span>
-                </div>
-                {company.city && company.state && (
-                  <div className="flex items-center space-x-2 text-sm">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{company.city}, {company.state}</span>
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Telefone</TableHead>
+              <TableHead>Responsável</TableHead>
+              <TableHead>Cidade</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-[100px]">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {companies.map((company: Company) => (
+              <TableRow key={company.id}>
+                <TableCell className="font-medium">
+                  <div>
+                    <div className="font-semibold">{company.name}</div>
+                    {company.tradeName && (
+                      <div className="text-sm text-muted-foreground">{company.tradeName}</div>
+                    )}
                   </div>
-                )}
-              </div>
-
-
-
-              <div className="flex justify-end pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedCompany(company);
-                    setIsViewDialogOpen(true);
-                  }}
-                >
-                  <Eye className="mr-2 h-4 w-4" />
-                  Ver Detalhes
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                </TableCell>
+                <TableCell>{company.email}</TableCell>
+                <TableCell>{company.phone}</TableCell>
+                <TableCell>{company.responsibleName}</TableCell>
+                <TableCell>
+                  {company.city && company.state ? `${company.city}, ${company.state}` : "-"}
+                </TableCell>
+                <TableCell>
+                  {getStatusBadge(company)}
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem 
+                        onClick={() => {
+                          setSelectedCompany(company);
+                          setIsViewDialogOpen(true);
+                        }}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        Ver Detalhes
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => {
+                          setSelectedCompany(company);
+                          setIsFormDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
 
       {/* Company Details Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
@@ -267,6 +285,24 @@ export default function Companies() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Company Dialog */}
+      <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Empresa</DialogTitle>
+          </DialogHeader>
+          <CompanyForm 
+            company={selectedCompany}
+            onSubmit={(data) => {
+              // TODO: Implement update mutation
+              console.log("Update company:", data);
+              setIsFormDialogOpen(false);
+            }}
+            isLoading={false}
+          />
         </DialogContent>
       </Dialog>
 
