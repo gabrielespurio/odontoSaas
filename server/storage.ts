@@ -43,7 +43,7 @@ import {
   type InsertCashFlow,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, ilike, sql, ne, notEq, gte, lte, like, lt, gt, isNull, asc } from "drizzle-orm";
+import { eq, desc, and, or, ilike, sql, ne, not, gte, lte, like, lt, gt, isNull, asc } from "drizzle-orm";
 
 export interface IStorage {
   // Companies
@@ -55,7 +55,7 @@ export interface IStorage {
   
   // Users
   getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+
   getUserByEmail?(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User>;
@@ -191,9 +191,8 @@ export class DatabaseStorage implements IStorage {
       isActive: true,
     }).returning();
     
-    // Generate admin username and password based on company
+    // Generate admin password based on company
     const companySlug = company.name.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10);
-    const adminUsername = `admin_${companySlug}`;
     const adminPassword = `${companySlug}123`;
     
     // Hash password
@@ -202,7 +201,6 @@ export class DatabaseStorage implements IStorage {
     
     // Create admin user
     const [adminUser] = await db.insert(users).values({
-      username: adminUsername,
       password: hashedPassword,
       name: "Administrador",
       email: company.email,
@@ -213,7 +211,13 @@ export class DatabaseStorage implements IStorage {
       dataScope: "all",
     }).returning();
     
-    return { company: newCompany, adminUser };
+    return { 
+      company: newCompany, 
+      adminUser: {
+        ...adminUser,
+        generatedPassword: adminPassword // Add generated password for display
+      }
+    };
   }
   // Users
   async getUser(id: number): Promise<User | undefined> {
@@ -221,10 +225,7 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
-  }
+
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));

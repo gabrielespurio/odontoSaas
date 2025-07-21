@@ -238,11 +238,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Find user by email
       let user = await storage.getUserByEmail(email);
       
-      // If not found by email, try username for backward compatibility
-      if (!user) {
-        user = await storage.getUserByUsername(email);
-      }
-      
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -254,7 +249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const token = jwt.sign(
-        { id: user.id, username: user.username, role: user.role, companyId: user.companyId, dataScope: user.dataScope },
+        { id: user.id, email: user.email, role: user.role, companyId: user.companyId, dataScope: user.dataScope },
         JWT_SECRET,
         { expiresIn: '24h' }
       );
@@ -263,7 +258,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         token, 
         user: { 
           id: user.id, 
-          username: user.username, 
           name: user.name, 
           email: user.email, 
           role: user.role,
@@ -549,7 +543,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let query = db.select({
         id: users.id,
-        username: users.username,
         name: users.name,
         email: users.email,
         role: users.role,
@@ -589,13 +582,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = userCreateSchema.parse(req.body);
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       
-      // Generate username from email (part before @)
-      const username = userData.email.split('@')[0];
-      
       // Create user with forcePasswordChange and companyId
       const userToCreate = {
         ...userData,
-        username,
         password: hashedPassword,
         forcePasswordChange: userData.forcePasswordChange || false,
         companyId: userData.companyId || null,
@@ -605,7 +594,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({
         id: user.id,
-        username: user.username,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -634,7 +622,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.updateUser(id, updateData);
       res.json({
         id: user.id,
-        username: user.username,
         name: user.name,
         email: user.email,
         role: user.role,

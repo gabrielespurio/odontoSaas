@@ -514,9 +514,9 @@ export default function Companies() {
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <h3 className="font-semibold text-green-800 mb-2">Usuário Admin Criado</h3>
                 <div className="space-y-2 text-sm">
-                  <p><strong>Usuário:</strong> {createdAdmin.adminUser.username}</p>
-                  <p><strong>Senha Temporária:</strong> {createdAdmin.adminUser.generatedPassword}</p>
+                  <p><strong>Nome:</strong> {createdAdmin.adminUser.name}</p>
                   <p><strong>Email:</strong> {createdAdmin.adminUser.email}</p>
+                  <p><strong>Senha Temporária:</strong> {createdAdmin.adminUser.generatedPassword}</p>
                 </div>
               </div>
               
