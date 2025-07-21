@@ -20,11 +20,11 @@ export function usePermissions() {
     
     // Companies module is only for system admin (admin role with null company_id)
     if (module === "companies") {
-      return user.role === "admin" && user.companyId === null;
+      return (user.role === "admin" || user.role === "Administrador") && user.companyId === null;
     }
     
     // Admin role has access to everything (backward compatibility)
-    if (user.role === "admin") return true;
+    if (user.role === "admin" || user.role === "Administrador") return true;
     
     // If no profile found, use default permissions for legacy roles
     if (!userProfile) {
@@ -41,8 +41,8 @@ export function usePermissions() {
     if (!user) return [];
     
     // Admin has access to everything
-    if (user.role === "admin") {
-      return ["dashboard", "patients", "schedule", "consultations", "procedures", "financial", "reports", "settings"];
+    if (user.role === "admin" || user.role === "Administrador") {
+      return ["dashboard", "patients", "schedule", "consultations", "procedures", "financial", "reports", "settings", "companies"];
     }
     
     // If no profile found, use default permissions
@@ -57,7 +57,8 @@ export function usePermissions() {
   const getLegacyPermissions = (role: string): string[] => {
     switch (role) {
       case "admin":
-        return ["dashboard", "patients", "schedule", "consultations", "procedures", "financial", "reports", "settings"];
+      case "Administrador":
+        return ["dashboard", "patients", "schedule", "consultations", "procedures", "financial", "reports", "settings", "companies"];
       case "dentist":
         return ["dashboard", "patients", "schedule", "consultations", "procedures", "reports"];
       case "reception":
