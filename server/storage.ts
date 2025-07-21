@@ -43,7 +43,7 @@ import {
   type InsertCashFlow,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, ilike, sql } from "drizzle-orm";
+import { eq, desc, and, or, ilike, sql, ne, notEq, gte, lte, like, lt, gt, isNull, asc } from "drizzle-orm";
 
 export interface IStorage {
   // Companies
@@ -379,6 +379,7 @@ export class DatabaseStorage implements IStorage {
 
     let query = db.select({
       id: appointments.id,
+      companyId: appointments.companyId,
       patientId: appointments.patientId,
       dentistId: appointments.dentistId,
       procedureId: appointments.procedureId,
@@ -429,6 +430,7 @@ export class DatabaseStorage implements IStorage {
       // Fetch the complete appointment with related data
       const completeAppointment = await tx.select({
         id: appointments.id,
+        companyId: appointments.companyId,
         patientId: appointments.patientId,
         dentistId: appointments.dentistId,
         procedureId: appointments.procedureId,

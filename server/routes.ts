@@ -1202,11 +1202,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (!conflictingAppointment) {
               // Criar o agendamento
               const appointmentData = {
+                companyId: 1, // Temporary fix - should get from user context
                 patientId: consultationData.patientId,
                 dentistId: consultationData.dentistId,
                 procedureId: procedure.id,
                 scheduledDate: currentDateTime,
-                status: "confirmed" as const,
+                status: "agendado" as const,
                 notes: `Agendamento criado automaticamente pela consulta #${consultation.id}`
               };
               
@@ -1876,6 +1877,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/companies", authenticateToken, requireSystemAdmin, async (req, res) => {
     try {
+      console.log("Received company data:", req.body);
       const companyData = insertCompanySchema.parse(req.body);
       
       // Clean up empty strings to undefined/null for optional fields
@@ -1889,16 +1891,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         neighborhood: companyData.neighborhood?.trim() || null,
         city: companyData.city?.trim() || null,
         state: companyData.state?.trim() || null,
-        trialEndDate: companyData.trialEndDate ? new Date(companyData.trialEndDate) : null,
-        subscriptionStartDate: companyData.subscriptionStartDate ? new Date(companyData.subscriptionStartDate) : null,
-        subscriptionEndDate: companyData.subscriptionEndDate ? new Date(companyData.subscriptionEndDate) : null,
+        trialEndDate: companyData.trialEndDate ? companyData.trialEndDate : null,
+        subscriptionStartDate: companyData.subscriptionStartDate ? companyData.subscriptionStartDate : null,
+        subscriptionEndDate: companyData.subscriptionEndDate ? companyData.subscriptionEndDate : null,
       };
       
-      const company = await db.insert(companies).values(cleanedData).returning();
-      res.json(company[0]);
+      console.log("Cleaned company data:", cleanedData);
+      const [company] = await db.insert(companies).values(cleanedData).returning();
+      res.json(company);
     } catch (error) {
       console.error("Create company error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Internal server error", details: error.message });
     }
   });
 
