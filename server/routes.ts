@@ -1841,7 +1841,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const user = req.user;
     
     // Only users with no companyId and admin role can access companies
-    if (!user || user.companyId !== null || user.role !== 'admin') {
+    if (!user || user.companyId !== null || (user.role !== 'admin' && user.role !== 'Administrador')) {
       return res.status(403).json({ message: 'Access denied. System admin required.' });
     }
     
