@@ -253,42 +253,39 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
         <CardHeader>
           <CardTitle>Configurações da Licença</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-8 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="space-y-3">
-              <Label htmlFor="trialEndDate" className="text-sm font-medium">
+        <CardContent className="space-y-6 p-6">
+          <div className="grid grid-cols-3 gap-6">
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="trialEndDate" className="text-sm font-medium text-gray-700">
                 Fim do Trial
               </Label>
               <Input
                 id="trialEndDate"
                 type="date"
                 {...register("trialEndDate")}
-                className="h-12 text-base"
-                placeholder="dd/mm/aaaa"
+                className="h-11 w-full"
               />
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="subscriptionStartDate" className="text-sm font-medium">
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="subscriptionStartDate" className="text-sm font-medium text-gray-700">
                 Início da Assinatura
               </Label>
               <Input
                 id="subscriptionStartDate"
                 type="date"
                 {...register("subscriptionStartDate")}
-                className="h-12 text-base"
-                placeholder="dd/mm/aaaa"
+                className="h-11 w-full"
               />
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="subscriptionEndDate" className="text-sm font-medium">
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="subscriptionEndDate" className="text-sm font-medium text-gray-700">
                 Fim da Assinatura
               </Label>
               <Input
                 id="subscriptionEndDate"
                 type="date"
                 {...register("subscriptionEndDate")}
-                className="h-12 text-base"
-                placeholder="dd/mm/aaaa"
+                className="h-11 w-full"
               />
             </div>
           </div>
