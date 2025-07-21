@@ -32,6 +32,9 @@ export const companies = pgTable("companies", {
   cnpj: text("cnpj").unique(),
   email: text("email").notNull(),
   phone: text("phone").notNull(),
+  // Responsible person information
+  responsibleName: text("responsible_name").notNull(),
+  responsiblePhone: text("responsible_phone").notNull(),
   // Address fields
   cep: text("cep"),
   street: text("street"),

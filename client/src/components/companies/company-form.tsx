@@ -44,6 +44,8 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
       cnpj: company?.cnpj || "",
       email: company?.email || "",
       phone: company?.phone || "",
+      responsibleName: company?.responsibleName || "",
+      responsiblePhone: company?.responsiblePhone || "",
       cep: company?.cep || "",
       street: company?.street || "",
       number: company?.number || "",
@@ -159,6 +161,32 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
             {errors.email && (
               <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
             )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="responsibleName">Nome do Responsável *</Label>
+              <Input
+                id="responsibleName"
+                {...register("responsibleName")}
+                className={errors.responsibleName ? "border-red-500" : ""}
+              />
+              {errors.responsibleName && (
+                <p className="text-sm text-red-500 mt-1">{errors.responsibleName.message}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="responsiblePhone">Telefone do Responsável *</Label>
+              <Input
+                id="responsiblePhone"
+                {...register("responsiblePhone")}
+                placeholder="(11) 99999-9999"
+                className={errors.responsiblePhone ? "border-red-500" : ""}
+              />
+              {errors.responsiblePhone && (
+                <p className="text-sm text-red-500 mt-1">{errors.responsiblePhone.message}</p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
