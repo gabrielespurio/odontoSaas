@@ -254,8 +254,8 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
           <CardTitle>Configurações da Licença</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6 p-6">
-          <div className="grid grid-cols-3 gap-6">
-            <div className="flex flex-col space-y-2">
+          <div className="space-y-6 max-w-md">
+            <div className="space-y-2">
               <Label htmlFor="trialEndDate" className="text-sm font-medium text-gray-700">
                 Fim do Trial
               </Label>
@@ -263,10 +263,10 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
                 id="trialEndDate"
                 type="date"
                 {...register("trialEndDate")}
-                className="h-11 w-full"
+                className="h-12 w-full text-base"
               />
             </div>
-            <div className="flex flex-col space-y-2">
+            <div className="space-y-2">
               <Label htmlFor="subscriptionStartDate" className="text-sm font-medium text-gray-700">
                 Início da Assinatura
               </Label>
@@ -274,10 +274,10 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
                 id="subscriptionStartDate"
                 type="date"
                 {...register("subscriptionStartDate")}
-                className="h-11 w-full"
+                className="h-12 w-full text-base"
               />
             </div>
-            <div className="flex flex-col space-y-2">
+            <div className="space-y-2">
               <Label htmlFor="subscriptionEndDate" className="text-sm font-medium text-gray-700">
                 Fim da Assinatura
               </Label>
@@ -285,7 +285,7 @@ export default function CompanyForm({ company, onSuccess, onCancel }: CompanyFor
                 id="subscriptionEndDate"
                 type="date"
                 {...register("subscriptionEndDate")}
-                className="h-11 w-full"
+                className="h-12 w-full text-base"
               />
             </div>
           </div>
