@@ -1736,11 +1736,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("No additionalQuestions in request, preserving existing:", JSON.stringify(additionalQuestions, null, 2));
       }
       
+      // DEBUG: Log before preparing final data
+      console.log("About to prepare final data. additionalQuestions value:", JSON.stringify(additionalQuestions, null, 2));
+      
       // Prepare data for database (only include fields that are actually being updated)
       const finalData: any = {
         companyId: user.companyId,
         additionalQuestions: additionalQuestions
       };
+      
+      // DEBUG: Log immediately after creating finalData
+      console.log("finalData immediately after creation:", JSON.stringify(finalData, null, 2));
       
       // Only include fields that are explicitly provided
       if (anamneseData.patientId !== undefined) finalData.patientId = anamneseData.patientId;
