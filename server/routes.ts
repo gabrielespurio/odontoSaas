@@ -587,11 +587,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create user with username, forcePasswordChange and companyId
       const userToCreate = {
-        ...userData,
         username: username,
+        name: userData.name,
+        email: userData.email,
         password: hashedPassword,
+        role: userData.role,
+        dataScope: userData.dataScope,
         forcePasswordChange: userData.forcePasswordChange || false,
         companyId: userData.companyId || null,
+        isActive: true,
       };
       
       const user = await storage.createUser(userToCreate);
