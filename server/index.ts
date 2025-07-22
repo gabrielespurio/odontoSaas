@@ -54,6 +54,36 @@ app.use((req, res, next) => {
     await db.execute(sql`ALTER TABLE companies DROP COLUMN IF EXISTS max_users`);  
     await db.execute(sql`ALTER TABLE companies DROP COLUMN IF EXISTS max_patients`);
     
+    // Fix procedure categories constraint issue
+    try {
+      // Remove the existing unique constraint on name only if it exists
+      await db.execute(sql`
+        DO $$ 
+        BEGIN
+          IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'procedure_categories_name_unique') THEN
+            ALTER TABLE procedure_categories DROP CONSTRAINT procedure_categories_name_unique;
+          END IF;
+        EXCEPTION
+          WHEN others THEN NULL;
+        END $$;
+      `);
+      
+      // Add a new unique constraint on (name, company_id) if it doesn't exist
+      await db.execute(sql`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'procedure_categories_name_company_unique') THEN
+            ALTER TABLE procedure_categories ADD CONSTRAINT procedure_categories_name_company_unique UNIQUE (name, company_id);
+          END IF;
+        EXCEPTION
+          WHEN others THEN NULL;
+        END $$;
+      `);
+      console.log("Procedure categories constraint fixed");
+    } catch (error) {
+      console.log("Constraint fix warning:", error);
+    }
+    
     console.log("Database migrations applied successfully");
     
     // Run SaaS migration
