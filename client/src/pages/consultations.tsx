@@ -174,6 +174,8 @@ export default function Consultations() {
       if (!response.ok) throw new Error("Failed to fetch appointments");
       return response.json();
     },
+    staleTime: 0, // Sempre considera dados como obsoletos
+    gcTime: 0, // Remove do cache imediatamente após não estar sendo usado
   });
 
   const { data: patients } = useQuery<Patient[]>({
@@ -245,6 +247,7 @@ export default function Consultations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
       toast({
         title: "Sucesso",
         description: "Status do atendimento atualizado",
@@ -434,6 +437,7 @@ export default function Consultations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
       toast({
         title: "Sucesso",
         description: "Consulta atualizada com sucesso!",
