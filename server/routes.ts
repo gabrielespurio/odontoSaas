@@ -452,9 +452,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", authenticateToken);
 
   // Dashboard
-  app.get("/api/dashboard/metrics", async (req, res) => {
+  app.get("/api/dashboard/metrics", authenticateToken, async (req, res) => {
     try {
-      const metrics = await storage.getDashboardMetrics();
+      const user = req.user;
+      const metrics = await storage.getDashboardMetrics(user.companyId);
       res.json(metrics);
     } catch (error) {
       console.error("Dashboard metrics error:", error);
@@ -469,7 +470,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const offset = parseInt(req.query.offset as string) || 0;
       const search = req.query.search as string;
       
-      const patients = await storage.getPatients(limit, offset, search);
+      // Apply company-based data isolation
+      const user = req.user;
+      const companyId = user.companyId;
+      
+      const patients = await storage.getPatients(limit, offset, search, companyId);
       res.json(patients);
     } catch (error) {
       console.error("Get patients error:", error);
@@ -477,13 +482,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/patients/:id", async (req, res) => {
+  app.get("/api/patients/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const user = req.user;
+      
       const patient = await storage.getPatient(id);
       
       if (!patient) {
         return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      // Check if patient belongs to user's company
+      if (user.companyId && patient.companyId !== user.companyId) {
+        return res.status(403).json({ message: "Access denied" });
       }
       
       res.json(patient);
@@ -493,10 +505,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/patients", async (req, res) => {
+  app.post("/api/patients", authenticateToken, async (req, res) => {
     try {
+      const user = req.user;
       const patientData = insertPatientSchema.parse(req.body);
-      const patient = await storage.createPatient(patientData);
+      
+      // Automatically set the company ID from authenticated user
+      const patientWithCompany = {
+        ...patientData,
+        companyId: user.companyId
+      };
+      
+      const patient = await storage.createPatient(patientWithCompany);
       res.json(patient);
     } catch (error) {
       console.error("Create patient error:", error);
@@ -504,10 +524,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/patients/:id", async (req, res) => {
+  app.put("/api/patients/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const user = req.user;
       const patientData = insertPatientSchema.partial().parse(req.body);
+      
+      // Check if patient belongs to user's company before updating
+      const existingPatient = await storage.getPatient(id);
+      if (!existingPatient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      if (user.companyId && existingPatient.companyId !== user.companyId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
       const patient = await storage.updatePatient(id, patientData);
       res.json(patient);
     } catch (error) {
@@ -813,7 +845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dentistId = user.id;
       }
       
-      const appointments = await storage.getAppointments(date, dentistId, startDate, endDate);
+      const appointments = await storage.getAppointments(date, dentistId, startDate, endDate, user.companyId);
       
       // Format dates for frontend
       const formattedAppointments = appointments.map(appointment => ({

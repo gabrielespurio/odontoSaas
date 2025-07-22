@@ -268,19 +268,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Patients
-  async getPatients(limit = 50, offset = 0, search?: string): Promise<Patient[]> {
-    let whereCondition = eq(patients.isActive, true);
+  async getPatients(limit = 50, offset = 0, search?: string, companyId?: number): Promise<Patient[]> {
+    let whereConditions = [eq(patients.isActive, true)];
+    
+    // Add company filter for data isolation
+    if (companyId) {
+      whereConditions.push(eq(patients.companyId, companyId));
+    }
     
     if (search) {
-      whereCondition = and(
-        whereCondition,
+      whereConditions.push(
         or(
           ilike(patients.name, `%${search}%`),
           ilike(patients.cpf, `%${search}%`),
           ilike(patients.phone, `%${search}%`)
         )
-      ) || whereCondition;
+      );
     }
+    
+    const whereCondition = whereConditions.length > 1 ? and(...whereConditions) : whereConditions[0];
     
     return await db.select().from(patients).where(whereCondition).limit(limit).offset(offset).orderBy(desc(patients.createdAt));
   }
@@ -369,7 +375,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Appointments
-  async getAppointments(date?: Date, dentistId?: number, startDate?: Date, endDate?: Date): Promise<(Appointment & { patient: Patient; dentist: User; procedure: Procedure })[]> {
+  async getAppointments(date?: Date, dentistId?: number, startDate?: Date, endDate?: Date, companyId?: number): Promise<(Appointment & { patient: Patient; dentist: User; procedure: Procedure })[]> {
     let whereConditions = [];
 
     if (date) {
@@ -398,6 +404,11 @@ export class DatabaseStorage implements IStorage {
 
     if (dentistId) {
       whereConditions.push(eq(appointments.dentistId, dentistId));
+    }
+
+    // Add company filtering for data isolation
+    if (companyId) {
+      whereConditions.push(eq(appointments.companyId, companyId));
     }
 
     // Filter out cancelled appointments
@@ -1266,47 +1277,57 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Dashboard metrics
-  async getDashboardMetrics(): Promise<{
+  async getDashboardMetrics(companyId?: number): Promise<{
     todayAppointments: number;
     activePatients: number;
     monthlyRevenue: number;
     pendingPayments: number;
   }> {
     try {
+      // Build conditions with company filtering
+      let appointmentConditions = [
+        sql`DATE(${appointments.scheduledDate}) = CURRENT_DATE`,
+        ne(appointments.status, 'cancelado')
+      ];
+      let patientConditions = [eq(patients.isActive, true)];
+      let receivableConditions = [];
+      
+      if (companyId) {
+        appointmentConditions.push(eq(appointments.companyId, companyId));
+        patientConditions.push(eq(patients.companyId, companyId));
+        receivableConditions.push(eq(receivables.companyId, companyId));
+      }
+
       // Count today's appointments (all status except cancelled)
       const [todayAppointmentsResult] = await db
         .select({ count: sql<number>`count(*)` })
         .from(appointments)
-        .where(
-          and(
-            sql`DATE(${appointments.scheduledDate}) = CURRENT_DATE`,
-            ne(appointments.status, 'cancelado')
-          )
-        );
+        .where(and(...appointmentConditions));
 
       // Count active patients
       const [activePatientsResult] = await db
         .select({ count: sql<number>`count(*)` })
         .from(patients)
-        .where(eq(patients.isActive, true));
+        .where(and(...patientConditions));
 
       // Calculate monthly revenue from paid receivables
+      const monthlyRevenueConditions = [
+        ...receivableConditions,
+        eq(receivables.status, "paid"),
+        sql`EXTRACT(MONTH FROM ${receivables.paymentDate}) = EXTRACT(MONTH FROM CURRENT_DATE)`,
+        sql`EXTRACT(YEAR FROM ${receivables.paymentDate}) = EXTRACT(YEAR FROM CURRENT_DATE)`
+      ];
       const [monthlyRevenueResult] = await db
         .select({ sum: sql<number>`coalesce(sum(${receivables.amount}::decimal), 0)` })
         .from(receivables)
-        .where(
-          and(
-            eq(receivables.status, "paid"),
-            sql`EXTRACT(MONTH FROM ${receivables.paymentDate}) = EXTRACT(MONTH FROM CURRENT_DATE)`,
-            sql`EXTRACT(YEAR FROM ${receivables.paymentDate}) = EXTRACT(YEAR FROM CURRENT_DATE)`
-          )
-        );
+        .where(and(...monthlyRevenueConditions));
 
       // Calculate pending payments from receivables
+      const pendingConditions = [...receivableConditions, eq(receivables.status, "pending")];
       const [pendingPaymentsResult] = await db
         .select({ sum: sql<number>`coalesce(sum(${receivables.amount}::decimal), 0)` })
         .from(receivables)
-        .where(eq(receivables.status, "pending"));
+        .where(and(...pendingConditions));
 
       return {
         todayAppointments: Number(todayAppointmentsResult.count) || 0,
