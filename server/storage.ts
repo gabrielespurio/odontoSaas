@@ -199,8 +199,13 @@ export class DatabaseStorage implements IStorage {
     const bcrypt = require('bcrypt');
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
     
+    // Generate unique username for admin
+    const baseUsername = company.email.split('@')[0];
+    const adminUsername = `admin_${baseUsername}_c${newCompany.id}`;
+    
     // Create admin user
     const [adminUser] = await db.insert(users).values({
+      username: adminUsername,
       password: hashedPassword,
       name: "Administrador",
       email: company.email,
@@ -229,6 +234,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
     return user || undefined;
   }
 

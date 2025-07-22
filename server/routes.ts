@@ -582,12 +582,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = userCreateSchema.parse(req.body);
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       
-      // Generate username from email (part before @)
-      const username = userData.email.split('@')[0];
+      // Generate unique username from email (part before @) with company suffix
+      let baseUsername = userData.email.split('@')[0];
+      let username = baseUsername;
       
-      // Create user with username, forcePasswordChange and companyId
+      // If companyId exists, append it to make username unique
+      if (userData.companyId) {
+        username = `${baseUsername}_c${userData.companyId}`;
+      }
+      
+      // Check if username already exists and add counter if needed
+      let counter = 1;
+      let finalUsername = username;
+      while (true) {
+        try {
+          const existingUser = await storage.getUserByUsername(finalUsername);
+          if (!existingUser) break;
+          finalUsername = `${username}_${counter}`;
+          counter++;
+        } catch (error) {
+          // If getUserByUsername doesn't exist, break and use current username
+          break;
+        }
+      }
+      
+      // Create user with unique username, forcePasswordChange and companyId
       const userToCreate = {
-        username: username,
+        username: finalUsername,
         name: userData.name,
         email: userData.email,
         password: hashedPassword,
