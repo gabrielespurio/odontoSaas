@@ -1337,12 +1337,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Results count:", appointmentsWithoutConsultation.length);
       console.log("Appointment IDs:", appointmentsWithoutConsultation.map(a => a.id));
       
-      // Debug specific appointments 27, 28, 29
+      // Debug specific appointments 27, 28, 29, 30
       for (const app of appointmentsWithoutConsultation) {
-        if ([27, 28, 29].includes(app.id)) {
+        if ([27, 28, 29, 30].includes(app.id)) {
           console.log(`Appointment ${app.id}: dentistId=${app.dentistId}, patientId=${app.patientId}, status=${app.status}`);
         }
       }
+      
+      // Check if appointment 27 has a consultation
+      console.log("=== CHECKING APPOINTMENT 27 CONSULTATION ===");
+      const check27 = await db.select({
+        appointmentId: appointments.id,
+        consultationId: consultations.id,
+        consultationAppointmentId: consultations.appointmentId
+      })
+      .from(appointments)
+      .leftJoin(consultations, eq(appointments.id, consultations.appointmentId))
+      .where(eq(appointments.id, 27));
+      
+      console.log("Appointment 27 consultation check:", check27);
 
       res.json(appointmentsWithoutConsultation);
     } catch (error) {
