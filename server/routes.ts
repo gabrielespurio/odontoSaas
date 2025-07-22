@@ -66,47 +66,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Debug appointment-consultation relationship (NO AUTH)
   app.get("/api/debug/appointment-consultation", async (req, res) => {
     try {
-      console.log("=== DEBUG APPOINTMENT-CONSULTATION RELATIONSHIP ===");
+      console.log("=== DEBUG APPOINTMENT-CONSULTATION ANALYSIS ===");
       
-      // Check recent appointments
-      const recentAppointments = await db.select({
+      // Check specific appointments (27, 28, 29)
+      const targetAppointments = await db.select({
         id: appointments.id,
         patientId: appointments.patientId,
         dentistId: appointments.dentistId,
         status: appointments.status,
-        scheduledDate: appointments.scheduledDate
-      }).from(appointments).limit(5).orderBy(desc(appointments.id));
+        scheduledDate: appointments.scheduledDate,
+        companyId: appointments.companyId
+      }).from(appointments).where(or(
+        eq(appointments.id, 27),
+        eq(appointments.id, 28), 
+        eq(appointments.id, 29)
+      ));
       
-      console.log("Recent appointments:", recentAppointments);
+      console.log("Target appointments (27,28,29):", targetAppointments);
       
-      // Check recent consultations  
-      const recentConsultations = await db.select({
+      // Check consultations for these appointments
+      const relatedConsultations = await db.select({
         id: consultations.id,
         appointmentId: consultations.appointmentId,
         patientId: consultations.patientId,
         dentistId: consultations.dentistId,
         date: consultations.date
-      }).from(consultations).limit(5).orderBy(desc(consultations.id));
+      }).from(consultations).where(or(
+        eq(consultations.appointmentId, 27),
+        eq(consultations.appointmentId, 28),
+        eq(consultations.appointmentId, 29)
+      ));
       
-      console.log("Recent consultations:", recentConsultations);
+      console.log("Related consultations:", relatedConsultations);
       
-      // Check LEFT JOIN query
-      const joinResult = await db.select({
-        appointmentId: appointments.id,
-        consultationId: consultations.id,
-        consultationAppointmentId: consultations.appointmentId
-      })
-      .from(appointments)
-      .leftJoin(consultations, eq(appointments.id, consultations.appointmentId))
-      .where(eq(appointments.id, 28))
-      .limit(5);
-      
-      console.log("JOIN result for appointment 28:", joinResult);
+      // Check detailed JOIN for each appointment
+      for (const appointmentId of [27, 28, 29]) {
+        const joinResult = await db.select({
+          appointmentId: appointments.id,
+          appointmentDentistId: appointments.dentistId,
+          consultationId: consultations.id,
+          consultationDentistId: consultations.dentistId,
+          consultationAppointmentId: consultations.appointmentId
+        })
+        .from(appointments)
+        .leftJoin(consultations, eq(appointments.id, consultations.appointmentId))
+        .where(eq(appointments.id, appointmentId));
+        
+        console.log(`JOIN result for appointment ${appointmentId}:`, joinResult);
+      }
       
       res.json({
-        appointments: recentAppointments,
-        consultations: recentConsultations,
-        joinResult: joinResult
+        targetAppointments: targetAppointments,
+        relatedConsultations: relatedConsultations
       });
     } catch (error) {
       console.error("Debug appointment-consultation error:", error);
@@ -1325,6 +1336,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Results count:", appointmentsWithoutConsultation.length);
       console.log("Appointment IDs:", appointmentsWithoutConsultation.map(a => a.id));
+      
+      // Debug specific appointments 27, 28, 29
+      for (const app of appointmentsWithoutConsultation) {
+        if ([27, 28, 29].includes(app.id)) {
+          console.log(`Appointment ${app.id}: dentistId=${app.dentistId}, patientId=${app.patientId}, status=${app.status}`);
+        }
+      }
 
       res.json(appointmentsWithoutConsultation);
     } catch (error) {
