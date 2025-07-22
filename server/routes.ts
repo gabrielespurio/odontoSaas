@@ -448,6 +448,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current user's company information
+  app.get("/api/user/company", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      
+      if (!user.companyId) {
+        return res.json({ 
+          companyName: "System Administrator",
+          isSystemAdmin: true 
+        });
+      }
+
+      const [company] = await db.select().from(companies).where(eq(companies.id, user.companyId));
+      
+      if (!company) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+
+      res.json({
+        companyName: company.name,
+        tradeName: company.tradeName,
+        isSystemAdmin: false
+      });
+    } catch (error) {
+      console.error("Get user company error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Protected routes
   app.use("/api", authenticateToken);
 
