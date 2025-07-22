@@ -571,7 +571,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Users Management
   app.get("/api/users", authenticateToken, async (req, res) => {
     try {
-      const companyId = req.query.companyId;
+      const user = req.user;
+      const companyId = req.query.companyId || user.companyId;
       
       let query = db.select({
         id: users.id,
@@ -585,7 +586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: users.createdAt,
       }).from(users);
       
-      // Filter by company if companyId is provided
+      // Always filter by company for data isolation
       if (companyId) {
         query = query.where(eq(users.companyId, parseInt(companyId as string)));
       }
