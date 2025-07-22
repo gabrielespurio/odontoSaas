@@ -466,6 +466,8 @@ export const insertConsultationSchema = createInsertSchema(consultations).omit({
   id: true,
   attendanceNumber: true,
   createdAt: true,
+  updatedAt: true,
+  companyId: true, // Excluir companyId pois será adicionado no backend
 }).extend({
   date: z.string().transform((str) => new Date(str)),
 });

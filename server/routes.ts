@@ -1392,8 +1392,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Você só pode criar consultas para si mesmo" });
       }
       
+      // Add companyId to consultation data after validation
+      const consultationDataWithCompany = {
+        ...consultationData,
+        companyId: user.companyId
+      };
+      
       // Criar a consulta primeiro
-      const consultation = await storage.createConsultation(consultationData);
+      const consultation = await storage.createConsultation(consultationDataWithCompany);
       
       // Se a consulta tem procedimentos, criar agendamentos correspondentes
       if (consultationData.procedures && consultationData.procedures.length > 0) {
@@ -1421,7 +1427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (!conflictingAppointment) {
               // Criar o agendamento
               const appointmentData = {
-                companyId: 1, // Temporary fix - should get from user context
+                companyId: user.companyId,
                 patientId: consultationData.patientId,
                 dentistId: consultationData.dentistId,
                 procedureId: procedure.id,
