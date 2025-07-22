@@ -395,7 +395,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }).from(users).where(
             and(
               eq(users.id, user.id),
-              eq(users.isActive, true)
+              eq(users.isActive, true),
+              eq(users.companyId, user.companyId) // CRITICAL: Filter by company for data isolation
             )
           );
           res.json(dentists);
@@ -403,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.json([]);
         }
       } else {
-        // Admin or users with "all" scope can see all dentists
+        // Admin or users with "all" scope can see all dentists FROM THEIR COMPANY
         const dentistsData = await db.select({
           id: users.id,
           username: users.username,
@@ -419,7 +420,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               eq(users.role, "dentista"),
               eq(users.role, "dentist")
             ),
-            eq(users.isActive, true)
+            eq(users.isActive, true),
+            eq(users.companyId, user.companyId) // CRITICAL: Filter by company for data isolation
           )
         ).orderBy(users.name);
         res.json(dentistsData);
