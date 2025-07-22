@@ -1688,79 +1688,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/anamnese/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      
-      // Debug: log the raw request body
-      console.log("PUT anamnese request body:", JSON.stringify(req.body, null, 2));
-      
-      const anamneseData = insertAnamneseSchema.partial().parse(req.body);
-      
-      // Debug: log the parsed data
-      console.log("PUT anamnese parsed data:", JSON.stringify(anamneseData, null, 2));
-      
-      // Verificar se additionalQuestions tem dados
-      console.log("anamneseData.additionalQuestions exists:", !!anamneseData.additionalQuestions);
-      console.log("anamneseData.additionalQuestions content:", JSON.stringify(anamneseData.additionalQuestions, null, 2));
-      
-      // Get the existing anamnese record to preserve existing values
-      const existingAnamnese = await storage.getAnamnese(anamneseData.patientId || 0);
-      
-      console.log("Existing anamnese:", JSON.stringify(existingAnamnese, null, 2));
-      
-      // Get user from authentication
       const user = req.user;
       
-      // Always merge with existing values to preserve data
-      const existingQuestions = existingAnamnese?.additionalQuestions || {};
+      console.log("=== ANAMNESE UPDATE DEBUG ===");
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
       
-      let additionalQuestions;
+      // Parse the data
+      const anamneseData = insertAnamneseSchema.partial().parse(req.body);
+      console.log("Parsed data:", JSON.stringify(anamneseData, null, 2));
       
-      if (anamneseData.additionalQuestions) {
-        // Merge provided additionalQuestions with existing values
-        additionalQuestions = {
-          hasHeartProblems: anamneseData.additionalQuestions.hasHeartProblems !== undefined ? anamneseData.additionalQuestions.hasHeartProblems : (existingQuestions.hasHeartProblems ?? false),
-          hasDiabetes: anamneseData.additionalQuestions.hasDiabetes !== undefined ? anamneseData.additionalQuestions.hasDiabetes : (existingQuestions.hasDiabetes ?? false),
-          hasHypertension: anamneseData.additionalQuestions.hasHypertension !== undefined ? anamneseData.additionalQuestions.hasHypertension : (existingQuestions.hasHypertension ?? false),
-          isPregnant: anamneseData.additionalQuestions.isPregnant !== undefined ? anamneseData.additionalQuestions.isPregnant : (existingQuestions.isPregnant ?? false),
-          smokingHabits: anamneseData.additionalQuestions.smokingHabits !== undefined ? anamneseData.additionalQuestions.smokingHabits : (existingQuestions.smokingHabits ?? ""),
-          bleedingProblems: anamneseData.additionalQuestions.bleedingProblems !== undefined ? anamneseData.additionalQuestions.bleedingProblems : (existingQuestions.bleedingProblems ?? false),
-          familyHistory: anamneseData.additionalQuestions.familyHistory !== undefined ? anamneseData.additionalQuestions.familyHistory : (existingQuestions.familyHistory ?? ""),
-        };
-        
-        console.log("Merging additionalQuestions:");
-        console.log("- Request data:", JSON.stringify(anamneseData.additionalQuestions, null, 2));
-        console.log("- Existing data:", JSON.stringify(existingQuestions, null, 2));
-        console.log("- Final result:", JSON.stringify(additionalQuestions, null, 2));
-      } else {
-        // If no additionalQuestions provided, preserve existing values
-        additionalQuestions = existingQuestions;
-        console.log("No additionalQuestions in request, preserving existing:", JSON.stringify(additionalQuestions, null, 2));
-      }
-      
-      // DEBUG: Log before preparing final data
-      console.log("About to prepare final data. additionalQuestions value:", JSON.stringify(additionalQuestions, null, 2));
-      
-      // Prepare data for database (only include fields that are actually being updated)
-      const finalData: any = {
+      // Simply use the data as provided - no complex merging
+      const updateData: any = {
         companyId: user.companyId,
-        additionalQuestions: additionalQuestions
       };
       
-      // DEBUG: Log immediately after creating finalData
-      console.log("finalData immediately after creation:", JSON.stringify(finalData, null, 2));
+      // Add all provided fields
+      if (anamneseData.patientId !== undefined) updateData.patientId = anamneseData.patientId;
+      if (anamneseData.medicalTreatment !== undefined) updateData.medicalTreatment = anamneseData.medicalTreatment;
+      if (anamneseData.medications !== undefined) updateData.medications = anamneseData.medications;
+      if (anamneseData.allergies !== undefined) updateData.allergies = anamneseData.allergies;
+      if (anamneseData.previousDentalTreatment !== undefined) updateData.previousDentalTreatment = anamneseData.previousDentalTreatment;
+      if (anamneseData.painComplaint !== undefined) updateData.painComplaint = anamneseData.painComplaint;
       
-      // Only include fields that are explicitly provided
-      if (anamneseData.patientId !== undefined) finalData.patientId = anamneseData.patientId;
-      if (anamneseData.medicalTreatment !== undefined) finalData.medicalTreatment = anamneseData.medicalTreatment;
-      if (anamneseData.medications !== undefined) finalData.medications = anamneseData.medications;
-      if (anamneseData.allergies !== undefined) finalData.allergies = anamneseData.allergies;
-      if (anamneseData.previousDentalTreatment !== undefined) finalData.previousDentalTreatment = anamneseData.previousDentalTreatment;
-      if (anamneseData.painComplaint !== undefined) finalData.painComplaint = anamneseData.painComplaint;
+      // Handle additionalQuestions simply - use exactly what's provided
+      if (anamneseData.additionalQuestions !== undefined) {
+        updateData.additionalQuestions = anamneseData.additionalQuestions;
+        console.log("Using additionalQuestions as provided:", JSON.stringify(anamneseData.additionalQuestions, null, 2));
+      }
       
-      console.log("PUT anamnese final data:", JSON.stringify(finalData, null, 2));
+      console.log("Update data being sent to database:", JSON.stringify(updateData, null, 2));
       
-      const anamnese = await storage.updateAnamnese(id, finalData);
+      const anamnese = await storage.updateAnamnese(id, updateData);
       
-      console.log("PUT anamnese result:", JSON.stringify(anamnese, null, 2));
+      console.log("Database result:", JSON.stringify(anamnese, null, 2));
+      console.log("=== END DEBUG ===");
       
       res.json(anamnese);
     } catch (error) {
