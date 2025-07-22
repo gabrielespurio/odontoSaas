@@ -442,6 +442,7 @@ export const insertPatientSchema = createInsertSchema(patients).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  companyId: true, // Excluir companyId pois será adicionado no backend
 });
 
 export const insertProcedureSchema = createInsertSchema(procedures).omit({

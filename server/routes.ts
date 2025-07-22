@@ -537,9 +537,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/patients", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
+      
+      // Verificar se o usuário tem companyId
+      if (!user.companyId) {
+        return res.status(400).json({ message: "User must belong to a company" });
+      }
+      
       const patientData = insertPatientSchema.parse(req.body);
       
-      // Automatically set the company ID from authenticated user
+      // CRITICAL: Add company ID from authenticated user
       const patientWithCompany = {
         ...patientData,
         companyId: user.companyId
@@ -549,6 +555,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(patient);
     } catch (error) {
       console.error("Create patient error:", error);
+      if (error.name === 'ZodError') {
+        console.error("Validation error details:", error.issues);
+        return res.status(400).json({ 
+          message: "Validation error", 
+          details: error.issues 
+        });
+      }
       res.status(500).json({ message: "Internal server error" });
     }
   });
