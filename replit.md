@@ -602,6 +602,8 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Added input formatting for CNPJ (00.000.000/0000-00), phone numbers ((11) 99999-9999), and CEP (00000-000)
   - Enhanced user experience with automatic formatting as users type
 - July 22, 2025. **MIGRATION COMPLETED**: Successfully migrated OdontoSync project from Replit Agent to standard Replit environment
+- July 22, 2025. **DENTAL CHART BUG FIX**: Fixed critical error in odontogram update functionality caused by companyId schema validation conflict
+- July 22, 2025. **DATABASE SCHEMA VALIDATION**: Resolved insertDentalChartSchema validation error by excluding companyId from frontend validation and adding it in backend after validation
 - July 22, 2025. **DATABASE SCHEMA FIXES**: Fixed critical database schema issues - added missing company_id columns to user_profiles, procedure_categories, and cash_flow tables
 - July 22, 2025. **COMPANY DISPLAY FEATURE**: Added company name display in header with dedicated /api/user/company endpoint
 - July 22, 2025. **MULTI-TENANT DATA ISOLATION**: Verified and maintained complete multi-tenant data isolation across all modules

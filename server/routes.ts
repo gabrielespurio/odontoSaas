@@ -1591,20 +1591,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
       
-      // Create the data with required fields
+      // Create the data without companyId for validation
       const dentalChartData = {
         patientId: patientId,
         toothNumber: toothNumber,
         condition: req.body.condition || "healthy",
         notes: req.body.notes || "",
-        treatmentDate: req.body.treatmentDate || new Date().toISOString().split('T')[0],
-        companyId: user.companyId // CRITICAL: Add company ID from authenticated user
+        treatmentDate: req.body.treatmentDate || new Date().toISOString().split('T')[0]
       };
       
       console.log('Received dental chart update:', dentalChartData);
       
+      // Validate data without companyId
       const validatedData = insertDentalChartSchema.parse(dentalChartData);
-      const updatedTooth = await storage.updateToothCondition(patientId, toothNumber, validatedData);
+      
+      // Add companyId after validation
+      const finalData = {
+        ...validatedData,
+        companyId: user.companyId
+      };
+      
+      const updatedTooth = await storage.updateToothCondition(patientId, toothNumber, finalData);
       res.json(updatedTooth);
     } catch (error) {
       console.error("Update tooth condition error:", error);
