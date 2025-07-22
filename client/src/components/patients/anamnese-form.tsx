@@ -82,6 +82,8 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
   // Update form when anamnese data is loaded
   useEffect(() => {
     if (anamnese) {
+      const normalizedQuestions = normalizeAdditionalQuestions(anamnese.additionalQuestions);
+      
       form.reset({
         patientId: anamnese.patientId,
         medicalTreatment: anamnese.medicalTreatment,
@@ -89,8 +91,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
         allergies: anamnese.allergies || "",
         previousDentalTreatment: anamnese.previousDentalTreatment,
         painComplaint: anamnese.painComplaint || "",
-        additionalQuestions: normalizeAdditionalQuestions(anamnese.additionalQuestions),
+        additionalQuestions: normalizedQuestions,
       });
+      
+      // Force form to re-render with the new values
+      setTimeout(() => {
+        form.trigger();
+      }, 100);
     }
   }, [anamnese, form]);
 
@@ -131,30 +138,10 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
   });
 
   const onSubmit = (data: AnamneseFormData) => {
-    // Debug: log the form data before processing
-    console.log("Form data submitted:", data);
-    console.log("additionalQuestions raw:", data.additionalQuestions);
-    
-    // Ensure additionalQuestions is properly formatted and not undefined
-    const additionalQuestions = data.additionalQuestions || normalizeAdditionalQuestions(null);
-    
-    const normalizedData = {
-      patientId: data.patientId,
-      medicalTreatment: data.medicalTreatment,
-      medications: data.medications,
-      allergies: data.allergies,
-      previousDentalTreatment: data.previousDentalTreatment,
-      painComplaint: data.painComplaint,
-      additionalQuestions: additionalQuestions,
-    };
-    
-    console.log("Normalized data:", normalizedData);
-    console.log("additionalQuestions normalized:", normalizedData.additionalQuestions);
-    
     if (anamnese) {
-      updateMutation.mutate(normalizedData);
+      updateMutation.mutate(data);
     } else {
-      createMutation.mutate(normalizedData);
+      createMutation.mutate(data);
     }
   };
 
