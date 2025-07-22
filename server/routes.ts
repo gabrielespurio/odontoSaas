@@ -1379,6 +1379,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const patient = await storage.getPatient(consultationData.patientId);
       const dentist = await storage.getUser(consultationData.dentistId);
       
+      console.log("Debug consultation creation:");
+      console.log("User companyId:", user.companyId);
+      console.log("Patient:", patient ? { id: patient.id, companyId: patient.companyId } : "not found");
+      console.log("Dentist:", dentist ? { id: dentist.id, companyId: dentist.companyId } : "not found");
+      console.log("Consultation data:", consultationData);
+      
       if (!patient || patient.companyId !== user.companyId) {
         return res.status(403).json({ message: "Paciente não encontrado ou não pertence à sua empresa" });
       }
