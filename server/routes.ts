@@ -979,15 +979,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const body = req.body;
       
       // Keep the date as string for Zod validation, but process it correctly
-      const appointmentData = insertAppointmentSchema.parse(body);
+      const appointmentData = insertAppointmentSchema.omit({ companyId: true }).parse(body);
       
       // Convert to Date object after validation
       if (typeof appointmentData.scheduledDate === 'string') {
         appointmentData.scheduledDate = formatDateForDatabase(appointmentData.scheduledDate);
       }
       
+      // Add companyId (assume default company for now, should be from authentication)
+      const appointmentWithCompany = {
+        ...appointmentData,
+        companyId: 2 // TODO: Get from authentication
+      };
+      
       // Enhanced conflict validation is now handled in storage layer
-      const appointment = await storage.createAppointment(appointmentData);
+      const appointment = await storage.createAppointment(appointmentWithCompany);
       
       // Send WhatsApp message to patient
       try {
