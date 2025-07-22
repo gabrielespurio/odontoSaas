@@ -798,7 +798,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/procedure-categories", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      const categoryData = insertProcedureCategorySchema.parse(req.body);
+      const categoryData = insertProcedureCategorySchema.omit({ companyId: true }).parse(req.body);
       
       // CRITICAL: Add company ID to category
       const categoryWithCompany = {
