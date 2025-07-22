@@ -131,11 +131,18 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
   });
 
   const onSubmit = (data: AnamneseFormData) => {
+    // Debug: log the form data before processing
+    console.log("Form data submitted:", data);
+    console.log("additionalQuestions raw:", data.additionalQuestions);
+    
     // Ensure additionalQuestions is properly formatted
     const normalizedData = {
       ...data,
       additionalQuestions: normalizeAdditionalQuestions(data.additionalQuestions),
     };
+    
+    console.log("Normalized data:", normalizedData);
+    console.log("additionalQuestions normalized:", normalizedData.additionalQuestions);
     
     if (anamnese) {
       updateMutation.mutate(normalizedData);
