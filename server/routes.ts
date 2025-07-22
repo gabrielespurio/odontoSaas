@@ -582,9 +582,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = userCreateSchema.parse(req.body);
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       
-      // Create user with forcePasswordChange and companyId
+      // Generate username from email (part before @)
+      const username = userData.email.split('@')[0];
+      
+      // Create user with username, forcePasswordChange and companyId
       const userToCreate = {
         ...userData,
+        username: username,
         password: hashedPassword,
         forcePasswordChange: userData.forcePasswordChange || false,
         companyId: userData.companyId || null,
