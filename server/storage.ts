@@ -242,6 +242,21 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByEmailAndCompany(email: string, companyId?: number | null): Promise<User | undefined> {
+    if (!companyId) {
+      // For system admins (no company), check global uniqueness
+      return this.getUserByEmail(email);
+    }
+    
+    const [user] = await db.select().from(users).where(
+      and(
+        eq(users.email, email),
+        eq(users.companyId, companyId)
+      )
+    );
+    return user || undefined;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;

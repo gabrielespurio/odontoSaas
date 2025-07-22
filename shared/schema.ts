@@ -58,7 +58,7 @@ export const users = pgTable("users", {
   username: text("username").notNull(),
   password: text("password").notNull(),
   name: text("name").notNull(),
-  email: text("email").notNull().unique(),
+  email: text("email").notNull(),
   role: text("role").notNull().default("dentist"), // Changed to text to support custom profiles
   companyId: integer("company_id"), // Null for system admin, FK for company users
   isActive: boolean("is_active").notNull().default(true),

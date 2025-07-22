@@ -613,10 +613,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Added getUserByUsername method to storage layer for username validation
   - Implemented automatic counter system for duplicate usernames
   - Fixed "duplicate key value violates unique constraint" errors in user creation
-- July 22, 2025. **EMAIL VALIDATION SYSTEM**: Added email uniqueness validation to prevent duplicate user creation
-  - Implemented frontend and backend email validation before user creation
-  - Added clear error messages when email already exists in system
-  - System now requires unique email addresses for each user account
+- July 22, 2025. **EMAIL VALIDATION SYSTEM**: Updated email validation for multi-tenant architecture
+  - Modified email uniqueness to be per-company instead of global
+  - Users can now have the same email in different companies (true SaaS multi-tenant)
+  - Added getUserByEmailAndCompany method for company-scoped email validation
+  - Removed global email unique constraint and added company-scoped unique index
 - July 21, 2025. **SAAS MULTI-TENANT ARCHITECTURE IMPLEMENTATION**: Transformed OdontoSync into a true SaaS multi-tenant system
   - **Database Schema Migration**: Added companyId fields to all relevant tables (patients, appointments, consultations, procedures, financial records, etc.)
   - **Company Management System**: Created companies table with comprehensive business information, license tracking, and address management
