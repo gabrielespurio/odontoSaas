@@ -1650,7 +1650,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/anamnese", authenticateToken, async (req, res) => {
     try {
       const anamneseData = insertAnamneseSchema.parse(req.body);
-      const anamnese = await storage.createAnamnese(anamneseData);
+      
+      // Get user from authentication
+      const user = req.user;
+      
+      // Add companyId from authenticated user
+      const anamneseWithCompany = {
+        ...anamneseData,
+        companyId: user.companyId
+      };
+      
+      const anamnese = await storage.createAnamnese(anamneseWithCompany);
       res.json(anamnese);
     } catch (error) {
       console.error("Create anamnese error:", error);
