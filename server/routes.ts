@@ -63,6 +63,57 @@ function authenticateToken(req: any, res: any, next: any) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
+  // Debug appointment-consultation relationship (NO AUTH)
+  app.get("/api/debug/appointment-consultation", async (req, res) => {
+    try {
+      console.log("=== DEBUG APPOINTMENT-CONSULTATION RELATIONSHIP ===");
+      
+      // Check recent appointments
+      const recentAppointments = await db.select({
+        id: appointments.id,
+        patientId: appointments.patientId,
+        dentistId: appointments.dentistId,
+        status: appointments.status,
+        scheduledDate: appointments.scheduledDate
+      }).from(appointments).limit(5).orderBy(desc(appointments.id));
+      
+      console.log("Recent appointments:", recentAppointments);
+      
+      // Check recent consultations  
+      const recentConsultations = await db.select({
+        id: consultations.id,
+        appointmentId: consultations.appointmentId,
+        patientId: consultations.patientId,
+        dentistId: consultations.dentistId,
+        date: consultations.date
+      }).from(consultations).limit(5).orderBy(desc(consultations.id));
+      
+      console.log("Recent consultations:", recentConsultations);
+      
+      // Check LEFT JOIN query
+      const joinResult = await db.select({
+        appointmentId: appointments.id,
+        consultationId: consultations.id,
+        consultationAppointmentId: consultations.appointmentId
+      })
+      .from(appointments)
+      .leftJoin(consultations, eq(appointments.id, consultations.appointmentId))
+      .where(eq(appointments.id, 28))
+      .limit(5);
+      
+      console.log("JOIN result for appointment 28:", joinResult);
+      
+      res.json({
+        appointments: recentAppointments,
+        consultations: recentConsultations,
+        joinResult: joinResult
+      });
+    } catch (error) {
+      console.error("Debug appointment-consultation error:", error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+  });
+
   // Debug endpoint to test dentist filtering - NO AUTH (must be before auth middleware)
   app.get("/api/debug/dentists", async (req, res) => {
     try {
@@ -527,6 +578,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+
+
 
   // Debug endpoint for dentists (before protected routes)
   app.get("/api/debug/dentists-no-auth", async (req, res) => {
@@ -1219,13 +1272,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user;
       let whereConditions = [
         isNull(consultations.id),
-        sql`${appointments.status} != 'cancelado'` // Filter out cancelled appointments
+        sql`${appointments.status} != 'cancelado'`, // Filter out cancelled appointments
+        eq(appointments.companyId, user.companyId) // CRITICAL: Filter by company
       ];
       
       if (user.role !== "admin" && user.dataScope === "own") {
         // Users with "own" scope can only see their own appointments
         whereConditions.push(eq(appointments.dentistId, user.id));
       }
+      
+      console.log("=== DEBUG appointments-without-consultation ===");
+      console.log("User:", { id: user.id, companyId: user.companyId, dataScope: user.dataScope });
       
       const appointmentsWithoutConsultation = await db.select({
         id: appointments.id,
@@ -1265,6 +1322,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       .leftJoin(consultations, eq(appointments.id, consultations.appointmentId))
       .where(and(...whereConditions))
       .orderBy(desc(appointments.scheduledDate));
+
+      console.log("Results count:", appointmentsWithoutConsultation.length);
+      console.log("Appointment IDs:", appointmentsWithoutConsultation.map(a => a.id));
 
       res.json(appointmentsWithoutConsultation);
     } catch (error) {
