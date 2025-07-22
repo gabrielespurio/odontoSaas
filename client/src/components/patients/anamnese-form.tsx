@@ -245,9 +245,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                   <Checkbox
                     id="hasHeartProblems"
                     checked={form.watch("additionalQuestions")?.hasHeartProblems || false}
-                    onCheckedChange={(checked) => 
-                      form.setValue("additionalQuestions.hasHeartProblems", !!checked)
-                    }
+                    onCheckedChange={(checked) => {
+                      const current = form.getValues("additionalQuestions") || {};
+                      form.setValue("additionalQuestions", {
+                        ...current,
+                        hasHeartProblems: !!checked
+                      });
+                    }}
                   />
                   <Label htmlFor="hasHeartProblems" className="text-sm leading-relaxed">
                     Possui problemas cardíacos?
@@ -258,9 +262,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                   <Checkbox
                     id="hasDiabetes"
                     checked={form.watch("additionalQuestions")?.hasDiabetes || false}
-                    onCheckedChange={(checked) => 
-                      form.setValue("additionalQuestions.hasDiabetes", !!checked)
-                    }
+                    onCheckedChange={(checked) => {
+                      const current = form.getValues("additionalQuestions") || {};
+                      form.setValue("additionalQuestions", {
+                        ...current,
+                        hasDiabetes: !!checked
+                      });
+                    }}
                   />
                   <Label htmlFor="hasDiabetes" className="text-sm leading-relaxed">
                     É diabético(a)?
@@ -271,9 +279,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                   <Checkbox
                     id="hasHypertension"
                     checked={form.watch("additionalQuestions")?.hasHypertension || false}
-                    onCheckedChange={(checked) => 
-                      form.setValue("additionalQuestions.hasHypertension", !!checked)
-                    }
+                    onCheckedChange={(checked) => {
+                      const current = form.getValues("additionalQuestions") || {};
+                      form.setValue("additionalQuestions", {
+                        ...current,
+                        hasHypertension: !!checked
+                      });
+                    }}
                   />
                   <Label htmlFor="hasHypertension" className="text-sm leading-relaxed">
                     Possui hipertensão?
@@ -284,9 +296,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                   <Checkbox
                     id="isPregnant"
                     checked={form.watch("additionalQuestions")?.isPregnant || false}
-                    onCheckedChange={(checked) => 
-                      form.setValue("additionalQuestions.isPregnant", !!checked)
-                    }
+                    onCheckedChange={(checked) => {
+                      const current = form.getValues("additionalQuestions") || {};
+                      form.setValue("additionalQuestions", {
+                        ...current,
+                        isPregnant: !!checked
+                      });
+                    }}
                   />
                   <Label htmlFor="isPregnant" className="text-sm leading-relaxed">
                     Está grávida?
@@ -297,9 +313,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                   <Checkbox
                     id="bleedingProblems"
                     checked={form.watch("additionalQuestions")?.bleedingProblems || false}
-                    onCheckedChange={(checked) => 
-                      form.setValue("additionalQuestions.bleedingProblems", !!checked)
-                    }
+                    onCheckedChange={(checked) => {
+                      const current = form.getValues("additionalQuestions") || {};
+                      form.setValue("additionalQuestions", {
+                        ...current,
+                        bleedingProblems: !!checked
+                      });
+                    }}
                   />
                   <Label htmlFor="bleedingProblems" className="text-sm leading-relaxed">
                     Possui problemas de coagulação?
@@ -312,9 +332,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                 <Textarea
                   id="smokingHabits"
                   value={form.watch("additionalQuestions")?.smokingHabits || ""}
-                  onChange={(e) => 
-                    form.setValue("additionalQuestions.smokingHabits", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const current = form.getValues("additionalQuestions") || {};
+                    form.setValue("additionalQuestions", {
+                      ...current,
+                      smokingHabits: e.target.value
+                    });
+                  }}
                   placeholder="Descreva hábitos de fumo (frequência, tipo, há quanto tempo)"
                   rows={2}
                   className="resize-none"
@@ -326,9 +350,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                 <Textarea
                   id="familyHistory"
                   value={form.watch("additionalQuestions")?.familyHistory || ""}
-                  onChange={(e) => 
-                    form.setValue("additionalQuestions.familyHistory", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const current = form.getValues("additionalQuestions") || {};
+                    form.setValue("additionalQuestions", {
+                      ...current,
+                      familyHistory: e.target.value
+                    });
+                  }}
                   placeholder="Descreva problemas de saúde relevantes na família"
                   rows={3}
                   className="resize-none"
