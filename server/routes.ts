@@ -1703,23 +1703,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user from authentication
       const user = req.user;
       
+      // Always merge with existing values to preserve data
+      const existingQuestions = existingAnamnese?.additionalQuestions || {};
+      
       let additionalQuestions;
       
       if (anamneseData.additionalQuestions) {
-        // If additionalQuestions is provided in request, use it directly
-        additionalQuestions = anamneseData.additionalQuestions;
-      } else {
-        // Otherwise, build from individual fields while preserving existing values
-        const existingQuestions = existingAnamnese?.additionalQuestions || {};
+        // Merge provided additionalQuestions with existing values
         additionalQuestions = {
-          hasHeartProblems: anamneseData.hasHeartProblems !== undefined ? anamneseData.hasHeartProblems : (existingQuestions.hasHeartProblems || false),
-          hasDiabetes: anamneseData.hasDiabetes !== undefined ? anamneseData.hasDiabetes : (existingQuestions.hasDiabetes || false),
-          hasHypertension: anamneseData.hasHypertension !== undefined ? anamneseData.hasHypertension : (existingQuestions.hasHypertension || false),
-          isPregnant: anamneseData.isPregnant !== undefined ? anamneseData.isPregnant : (existingQuestions.isPregnant || false),
-          smokingHabits: anamneseData.smokingHabits !== undefined ? anamneseData.smokingHabits : (existingQuestions.smokingHabits || ""),
-          bleedingProblems: anamneseData.bleedingProblems !== undefined ? anamneseData.bleedingProblems : (existingQuestions.bleedingProblems || false),
-          familyHistory: anamneseData.familyHistory !== undefined ? anamneseData.familyHistory : (existingQuestions.familyHistory || ""),
+          hasHeartProblems: anamneseData.additionalQuestions.hasHeartProblems !== undefined ? anamneseData.additionalQuestions.hasHeartProblems : (existingQuestions.hasHeartProblems || false),
+          hasDiabetes: anamneseData.additionalQuestions.hasDiabetes !== undefined ? anamneseData.additionalQuestions.hasDiabetes : (existingQuestions.hasDiabetes || false),
+          hasHypertension: anamneseData.additionalQuestions.hasHypertension !== undefined ? anamneseData.additionalQuestions.hasHypertension : (existingQuestions.hasHypertension || false),
+          isPregnant: anamneseData.additionalQuestions.isPregnant !== undefined ? anamneseData.additionalQuestions.isPregnant : (existingQuestions.isPregnant || false),
+          smokingHabits: anamneseData.additionalQuestions.smokingHabits !== undefined ? anamneseData.additionalQuestions.smokingHabits : (existingQuestions.smokingHabits || ""),
+          bleedingProblems: anamneseData.additionalQuestions.bleedingProblems !== undefined ? anamneseData.additionalQuestions.bleedingProblems : (existingQuestions.bleedingProblems || false),
+          familyHistory: anamneseData.additionalQuestions.familyHistory !== undefined ? anamneseData.additionalQuestions.familyHistory : (existingQuestions.familyHistory || ""),
         };
+      } else {
+        // If no additionalQuestions provided, preserve existing values
+        additionalQuestions = existingQuestions;
       }
       
       // Prepare data for database (only include fields that are actually being updated)

@@ -675,6 +675,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
 - July 22, 2025. **FINAL MULTI-TENANT MIGRATION**: Added company_id columns to remaining tables (anamnese, suppliers, financial) ensuring complete data isolation
 - July 22, 2025. **DATABASE INTEGRITY FIX**: Fixed NULL company_id values in procedures table and made all company_id columns NOT NULL where required
 - July 22, 2025. **COMPLETE MULTI-TENANT SYSTEM**: All 14 core tables now have company_id ensuring bulletproof data isolation between companies
+- July 22, 2025. **ANAMNESE DATA PERSISTENCE FIX**: Fixed critical bug where patient anamnese data was being lost on page navigation
+  - **Root Cause**: PUT endpoint was completely overwriting additionalQuestions object instead of merging with existing values
+  - **Solution**: Enhanced PUT /api/anamnese/:id to fetch existing record and intelligently merge new values with existing ones
+  - **Technical Details**: Changed logic to use !== undefined checks and preserve existing values when fields not provided
+  - **Impact**: Users can now check health conditions (Diabetes, Heart Problems, etc.) and they will persist correctly when navigating between pages
 - July 21, 2025. **SAAS MULTI-TENANT ARCHITECTURE IMPLEMENTATION**: Transformed OdontoSync into a true SaaS multi-tenant system
   - **Database Schema Migration**: Added companyId fields to all relevant tables (patients, appointments, consultations, procedures, financial records, etc.)
   - **Company Management System**: Created companies table with comprehensive business information, license tracking, and address management
