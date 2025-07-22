@@ -1555,9 +1555,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dental Chart
-  app.get("/api/dental-chart/:patientId", async (req, res) => {
+  app.get("/api/dental-chart/:patientId", authenticateToken, async (req, res) => {
     try {
       const patientId = parseInt(req.params.patientId);
+      const user = req.user;
+      
+      // Verificar se o paciente pertence à empresa do usuário
+      const patient = await storage.getPatient(patientId);
+      if (!patient || (user.companyId && patient.companyId !== user.companyId)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
       const dentalChart = await storage.getDentalChart(patientId);
       res.json(dentalChart);
     } catch (error) {
@@ -1566,10 +1574,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/dental-chart/:patientId/:toothNumber", async (req, res) => {
+  app.put("/api/dental-chart/:patientId/:toothNumber", authenticateToken, async (req, res) => {
     try {
       const patientId = parseInt(req.params.patientId);
       const toothNumber = req.params.toothNumber;
+      const user = req.user;
+      
+      // Verificar se o usuário tem companyId
+      if (!user.companyId) {
+        return res.status(400).json({ message: "User must belong to a company" });
+      }
+      
+      // Verificar se o paciente pertence à empresa do usuário
+      const patient = await storage.getPatient(patientId);
+      if (!patient || patient.companyId !== user.companyId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
       
       // Create the data with required fields
       const dentalChartData = {
@@ -1577,7 +1597,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         toothNumber: toothNumber,
         condition: req.body.condition || "healthy",
         notes: req.body.notes || "",
-        treatmentDate: req.body.treatmentDate || new Date().toISOString().split('T')[0]
+        treatmentDate: req.body.treatmentDate || new Date().toISOString().split('T')[0],
+        companyId: user.companyId // CRITICAL: Add company ID from authenticated user
       };
       
       console.log('Received dental chart update:', dentalChartData);
@@ -1587,9 +1608,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedTooth);
     } catch (error) {
       console.error("Update tooth condition error:", error);
-      if (error instanceof Error) {
-        console.error("Error details:", error.message);
-        console.error("Error stack:", error.stack);
+      if (error.name === 'ZodError') {
+        console.error("Validation error details:", error.issues);
+        return res.status(400).json({ 
+          message: "Validation error", 
+          details: error.issues 
+        });
       }
       res.status(500).json({ message: "Internal server error", error: error.message });
     }

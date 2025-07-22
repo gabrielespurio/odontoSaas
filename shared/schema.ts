@@ -470,6 +470,7 @@ export const insertDentalChartSchema = createInsertSchema(dentalChart).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  companyId: true, // Excluir companyId pois será adicionado no backend
 });
 
 // Define additionalQuestions structure

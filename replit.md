@@ -607,6 +607,8 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
 - July 22, 2025. **MULTI-TENANT DATA ISOLATION**: Verified and maintained complete multi-tenant data isolation across all modules
 - July 22, 2025. **USER PROFILE SCHEMA FIX**: Fixed companyId validation error in user profile creation by excluding companyId from frontend schema
 - July 22, 2025. **USER CREATION FIX**: Fixed user creation to automatically assign logged user's companyId ensuring proper multi-tenant isolation
+- July 22, 2025. **PATIENT CREATION FIX**: Fixed patient creation validation error by excluding companyId from frontend schema and adding proper backend validation
+- July 22, 2025. **DENTAL CHART SECURITY FIX**: Fixed odontogram update error by adding authentication, company validation, and excluding companyId from frontend schema
 - July 22, 2025. **DATABASE SCHEMA FIXES**: Fixed critical database schema issues for user creation and appointments
   - Added missing `username` column to users table with automatic generation from email
   - Added missing `company_id` column to procedures table for multi-tenant support
