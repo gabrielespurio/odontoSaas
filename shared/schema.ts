@@ -504,6 +504,7 @@ export const insertProcedureCategorySchema = createInsertSchema(procedureCategor
 export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
   id: true,
   createdAt: true,
+  companyId: true, // Excluir companyId pois será adicionado no backend
 });
 
 export const insertReceivableSchema = createInsertSchema(receivables).omit({

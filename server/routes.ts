@@ -818,6 +818,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/user-profiles", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
+      
+      // Verificar se o usuário tem companyId
+      if (!user.companyId) {
+        return res.status(400).json({ message: "User must belong to a company" });
+      }
+      
       const profileData = insertUserProfileSchema.parse(req.body);
       
       // CRITICAL: Add company ID to profile
@@ -830,6 +836,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(profile);
     } catch (error) {
       console.error("Create user profile error:", error);
+      if (error.name === 'ZodError') {
+        console.error("Validation error details:", error.issues);
+        return res.status(400).json({ 
+          message: "Validation error", 
+          details: error.issues 
+        });
+      }
       res.status(500).json({ message: "Internal server error" });
     }
   });
