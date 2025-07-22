@@ -618,6 +618,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - Users can now have the same email in different companies (true SaaS multi-tenant)
   - Added getUserByEmailAndCompany method for company-scoped email validation
   - Removed global email unique constraint and added company-scoped unique index
+- July 22, 2025. **DATA ISOLATION FIX**: Fixed critical frontend bug where users from different companies appeared in same list
+  - Added useEffect to reload users when company selection changes
+  - Implemented proper state clearing when switching between companies
+  - Added console logging for debugging user loading issues
+  - Enhanced frontend to ensure proper data isolation between companies
 - July 21, 2025. **SAAS MULTI-TENANT ARCHITECTURE IMPLEMENTATION**: Transformed OdontoSync into a true SaaS multi-tenant system
   - **Database Schema Migration**: Added companyId fields to all relevant tables (patients, appointments, consultations, procedures, financial records, etc.)
   - **Company Management System**: Created companies table with comprehensive business information, license tracking, and address management

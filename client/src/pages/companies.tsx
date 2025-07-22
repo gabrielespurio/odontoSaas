@@ -64,6 +64,13 @@ export default function Companies() {
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const [companyUsers, setCompanyUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+
+  // Load users when dialog opens and company changes
+  useEffect(() => {
+    if (isFormDialogOpen && selectedCompany) {
+      loadCompanyUsers();
+    }
+  }, [isFormDialogOpen, selectedCompany?.id]);
   const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
   const { toast } = useToast();
@@ -190,15 +197,23 @@ export default function Companies() {
     setLoadingUsers(true);
     try {
       const token = localStorage.getItem("token");
+      console.log(`Loading users for company: ${selectedCompany.name} (ID: ${selectedCompany.id})`);
+      
       const response = await fetch(`/api/users?companyId=${selectedCompany.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
       if (response.ok) {
         const users = await response.json();
+        console.log(`Loaded ${users.length} users for company ${selectedCompany.id}:`, users);
         setCompanyUsers(users);
+      } else {
+        console.error("Failed to load users:", response.status, response.statusText);
+        setCompanyUsers([]);
       }
     } catch (error) {
       console.error("Error loading users:", error);
+      setCompanyUsers([]);
     }
     setLoadingUsers(false);
   };
@@ -317,6 +332,7 @@ export default function Companies() {
                       <DropdownMenuItem 
                         onClick={async () => {
                           setSelectedCompany(company);
+                          setCompanyUsers([]); // Clear previous users
                           setIsFormDialogOpen(true);
                         }}
                       >
@@ -424,7 +440,7 @@ export default function Companies() {
               />
             </TabsContent>
             
-            <TabsContent value="users" className="mt-6" onSelect={() => loadCompanyUsers()}>
+            <TabsContent value="users" className="mt-6">
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div>
