@@ -1671,8 +1671,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/anamnese/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      
+      // Debug: log the raw request body
+      console.log("PUT anamnese request body:", JSON.stringify(req.body, null, 2));
+      
       const anamneseData = insertAnamneseSchema.partial().parse(req.body);
-      const anamnese = await storage.updateAnamnese(id, anamneseData);
+      
+      // Debug: log the parsed data
+      console.log("PUT anamnese parsed data:", JSON.stringify(anamneseData, null, 2));
+      
+      // Get user from authentication
+      const user = req.user;
+      
+      // Add companyId from authenticated user
+      const anamneseWithCompany = {
+        ...anamneseData,
+        companyId: user.companyId
+      };
+      
+      console.log("PUT anamnese with company:", JSON.stringify(anamneseWithCompany, null, 2));
+      
+      const anamnese = await storage.updateAnamnese(id, anamneseWithCompany);
+      
+      console.log("PUT anamnese result:", JSON.stringify(anamnese, null, 2));
+      
       res.json(anamnese);
     } catch (error) {
       console.error("Update anamnese error:", error);
