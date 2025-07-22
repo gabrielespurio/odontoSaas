@@ -649,6 +649,14 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **STORAGE LAYER UPDATES**: Updated all financial storage methods (getReceivables, getPayables, getCashFlow, getFinancialMetrics, getCurrentBalance) to accept companyId parameter
   - **DATA SCOPE CONTROL**: Users with "own" scope only see their own data, admin and "all" scope users see all company data (but never cross-company)
   - **COMPLETE FINANCIAL ISOLATION**: All financial modules now properly isolated by company with bulletproof multi-tenant security
+- July 22, 2025. **PROCEDURES MODULE SECURITY FIX**: Resolved critical multi-tenant data leakage vulnerability in procedures module
+  - **CRITICAL VULNERABILITY**: Users were seeing procedures from other companies due to missing authentication and company filtering
+  - **PROCEDURES ENDPOINTS**: Added authenticateToken middleware to all procedure endpoints (/api/procedures, POST, PUT)
+  - **COMPANY FILTERING**: Updated getProcedures() storage method to include companyId parameter and filtering
+  - **CATEGORIES SECURITY**: Fixed procedure categories endpoints with proper company-based authentication
+  - **USER PROFILES**: Enhanced user profiles module with company-based data isolation
+  - **AUTHENTICATION REQUIRED**: All configuration modules (procedures, categories, profiles) now require proper authentication
+  - **COMPLETE MODULE ISOLATION**: Procedures module now properly isolated by company preventing cross-company data access
 - July 21, 2025. **SAAS MULTI-TENANT ARCHITECTURE IMPLEMENTATION**: Transformed OdontoSync into a true SaaS multi-tenant system
   - **Database Schema Migration**: Added companyId fields to all relevant tables (patients, appointments, consultations, procedures, financial records, etc.)
   - **Company Management System**: Created companies table with comprehensive business information, license tracking, and address management

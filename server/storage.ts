@@ -355,8 +355,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Procedures
-  async getProcedures(): Promise<Procedure[]> {
-    return await db.select().from(procedures).where(eq(procedures.isActive, true)).orderBy(procedures.name);
+  async getProcedures(limit?: number, offset?: number, search?: string, categoryId?: number, companyId?: number): Promise<Procedure[]> {
+    const whereConditions = [eq(procedures.isActive, true)];
+    
+    // CRITICAL: Always filter by company when provided
+    if (companyId) {
+      whereConditions.push(eq(procedures.companyId, companyId));
+    }
+    
+    if (search) {
+      whereConditions.push(ilike(procedures.name, `%${search}%`));
+    }
+    if (categoryId) {
+      whereConditions.push(eq(procedures.categoryId, categoryId));
+    }
+
+    let query = db.select().from(procedures);
+
+    if (whereConditions.length > 0) {
+      query = query.where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions)!) as any;
+    }
+
+    if (limit) {
+      query = query.limit(limit) as any;
+    }
+    if (offset) {
+      query = query.offset(offset) as any;
+    }
+
+    return await query.orderBy(procedures.name);
   }
 
   async getProcedure(id: number): Promise<Procedure | undefined> {

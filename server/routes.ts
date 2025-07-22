@@ -730,20 +730,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Procedure Categories
-  app.get("/api/procedure-categories", async (req, res) => {
+  app.get("/api/procedure-categories", authenticateToken, async (req, res) => {
     try {
-      // Temporarily return empty array to fix loading issue
-      res.json([]);
+      const user = req.user;
+      // CRITICAL: Filter categories by company
+      const categories = await storage.getProcedureCategories(user.companyId);
+      res.json(categories);
     } catch (error) {
       console.error("Get procedure categories error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.post("/api/procedure-categories", async (req, res) => {
+  app.post("/api/procedure-categories", authenticateToken, async (req, res) => {
     try {
+      const user = req.user;
       const categoryData = insertProcedureCategorySchema.parse(req.body);
-      const category = await storage.createProcedureCategory(categoryData);
+      
+      // CRITICAL: Add company ID to category
+      const categoryWithCompany = {
+        ...categoryData,
+        companyId: user.companyId
+      };
+      
+      const category = await storage.createProcedureCategory(categoryWithCompany);
       res.json(category);
     } catch (error) {
       console.error("Create procedure category error:", error);
@@ -764,20 +774,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User Profiles
-  app.get("/api/user-profiles", async (req, res) => {
+  app.get("/api/user-profiles", authenticateToken, async (req, res) => {
     try {
-      // Temporarily return empty array to fix loading issue
-      res.json([]);
+      const user = req.user;
+      // CRITICAL: Filter user profiles by company
+      const profiles = await storage.getUserProfiles(user.companyId);
+      res.json(profiles);
     } catch (error) {
       console.error("Get user profiles error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.post("/api/user-profiles", async (req, res) => {
+  app.post("/api/user-profiles", authenticateToken, async (req, res) => {
     try {
+      const user = req.user;
       const profileData = insertUserProfileSchema.parse(req.body);
-      const profile = await storage.createUserProfile(profileData);
+      
+      // CRITICAL: Add company ID to profile
+      const profileWithCompany = {
+        ...profileData,
+        companyId: user.companyId
+      };
+      
+      const profile = await storage.createUserProfile(profileWithCompany);
       res.json(profile);
     } catch (error) {
       console.error("Create user profile error:", error);
@@ -798,9 +818,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Procedures
-  app.get("/api/procedures", async (req, res) => {
+  app.get("/api/procedures", authenticateToken, async (req, res) => {
     try {
-      const procedures = await storage.getProcedures();
+      const user = req.user;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const search = req.query.search as string;
+      const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
+      
+      // CRITICAL: Filter procedures by company
+      const procedures = await storage.getProcedures(limit, offset, search, categoryId, user.companyId);
       res.json(procedures);
     } catch (error) {
       console.error("Get procedures error:", error);
@@ -808,10 +835,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/procedures", async (req, res) => {
+  app.post("/api/procedures", authenticateToken, async (req, res) => {
     try {
+      const user = req.user;
       const procedureData = insertProcedureSchema.parse(req.body);
-      const procedure = await storage.createProcedure(procedureData);
+      
+      // CRITICAL: Add company ID to procedure
+      const procedureWithCompany = {
+        ...procedureData,
+        companyId: user.companyId
+      };
+      
+      const procedure = await storage.createProcedure(procedureWithCompany);
       res.json(procedure);
     } catch (error) {
       console.error("Create procedure error:", error);
@@ -819,10 +854,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/procedures/:id", async (req, res) => {
+  app.put("/api/procedures/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const user = req.user;
       const procedureData = insertProcedureSchema.partial().parse(req.body);
+      
+      // CRITICAL: Verify procedure belongs to user's company
+      const existingProcedure = await storage.getProcedure(id);
+      if (!existingProcedure) {
+        return res.status(404).json({ message: "Procedimento não encontrado" });
+      }
+      
+      if (user.companyId && existingProcedure.companyId !== user.companyId) {
+        return res.status(403).json({ message: "Acesso negado - procedimento não pertence à sua empresa" });
+      }
+      
       const procedure = await storage.updateProcedure(id, procedureData);
       res.json(procedure);
     } catch (error) {
