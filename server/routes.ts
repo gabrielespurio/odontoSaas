@@ -1697,31 +1697,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Debug: log the parsed data
       console.log("PUT anamnese parsed data:", JSON.stringify(anamneseData, null, 2));
       
-      // Convert individual fields to additionalQuestions object
-      const additionalQuestions = {
-        hasHeartProblems: anamneseData.hasHeartProblems || false,
-        hasDiabetes: anamneseData.hasDiabetes || false,
-        hasHypertension: anamneseData.hasHypertension || false,
-        isPregnant: anamneseData.isPregnant || false,
-        smokingHabits: anamneseData.smokingHabits || "",
-        bleedingProblems: anamneseData.bleedingProblems || false,
-        familyHistory: anamneseData.familyHistory || "",
-      };
+      // Get the existing anamnese record to preserve existing values
+      const existingAnamnese = await storage.getAnamnese(anamneseData.patientId || 0);
       
       // Get user from authentication
       const user = req.user;
       
-      // Prepare data for database (remove individual fields, keep only the object)
-      const finalData = {
-        patientId: anamneseData.patientId,
-        medicalTreatment: anamneseData.medicalTreatment,
-        medications: anamneseData.medications,
-        allergies: anamneseData.allergies,
-        previousDentalTreatment: anamneseData.previousDentalTreatment,
-        painComplaint: anamneseData.painComplaint,
-        additionalQuestions: additionalQuestions,
-        companyId: user.companyId
+      let additionalQuestions;
+      
+      if (anamneseData.additionalQuestions) {
+        // If additionalQuestions is provided in request, use it directly
+        additionalQuestions = anamneseData.additionalQuestions;
+      } else {
+        // Otherwise, build from individual fields while preserving existing values
+        const existingQuestions = existingAnamnese?.additionalQuestions || {};
+        additionalQuestions = {
+          hasHeartProblems: anamneseData.hasHeartProblems !== undefined ? anamneseData.hasHeartProblems : (existingQuestions.hasHeartProblems || false),
+          hasDiabetes: anamneseData.hasDiabetes !== undefined ? anamneseData.hasDiabetes : (existingQuestions.hasDiabetes || false),
+          hasHypertension: anamneseData.hasHypertension !== undefined ? anamneseData.hasHypertension : (existingQuestions.hasHypertension || false),
+          isPregnant: anamneseData.isPregnant !== undefined ? anamneseData.isPregnant : (existingQuestions.isPregnant || false),
+          smokingHabits: anamneseData.smokingHabits !== undefined ? anamneseData.smokingHabits : (existingQuestions.smokingHabits || ""),
+          bleedingProblems: anamneseData.bleedingProblems !== undefined ? anamneseData.bleedingProblems : (existingQuestions.bleedingProblems || false),
+          familyHistory: anamneseData.familyHistory !== undefined ? anamneseData.familyHistory : (existingQuestions.familyHistory || ""),
+        };
+      }
+      
+      // Prepare data for database (only include fields that are actually being updated)
+      const finalData: any = {
+        companyId: user.companyId,
+        additionalQuestions: additionalQuestions
       };
+      
+      // Only include fields that are explicitly provided
+      if (anamneseData.patientId !== undefined) finalData.patientId = anamneseData.patientId;
+      if (anamneseData.medicalTreatment !== undefined) finalData.medicalTreatment = anamneseData.medicalTreatment;
+      if (anamneseData.medications !== undefined) finalData.medications = anamneseData.medications;
+      if (anamneseData.allergies !== undefined) finalData.allergies = anamneseData.allergies;
+      if (anamneseData.previousDentalTreatment !== undefined) finalData.previousDentalTreatment = anamneseData.previousDentalTreatment;
+      if (anamneseData.painComplaint !== undefined) finalData.painComplaint = anamneseData.painComplaint;
       
       console.log("PUT anamnese final data:", JSON.stringify(finalData, null, 2));
       
