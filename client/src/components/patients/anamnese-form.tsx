@@ -84,20 +84,20 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
     if (anamnese) {
       const normalizedQuestions = normalizeAdditionalQuestions(anamnese.additionalQuestions);
       
-      form.reset({
-        patientId: anamnese.patientId,
-        medicalTreatment: anamnese.medicalTreatment,
-        medications: anamnese.medications || "",
-        allergies: anamnese.allergies || "",
-        previousDentalTreatment: anamnese.previousDentalTreatment,
-        painComplaint: anamnese.painComplaint || "",
-        additionalQuestions: normalizedQuestions,
-      });
+      console.log("Loading anamnese data:", anamnese);
+      console.log("Normalized questions:", normalizedQuestions);
       
-      // Force form to re-render with the new values
-      setTimeout(() => {
-        form.trigger();
-      }, 100);
+      // Set each field individually to ensure they are updated
+      form.setValue("patientId", anamnese.patientId);
+      form.setValue("medicalTreatment", anamnese.medicalTreatment);
+      form.setValue("medications", anamnese.medications || "");
+      form.setValue("allergies", anamnese.allergies || "");
+      form.setValue("previousDentalTreatment", anamnese.previousDentalTreatment);
+      form.setValue("painComplaint", anamnese.painComplaint || "");
+      form.setValue("additionalQuestions", normalizedQuestions);
+      
+      // Trigger validation to ensure form is updated
+      form.trigger();
     }
   }, [anamnese, form]);
 
@@ -240,11 +240,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                     id="hasHeartProblems"
                     checked={form.watch("additionalQuestions")?.hasHeartProblems || false}
                     onCheckedChange={(checked) => {
-                      const current = form.getValues("additionalQuestions") || {};
-                      form.setValue("additionalQuestions", {
+                      const current = form.getValues("additionalQuestions") || normalizeAdditionalQuestions(null);
+                      const updated = {
                         ...current,
                         hasHeartProblems: !!checked
-                      });
+                      };
+                      form.setValue("additionalQuestions", updated);
+                      form.trigger("additionalQuestions");
                     }}
                   />
                   <Label htmlFor="hasHeartProblems" className="text-sm leading-relaxed">
@@ -257,11 +259,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                     id="hasDiabetes"
                     checked={form.watch("additionalQuestions")?.hasDiabetes || false}
                     onCheckedChange={(checked) => {
-                      const current = form.getValues("additionalQuestions") || {};
-                      form.setValue("additionalQuestions", {
+                      const current = form.getValues("additionalQuestions") || normalizeAdditionalQuestions(null);
+                      const updated = {
                         ...current,
                         hasDiabetes: !!checked
-                      });
+                      };
+                      form.setValue("additionalQuestions", updated);
+                      form.trigger("additionalQuestions");
                     }}
                   />
                   <Label htmlFor="hasDiabetes" className="text-sm leading-relaxed">
@@ -274,11 +278,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                     id="hasHypertension"
                     checked={form.watch("additionalQuestions")?.hasHypertension || false}
                     onCheckedChange={(checked) => {
-                      const current = form.getValues("additionalQuestions") || {};
-                      form.setValue("additionalQuestions", {
+                      const current = form.getValues("additionalQuestions") || normalizeAdditionalQuestions(null);
+                      const updated = {
                         ...current,
                         hasHypertension: !!checked
-                      });
+                      };
+                      form.setValue("additionalQuestions", updated);
+                      form.trigger("additionalQuestions");
                     }}
                   />
                   <Label htmlFor="hasHypertension" className="text-sm leading-relaxed">
@@ -308,11 +314,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                     id="bleedingProblems"
                     checked={form.watch("additionalQuestions")?.bleedingProblems || false}
                     onCheckedChange={(checked) => {
-                      const current = form.getValues("additionalQuestions") || {};
-                      form.setValue("additionalQuestions", {
+                      const current = form.getValues("additionalQuestions") || normalizeAdditionalQuestions(null);
+                      const updated = {
                         ...current,
                         bleedingProblems: !!checked
-                      });
+                      };
+                      form.setValue("additionalQuestions", updated);
+                      form.trigger("additionalQuestions");
                     }}
                   />
                   <Label htmlFor="bleedingProblems" className="text-sm leading-relaxed">
@@ -327,11 +335,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                   id="smokingHabits"
                   value={form.watch("additionalQuestions")?.smokingHabits || ""}
                   onChange={(e) => {
-                    const current = form.getValues("additionalQuestions") || {};
-                    form.setValue("additionalQuestions", {
+                    const current = form.getValues("additionalQuestions") || normalizeAdditionalQuestions(null);
+                    const updated = {
                       ...current,
                       smokingHabits: e.target.value
-                    });
+                    };
+                    form.setValue("additionalQuestions", updated);
+                    form.trigger("additionalQuestions");
                   }}
                   placeholder="Descreva hábitos de fumo (frequência, tipo, há quanto tempo)"
                   rows={2}
@@ -345,11 +355,13 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
                   id="familyHistory"
                   value={form.watch("additionalQuestions")?.familyHistory || ""}
                   onChange={(e) => {
-                    const current = form.getValues("additionalQuestions") || {};
-                    form.setValue("additionalQuestions", {
+                    const current = form.getValues("additionalQuestions") || normalizeAdditionalQuestions(null);
+                    const updated = {
                       ...current,
                       familyHistory: e.target.value
-                    });
+                    };
+                    form.setValue("additionalQuestions", updated);
+                    form.trigger("additionalQuestions");
                   }}
                   placeholder="Descreva problemas de saúde relevantes na família"
                   rows={3}
