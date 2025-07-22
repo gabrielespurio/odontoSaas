@@ -630,6 +630,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", authenticateToken, async (req, res) => {
     try {
+      const loggedUser = req.user;
+      
+      // Verificar se o usuário logado tem companyId
+      if (!loggedUser.companyId) {
+        return res.status(400).json({ message: "User must belong to a company" });
+      }
+      
       // Create custom schema for user creation without username field
       const userCreateSchema = z.object({
         name: z.string().min(1),
@@ -638,13 +645,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: z.string().min(1), // Changed to accept any string (custom profiles)
         dataScope: z.enum(["all", "own"]).optional().default("all"),
         forcePasswordChange: z.boolean().optional(),
-        companyId: z.number().optional(),
       });
       
       const userData = userCreateSchema.parse(req.body);
       
+      // CRITICAL: Use the company ID from the logged user
+      const companyId = loggedUser.companyId;
+      
       // Check if email already exists within the same company
-      const existingUser = await storage.getUserByEmailAndCompany(userData.email, userData.companyId);
+      const existingUser = await storage.getUserByEmailAndCompany(userData.email, companyId);
       if (existingUser) {
         return res.status(400).json({ 
           message: "Um usuário com este email já existe nesta empresa." 
@@ -655,12 +664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Generate unique username from email (part before @) with company suffix
       let baseUsername = userData.email.split('@')[0];
-      let username = baseUsername;
-      
-      // If companyId exists, append it to make username unique
-      if (userData.companyId) {
-        username = `${baseUsername}_c${userData.companyId}`;
-      }
+      let username = `${baseUsername}_c${companyId}`;
       
       // Check if username already exists and add counter if needed
       let counter = 1;
@@ -686,7 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: userData.role,
         dataScope: userData.dataScope,
         forcePasswordChange: userData.forcePasswordChange || false,
-        companyId: userData.companyId || null,
+        companyId: companyId, // CRITICAL: Always use logged user's company
         isActive: true,
       };
       
@@ -705,6 +709,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Create user error:", error);
+      if (error.name === 'ZodError') {
+        console.error("Validation error details:", error.issues);
+        return res.status(400).json({ 
+          message: "Validation error", 
+          details: error.issues 
+        });
+      }
       res.status(500).json({ message: "Internal server error" });
     }
   });
