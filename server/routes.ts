@@ -383,7 +383,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // If user has "own" scope and is not admin, only return themselves if they are a dentist
       if (user.role !== "admin" && user.dataScope === "own") {
-        if (user.role === "Dentista" || user.role === "dentista" || user.role === "dentist") {
+        if (user.role === "Dentista" || user.role === "dentista" || user.role === "dentist" || 
+            user.role.toLowerCase().includes("dentist") || user.role.toLowerCase().includes("dentista")) {
           const dentists = await db.select({
             id: users.id,
             username: users.username,
@@ -418,7 +419,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             or(
               eq(users.role, "Dentista"),
               eq(users.role, "dentista"),
-              eq(users.role, "dentist")
+              eq(users.role, "dentist"),
+              like(users.role, "%dentist%"),
+              like(users.role, "%Dentist%"),
+              like(users.role, "%dentista%"),
+              like(users.role, "%Dentista%")
             ),
             eq(users.isActive, true),
             eq(users.companyId, user.companyId) // CRITICAL: Filter by company for data isolation
