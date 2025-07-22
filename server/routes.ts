@@ -1700,6 +1700,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the existing anamnese record to preserve existing values
       const existingAnamnese = await storage.getAnamnese(anamneseData.patientId || 0);
       
+      console.log("Existing anamnese:", JSON.stringify(existingAnamnese, null, 2));
+      
       // Get user from authentication
       const user = req.user;
       
@@ -1711,17 +1713,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (anamneseData.additionalQuestions) {
         // Merge provided additionalQuestions with existing values
         additionalQuestions = {
-          hasHeartProblems: anamneseData.additionalQuestions.hasHeartProblems !== undefined ? anamneseData.additionalQuestions.hasHeartProblems : (existingQuestions.hasHeartProblems || false),
-          hasDiabetes: anamneseData.additionalQuestions.hasDiabetes !== undefined ? anamneseData.additionalQuestions.hasDiabetes : (existingQuestions.hasDiabetes || false),
-          hasHypertension: anamneseData.additionalQuestions.hasHypertension !== undefined ? anamneseData.additionalQuestions.hasHypertension : (existingQuestions.hasHypertension || false),
-          isPregnant: anamneseData.additionalQuestions.isPregnant !== undefined ? anamneseData.additionalQuestions.isPregnant : (existingQuestions.isPregnant || false),
-          smokingHabits: anamneseData.additionalQuestions.smokingHabits !== undefined ? anamneseData.additionalQuestions.smokingHabits : (existingQuestions.smokingHabits || ""),
-          bleedingProblems: anamneseData.additionalQuestions.bleedingProblems !== undefined ? anamneseData.additionalQuestions.bleedingProblems : (existingQuestions.bleedingProblems || false),
-          familyHistory: anamneseData.additionalQuestions.familyHistory !== undefined ? anamneseData.additionalQuestions.familyHistory : (existingQuestions.familyHistory || ""),
+          hasHeartProblems: anamneseData.additionalQuestions.hasHeartProblems !== undefined ? anamneseData.additionalQuestions.hasHeartProblems : (existingQuestions.hasHeartProblems ?? false),
+          hasDiabetes: anamneseData.additionalQuestions.hasDiabetes !== undefined ? anamneseData.additionalQuestions.hasDiabetes : (existingQuestions.hasDiabetes ?? false),
+          hasHypertension: anamneseData.additionalQuestions.hasHypertension !== undefined ? anamneseData.additionalQuestions.hasHypertension : (existingQuestions.hasHypertension ?? false),
+          isPregnant: anamneseData.additionalQuestions.isPregnant !== undefined ? anamneseData.additionalQuestions.isPregnant : (existingQuestions.isPregnant ?? false),
+          smokingHabits: anamneseData.additionalQuestions.smokingHabits !== undefined ? anamneseData.additionalQuestions.smokingHabits : (existingQuestions.smokingHabits ?? ""),
+          bleedingProblems: anamneseData.additionalQuestions.bleedingProblems !== undefined ? anamneseData.additionalQuestions.bleedingProblems : (existingQuestions.bleedingProblems ?? false),
+          familyHistory: anamneseData.additionalQuestions.familyHistory !== undefined ? anamneseData.additionalQuestions.familyHistory : (existingQuestions.familyHistory ?? ""),
         };
+        
+        console.log("Merging additionalQuestions:");
+        console.log("- Request data:", JSON.stringify(anamneseData.additionalQuestions, null, 2));
+        console.log("- Existing data:", JSON.stringify(existingQuestions, null, 2));
+        console.log("- Final result:", JSON.stringify(additionalQuestions, null, 2));
       } else {
         // If no additionalQuestions provided, preserve existing values
         additionalQuestions = existingQuestions;
+        console.log("No additionalQuestions in request, preserving existing:", JSON.stringify(additionalQuestions, null, 2));
       }
       
       // Prepare data for database (only include fields that are actually being updated)
