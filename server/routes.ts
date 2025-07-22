@@ -1576,7 +1576,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply data scope filtering
       let receivablesResult;
       if (user.role === "admin" || user.dataScope === "all") {
-        receivablesResult = await storage.getReceivables(patientId, status, startDate, endDate, dentistId);
+        // CRITICAL: Always filter by company, even for admins and "all" scope users
+        receivablesResult = await storage.getReceivables(patientId, status, startDate, endDate, dentistId, user.companyId);
       } else {
         // For users with "own" scope, filter by their appointments/consultations
         const userConsultations = await db.select({
@@ -1618,12 +1619,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             whereConditions.push(or(...orConditions));
           }
 
+          // CRITICAL: Always pass company ID for proper isolation
           receivablesResult = await storage.getReceivables(
             patientId, 
             status, 
             startDate, 
             endDate,
-            dentistId
+            dentistId,
+            user.companyId
           );
 
           // Filter results to only include user's own data
@@ -1641,13 +1644,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/receivables/:id", async (req, res) => {
+  app.get("/api/receivables/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const receivable = await storage.getReceivable(id);
+      const user = req.user;
+      
+      // CRITICAL: Get receivable with company filtering
+      const receivable = await storage.getReceivable(id, user.companyId);
       
       if (!receivable) {
         return res.status(404).json({ message: "Receivable not found" });
+      }
+      
+      // Additional data scope check for "own" users
+      if (user.role !== "admin" && user.dataScope === "own") {
+        // Verify the receivable belongs to user's consultations/appointments
+        if (receivable.consultation && receivable.consultation.dentistId !== user.id) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+        if (receivable.appointment && receivable.appointment.dentistId !== user.id) {
+          return res.status(403).json({ message: "Access denied" });
+        }
       }
       
       res.json(receivable);
@@ -1657,9 +1674,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/receivables", async (req, res) => {
+  app.post("/api/receivables", authenticateToken, async (req, res) => {
     try {
       const receivableData = insertReceivableSchema.parse(req.body);
+      const user = req.user;
+      
+      // CRITICAL: Add company ID to receivable data
+      receivableData.companyId = user.companyId;
+      
+      // Verify patient belongs to user's company
+      const patient = await storage.getPatient(receivableData.patientId);
+      if (!patient || patient.companyId !== user.companyId) {
+        return res.status(403).json({ message: "Patient not found or not from your company" });
+      }
+      
       const receivable = await storage.createReceivable(receivableData);
       res.json(receivable);
     } catch (error) {
@@ -1668,10 +1696,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/receivables/:id", async (req, res) => {
+  app.put("/api/receivables/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const receivableData = insertReceivableSchema.partial().parse(req.body);
+      const user = req.user;
+      
+      // CRITICAL: Verify receivable belongs to user's company
+      const existingReceivable = await storage.getReceivable(id, user.companyId);
+      if (!existingReceivable) {
+        return res.status(404).json({ message: "Receivable not found" });
+      }
+      
       const receivable = await storage.updateReceivable(id, receivableData);
       res.json(receivable);
     } catch (error) {
@@ -1680,9 +1716,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/receivables/:id", async (req, res) => {
+  app.delete("/api/receivables/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const user = req.user;
+      
+      // CRITICAL: Verify receivable belongs to user's company
+      const existingReceivable = await storage.getReceivable(id, user.companyId);
+      if (!existingReceivable) {
+        return res.status(404).json({ message: "Conta a receber não encontrada" });
+      }
+      
       await storage.deleteReceivable(id);
       res.json({ message: "Receivable deleted successfully" });
     } catch (error) {
@@ -1692,10 +1736,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Criar contas a receber a partir de consulta
-  app.post("/api/receivables/from-consultation", async (req, res) => {
+  app.post("/api/receivables/from-consultation", authenticateToken, async (req, res) => {
     try {
       const { consultationId, procedureIds, installments = 1, customAmount, paymentMethod = 'pix', dueDate } = req.body;
-      const receivables = await storage.createReceivableFromConsultation(consultationId, procedureIds, installments, customAmount, paymentMethod, dueDate);
+      const user = req.user;
+      
+      // CRITICAL: Verify consultation belongs to user's company
+      const consultation = await storage.getConsultation(consultationId, user.companyId);
+      if (!consultation) {
+        return res.status(404).json({ message: "Consulta não encontrada ou não pertence à sua empresa" });
+      }
+      
+      const receivables = await storage.createReceivableFromConsultation(consultationId, procedureIds, installments, customAmount, paymentMethod, dueDate, user.companyId);
       res.json(receivables);
     } catch (error) {
       console.error("Create receivables from consultation error:", error);
@@ -1714,7 +1766,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Apply data scope filtering - only admin and "all" scope users can see payables
       if (user.role === "admin" || user.dataScope === "all") {
-        const payables = await storage.getPayables(status, category, startDate, endDate);
+        // CRITICAL: Always filter by company, even for admins and "all" scope users
+        const payables = await storage.getPayables(status, category, startDate, endDate, user.companyId);
         res.json(payables);
       } else {
         // Users with "own" scope cannot see payables (clinic expenses)
@@ -1726,10 +1779,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/payables/:id", async (req, res) => {
+  app.get("/api/payables/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const payable = await storage.getPayable(id);
+      const user = req.user;
+      
+      // CRITICAL: Get payable with company filtering
+      const payable = await storage.getPayable(id, user.companyId);
       
       if (!payable) {
         return res.status(404).json({ message: "Payable not found" });
@@ -1750,6 +1806,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Clean up empty strings to undefined/null for optional fields
       const cleanedData = {
         ...payableData,
+        companyId: user.companyId, // CRITICAL: Add company ID
         paymentDate: payableData.paymentDate && payableData.paymentDate.trim() !== "" ? payableData.paymentDate : undefined,
         paymentMethod: payableData.paymentMethod && payableData.paymentMethod.trim() !== "" ? payableData.paymentMethod : undefined,
         supplier: payableData.supplier && payableData.supplier.trim() !== "" ? payableData.supplier : undefined,
@@ -1766,10 +1823,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/payables/:id", async (req, res) => {
+  app.put("/api/payables/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const user = req.user;
       const payableData = insertPayableSchema.partial().parse(req.body);
+      
+      // CRITICAL: Verify payable belongs to user's company
+      const existingPayable = await storage.getPayable(id, user.companyId);
+      if (!existingPayable) {
+        return res.status(404).json({ message: "Payable not found" });
+      }
       
       // Clean up empty strings to undefined/null for optional fields
       const cleanedData = {
@@ -1792,6 +1856,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/payables/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const user = req.user;
+      
+      // CRITICAL: Verify payable belongs to user's company
+      const existingPayable = await storage.getPayable(id, user.companyId);
+      if (!existingPayable) {
+        return res.status(404).json({ message: "Conta a pagar não encontrada" });
+      }
+      
       await storage.deletePayable(id);
       res.json({ message: "Payable deleted successfully" });
     } catch (error) {
@@ -1809,7 +1881,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Apply data scope filtering
       if (user.role === "admin" || user.dataScope === "all") {
-        const cashFlow = await storage.getCashFlow(startDate, endDate);
+        // CRITICAL: Always filter by company, even for admins and "all" scope users
+        const cashFlow = await storage.getCashFlow(startDate, endDate, user.companyId);
         res.json(cashFlow);
       } else {
         // Users with "own" scope only see cash flow from their own receivables
@@ -1858,7 +1931,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Apply data scope filtering
       if (user.role === "admin" || user.dataScope === "all") {
-        const metrics = await storage.getFinancialMetrics(startDate, endDate);
+        // CRITICAL: Always filter by company, even for admins and "all" scope users
+        const metrics = await storage.getFinancialMetrics(startDate, endDate, user.companyId);
         res.json(metrics);
       } else {
         // Users with "own" scope only see metrics from their own data
@@ -1915,7 +1989,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Apply data scope filtering
       if (user.role === "admin" || user.dataScope === "all") {
-        const balance = await storage.getCurrentBalance();
+        // CRITICAL: Always filter by company, even for admins and "all" scope users
+        const balance = await storage.getCurrentBalance(user.companyId);
         res.json({ balance });
       } else {
         // Users with "own" scope only see balance from their own receivables

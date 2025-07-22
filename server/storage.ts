@@ -933,8 +933,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Receivables (Contas a Receber)
-  async getReceivables(patientId?: number, status?: string, startDate?: Date, endDate?: Date, dentistId?: number): Promise<(Receivable & { patient: Patient; consultation?: Consultation; appointment?: Appointment })[]> {
+  async getReceivables(patientId?: number, status?: string, startDate?: Date, endDate?: Date, dentistId?: number, companyId?: number): Promise<(Receivable & { patient: Patient; consultation?: Consultation; appointment?: Appointment })[]> {
     const whereConditions = [];
+    
+    // CRITICAL: Always filter by company when provided
+    if (companyId) {
+      whereConditions.push(eq(receivables.companyId, companyId));
+    }
     
     if (patientId) {
       whereConditions.push(eq(receivables.patientId, patientId));
@@ -1002,8 +1007,15 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(receivables.dueDate));
   }
 
-  async getReceivable(id: number): Promise<Receivable | undefined> {
-    const [record] = await db.select().from(receivables).where(eq(receivables.id, id));
+  async getReceivable(id: number, companyId?: number): Promise<Receivable | undefined> {
+    const whereConditions = [eq(receivables.id, id)];
+    
+    // CRITICAL: Filter by company when provided
+    if (companyId) {
+      whereConditions.push(eq(receivables.companyId, companyId));
+    }
+    
+    const [record] = await db.select().from(receivables).where(and(...whereConditions));
     return record || undefined;
   }
 
@@ -1052,9 +1064,9 @@ export class DatabaseStorage implements IStorage {
     await db.delete(receivables).where(eq(receivables.id, id));
   }
 
-  async createReceivableFromConsultation(consultationId: number, procedureIds: number[], installments: number = 1, customAmount?: string, paymentMethod: string = 'pix', dueDate?: string): Promise<Receivable[]> {
-    // Buscar consulta
-    const consultation = await this.getConsultation(consultationId);
+  async createReceivableFromConsultation(consultationId: number, procedureIds: number[], installments: number = 1, customAmount?: string, paymentMethod: string = 'pix', dueDate?: string, companyId?: number): Promise<Receivable[]> {
+    // Buscar consulta with company filtering
+    const consultation = await this.getConsultation(consultationId, companyId);
     if (!consultation) {
       throw new Error('Consulta não encontrada');
     }
@@ -1097,6 +1109,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       const receivableData: InsertReceivable = {
+        companyId: companyId, // CRITICAL: Add company ID
         patientId: consultation.patientId,
         consultationId: consultationId,
         appointmentId: consultation.appointmentId || undefined,
@@ -1128,8 +1141,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Payables (Contas a Pagar)
-  async getPayables(status?: string, category?: string, startDate?: Date, endDate?: Date): Promise<Payable[]> {
+  async getPayables(status?: string, category?: string, startDate?: Date, endDate?: Date, companyId?: number): Promise<Payable[]> {
     const whereConditions = [];
+    
+    // CRITICAL: Always filter by company when provided
+    if (companyId) {
+      whereConditions.push(eq(payables.companyId, companyId));
+    }
     
     if (status) {
       whereConditions.push(eq(payables.status, status as any));
@@ -1153,8 +1171,15 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(payables.dueDate));
   }
 
-  async getPayable(id: number): Promise<Payable | undefined> {
-    const [record] = await db.select().from(payables).where(eq(payables.id, id));
+  async getPayable(id: number, companyId?: number): Promise<Payable | undefined> {
+    const whereConditions = [eq(payables.id, id)];
+    
+    // CRITICAL: Filter by company when provided
+    if (companyId) {
+      whereConditions.push(eq(payables.companyId, companyId));
+    }
+    
+    const [record] = await db.select().from(payables).where(and(...whereConditions));
     return record || undefined;
   }
 
@@ -1204,8 +1229,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Cash Flow (Fluxo de Caixa)
-  async getCashFlow(startDate?: Date, endDate?: Date): Promise<CashFlow[]> {
+  async getCashFlow(startDate?: Date, endDate?: Date, companyId?: number): Promise<CashFlow[]> {
     const whereConditions = [];
+    
+    // CRITICAL: Always filter by company when provided
+    if (companyId) {
+      whereConditions.push(eq(cashFlow.companyId, companyId));
+    }
     
     if (startDate) {
       whereConditions.push(sql`${cashFlow.date} >= ${startDate}`);
@@ -1228,18 +1258,22 @@ export class DatabaseStorage implements IStorage {
     return record;
   }
 
-  async getCurrentBalance(): Promise<number> {
+  async getCurrentBalance(companyId?: number): Promise<number> {
     // Calcular saldo atual baseado na soma de todas as transações
-    const [result] = await db
-      .select({ 
-        total: sql<number>`coalesce(sum(${cashFlow.amount}), 0)` 
-      })
-      .from(cashFlow);
+    let query = db.select({ 
+      total: sql<number>`coalesce(sum(${cashFlow.amount}), 0)` 
+    }).from(cashFlow);
 
+    // CRITICAL: Filter by company when provided
+    if (companyId) {
+      query = query.where(eq(cashFlow.companyId, companyId)) as any;
+    }
+
+    const [result] = await query;
     return result?.total || 0;
   }
 
-  async getFinancialMetrics(startDate?: Date, endDate?: Date): Promise<{
+  async getFinancialMetrics(startDate?: Date, endDate?: Date, companyId?: number): Promise<{
     totalReceivables: number;
     totalPayables: number;
     totalReceived: number;
@@ -1250,6 +1284,12 @@ export class DatabaseStorage implements IStorage {
   }> {
     const whereReceivables = [];
     const wherePayables = [];
+    
+    // CRITICAL: Always filter by company when provided
+    if (companyId) {
+      whereReceivables.push(eq(receivables.companyId, companyId));
+      wherePayables.push(eq(payables.companyId, companyId));
+    }
     
     if (startDate) {
       whereReceivables.push(sql`${receivables.dueDate} >= ${startDate}`);
@@ -1280,27 +1320,40 @@ export class DatabaseStorage implements IStorage {
     const [totalReceivablesResult] = await totalReceivablesQuery;
     const [totalPayablesResult] = await totalPayablesQuery;
 
+    // Build conditions for paid/pending status queries
+    const paidReceivableConditions = [eq(receivables.status, 'paid')];
+    const paidPayableConditions = [eq(payables.status, 'paid')];
+    const pendingReceivableConditions = [eq(receivables.status, 'pending')];
+    const pendingPayableConditions = [eq(payables.status, 'pending')];
+
+    if (companyId) {
+      paidReceivableConditions.push(eq(receivables.companyId, companyId));
+      paidPayableConditions.push(eq(payables.companyId, companyId));
+      pendingReceivableConditions.push(eq(receivables.companyId, companyId));
+      pendingPayableConditions.push(eq(payables.companyId, companyId));
+    }
+
     const [totalReceivedResult] = await db
       .select({ sum: sql<number>`coalesce(sum(${receivables.amount}), 0)` })
       .from(receivables)
-      .where(eq(receivables.status, 'paid'));
+      .where(and(...paidReceivableConditions));
 
     const [totalPaidResult] = await db
       .select({ sum: sql<number>`coalesce(sum(${payables.amount}), 0)` })
       .from(payables)
-      .where(eq(payables.status, 'paid'));
+      .where(and(...paidPayableConditions));
 
     const [pendingReceivablesResult] = await db
       .select({ sum: sql<number>`coalesce(sum(${receivables.amount}), 0)` })
       .from(receivables)
-      .where(eq(receivables.status, 'pending'));
+      .where(and(...pendingReceivableConditions));
 
     const [pendingPayablesResult] = await db
       .select({ sum: sql<number>`coalesce(sum(${payables.amount}), 0)` })
       .from(payables)
-      .where(eq(payables.status, 'pending'));
+      .where(and(...pendingPayableConditions));
 
-    const currentBalance = await this.getCurrentBalance();
+    const currentBalance = await this.getCurrentBalance(companyId);
 
     return {
       totalReceivables: totalReceivablesResult.sum,
