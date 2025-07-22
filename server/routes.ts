@@ -1651,16 +1651,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const anamneseData = insertAnamneseSchema.parse(req.body);
       
+      // Convert individual fields to additionalQuestions object
+      const additionalQuestions = {
+        hasHeartProblems: anamneseData.hasHeartProblems || false,
+        hasDiabetes: anamneseData.hasDiabetes || false,
+        hasHypertension: anamneseData.hasHypertension || false,
+        isPregnant: anamneseData.isPregnant || false,
+        smokingHabits: anamneseData.smokingHabits || "",
+        bleedingProblems: anamneseData.bleedingProblems || false,
+        familyHistory: anamneseData.familyHistory || "",
+      };
+      
       // Get user from authentication
       const user = req.user;
       
-      // Add companyId from authenticated user
-      const anamneseWithCompany = {
-        ...anamneseData,
+      // Prepare data for database (remove individual fields, keep only the object)
+      const finalData = {
+        patientId: anamneseData.patientId,
+        medicalTreatment: anamneseData.medicalTreatment,
+        medications: anamneseData.medications,
+        allergies: anamneseData.allergies,
+        previousDentalTreatment: anamneseData.previousDentalTreatment,
+        painComplaint: anamneseData.painComplaint,
+        additionalQuestions: additionalQuestions,
         companyId: user.companyId
       };
       
-      const anamnese = await storage.createAnamnese(anamneseWithCompany);
+      const anamnese = await storage.createAnamnese(finalData);
       res.json(anamnese);
     } catch (error) {
       console.error("Create anamnese error:", error);
@@ -1680,18 +1697,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Debug: log the parsed data
       console.log("PUT anamnese parsed data:", JSON.stringify(anamneseData, null, 2));
       
+      // Convert individual fields to additionalQuestions object
+      const additionalQuestions = {
+        hasHeartProblems: anamneseData.hasHeartProblems || false,
+        hasDiabetes: anamneseData.hasDiabetes || false,
+        hasHypertension: anamneseData.hasHypertension || false,
+        isPregnant: anamneseData.isPregnant || false,
+        smokingHabits: anamneseData.smokingHabits || "",
+        bleedingProblems: anamneseData.bleedingProblems || false,
+        familyHistory: anamneseData.familyHistory || "",
+      };
+      
       // Get user from authentication
       const user = req.user;
       
-      // Add companyId from authenticated user
-      const anamneseWithCompany = {
-        ...anamneseData,
+      // Prepare data for database (remove individual fields, keep only the object)
+      const finalData = {
+        patientId: anamneseData.patientId,
+        medicalTreatment: anamneseData.medicalTreatment,
+        medications: anamneseData.medications,
+        allergies: anamneseData.allergies,
+        previousDentalTreatment: anamneseData.previousDentalTreatment,
+        painComplaint: anamneseData.painComplaint,
+        additionalQuestions: additionalQuestions,
         companyId: user.companyId
       };
       
-      console.log("PUT anamnese with company:", JSON.stringify(anamneseWithCompany, null, 2));
+      console.log("PUT anamnese final data:", JSON.stringify(finalData, null, 2));
       
-      const anamnese = await storage.updateAnamnese(id, anamneseWithCompany);
+      const anamnese = await storage.updateAnamnese(id, finalData);
       
       console.log("PUT anamnese result:", JSON.stringify(anamnese, null, 2));
       

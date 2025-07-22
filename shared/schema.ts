@@ -484,6 +484,7 @@ export const additionalQuestionsSchema = z.object({
   familyHistory: z.string().optional(),
 }).optional();
 
+// Schema que aceita campos individuais do frontend
 export const insertAnamneseSchema = createInsertSchema(anamnese).omit({
   id: true,
   createdAt: true,
@@ -491,6 +492,14 @@ export const insertAnamneseSchema = createInsertSchema(anamnese).omit({
   companyId: true, // Excluir companyId pois será adicionado no backend
 }).extend({
   additionalQuestions: additionalQuestionsSchema.nullable().optional(),
+  // Aceitar campos individuais do frontend
+  hasHeartProblems: z.boolean().optional(),
+  hasDiabetes: z.boolean().optional(),
+  hasHypertension: z.boolean().optional(),
+  isPregnant: z.boolean().optional(),
+  smokingHabits: z.string().optional(),
+  bleedingProblems: z.boolean().optional(),
+  familyHistory: z.string().optional(),
 });
 
 export const insertFinancialSchema = createInsertSchema(financial).omit({
