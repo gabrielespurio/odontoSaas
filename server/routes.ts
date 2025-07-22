@@ -1697,6 +1697,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Debug: log the parsed data
       console.log("PUT anamnese parsed data:", JSON.stringify(anamneseData, null, 2));
       
+      // Verificar se additionalQuestions tem dados
+      console.log("anamneseData.additionalQuestions exists:", !!anamneseData.additionalQuestions);
+      console.log("anamneseData.additionalQuestions content:", JSON.stringify(anamneseData.additionalQuestions, null, 2));
+      
       // Get the existing anamnese record to preserve existing values
       const existingAnamnese = await storage.getAnamnese(anamneseData.patientId || 0);
       
