@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { eq, and, or, sql, isNull, desc } from "drizzle-orm";
+import { eq, and, or, sql, isNull, desc, ilike } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
@@ -62,6 +62,50 @@ function authenticateToken(req: any, res: any, next: any) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+
+  // Debug endpoint to test dentist filtering - NO AUTH (must be before auth middleware)
+  app.get("/api/debug/dentists", async (req, res) => {
+    try {
+      console.log("=== DEBUG DENTISTS FILTER ===");
+      
+      // Get all users
+      const allUsers = await db.select().from(users);
+      console.log("All users:", allUsers.map(u => ({ id: u.id, name: u.name, role: u.role, companyId: u.companyId })));
+      
+      // Test the dentist filter without authentication
+      const dentistsData = await db.select({
+        id: users.id,
+        username: users.username,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        companyId: users.companyId,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+      }).from(users).where(
+        and(
+          or(
+            eq(users.role, "Dentista"),
+            eq(users.role, "dentista"),
+            eq(users.role, "dentist"),
+            ilike(users.role, "%dentist%"),
+            ilike(users.role, "%dentista%")
+          ),
+          eq(users.isActive, true)
+        )
+      ).orderBy(users.name);
+      
+      console.log("Filtered dentists:", dentistsData);
+      
+      res.json({
+        allUsers: allUsers.length,
+        filteredDentists: dentistsData
+      });
+    } catch (error) {
+      console.error("Debug dentists error:", error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+  });
 
 
 
@@ -376,6 +420,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+
   // Get dentists only - WITH AUTH AND DATA SCOPE CONTROL
   app.get("/api/users/dentists", authenticateToken, async (req, res) => {
     try {
@@ -420,10 +466,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               eq(users.role, "Dentista"),
               eq(users.role, "dentista"),
               eq(users.role, "dentist"),
-              like(users.role, "%dentist%"),
-              like(users.role, "%Dentist%"),
-              like(users.role, "%dentista%"),
-              like(users.role, "%Dentista%")
+              ilike(users.role, "%dentist%"),
+              ilike(users.role, "%dentista%")
             ),
             eq(users.isActive, true),
             eq(users.companyId, user.companyId) // CRITICAL: Filter by company for data isolation
@@ -481,6 +525,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get user company error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Debug endpoint for dentists (before protected routes)
+  app.get("/api/debug/dentists-no-auth", async (req, res) => {
+    try {
+      console.log("=== DEBUG DENTISTS FILTER (NO AUTH) ===");
+      
+      // Get all users
+      const allUsers = await db.select().from(users);
+      console.log("All users:", allUsers.map(u => ({ id: u.id, name: u.name, role: u.role, companyId: u.companyId })));
+      
+      // Test the dentist filter without authentication
+      const dentistsData = await db.select({
+        id: users.id,
+        username: users.username,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        companyId: users.companyId,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+      }).from(users).where(
+        and(
+          or(
+            eq(users.role, "Dentista"),
+            eq(users.role, "dentista"),
+            eq(users.role, "dentist"),
+            ilike(users.role, "%dentist%"),
+            ilike(users.role, "%dentista%")
+          ),
+          eq(users.isActive, true)
+        )
+      ).orderBy(users.name);
+      
+      console.log("Filtered dentists:", dentistsData);
+      
+      res.json({
+        allUsers: allUsers.length,
+        filteredDentists: dentistsData
+      });
+    } catch (error) {
+      console.error("Debug dentists error:", error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
     }
   });
 
