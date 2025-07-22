@@ -490,7 +490,7 @@ export const insertAnamneseSchema = createInsertSchema(anamnese).omit({
   updatedAt: true,
   companyId: true, // Excluir companyId pois será adicionado no backend
 }).extend({
-  additionalQuestions: additionalQuestionsSchema,
+  additionalQuestions: additionalQuestionsSchema.nullable().optional(),
 });
 
 export const insertFinancialSchema = createInsertSchema(financial).omit({

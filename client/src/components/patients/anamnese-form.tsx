@@ -135,10 +135,17 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
     console.log("Form data submitted:", data);
     console.log("additionalQuestions raw:", data.additionalQuestions);
     
-    // Ensure additionalQuestions is properly formatted
+    // Ensure additionalQuestions is properly formatted and not undefined
+    const additionalQuestions = data.additionalQuestions || normalizeAdditionalQuestions(null);
+    
     const normalizedData = {
-      ...data,
-      additionalQuestions: normalizeAdditionalQuestions(data.additionalQuestions),
+      patientId: data.patientId,
+      medicalTreatment: data.medicalTreatment,
+      medications: data.medications,
+      allergies: data.allergies,
+      previousDentalTreatment: data.previousDentalTreatment,
+      painComplaint: data.painComplaint,
+      additionalQuestions: additionalQuestions,
     };
     
     console.log("Normalized data:", normalizedData);
