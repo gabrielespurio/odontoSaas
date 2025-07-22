@@ -1227,7 +1227,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dentistId = user.id;
       }
       
-      const consultations = await storage.getConsultations(patientId, dentistId, status);
+      // CRITICAL: Pass user's companyId for data isolation
+      const consultations = await storage.getConsultations(patientId, dentistId, status, user.companyId);
       res.json(consultations);
     } catch (error) {
       console.error("Get consultations error:", error);
@@ -1235,9 +1236,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/consultations", async (req, res) => {
+  app.post("/api/consultations", authenticateToken, async (req, res) => {
     try {
       const consultationData = insertConsultationSchema.parse(req.body);
+      
+      // Get user from authentication
+      const user = req.user;
       
       // Validar se a data não está no passado
       const consultationDate = new Date(consultationData.date);
@@ -1250,6 +1254,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ 
           message: "Não é possível criar consultas com data e horário no passado." 
         });
+      }
+      
+      // CRITICAL: Verify that the patient and dentist belong to the user's company
+      const patient = await storage.getPatient(consultationData.patientId);
+      const dentist = await storage.getUser(consultationData.dentistId);
+      
+      if (!patient || patient.companyId !== user.companyId) {
+        return res.status(403).json({ message: "Paciente não encontrado ou não pertence à sua empresa" });
+      }
+      
+      if (!dentist || dentist.companyId !== user.companyId) {
+        return res.status(403).json({ message: "Dentista não encontrado ou não pertence à sua empresa" });
+      }
+      
+      // Verify user has permission to create consultation for this dentist
+      if (user.role !== "admin" && user.dataScope === "own" && consultationData.dentistId !== user.id) {
+        return res.status(403).json({ message: "Você só pode criar consultas para si mesmo" });
       }
       
       // Criar a consulta primeiro
@@ -1308,10 +1329,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/consultations/:id", async (req, res) => {
+  app.put("/api/consultations/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const consultationData = insertConsultationSchema.partial().parse(req.body);
+      
+      // Get user from authentication
+      const user = req.user;
       
       // Validar se a data não está no passado (apenas se a data estiver sendo alterada)
       if (consultationData.date) {
@@ -1328,8 +1352,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Buscar a consulta atual
-      const currentConsultation = await storage.getConsultation(id);
+      // CRITICAL: Verify company access and get consultation with company filtering
+      const currentConsultation = await storage.getConsultation(id, user.companyId);
+      
+      if (!currentConsultation) {
+        return res.status(404).json({ message: "Consulta não encontrada" });
+      }
+      
+      // Verify user has permission to edit this consultation
+      if (user.role !== "admin" && user.dataScope === "own" && currentConsultation.dentistId !== user.id) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
       
       // Atualizar a consulta
       const consultation = await storage.updateConsultation(id, consultationData);
@@ -1377,15 +1410,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/consultations/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const user = req.user;
       
-      // Verificar se a consulta existe
-      const consultation = await storage.getConsultation(id);
+      // CRITICAL: Verify company access and get consultation with company filtering
+      const consultation = await storage.getConsultation(id, user.companyId);
       if (!consultation) {
         return res.status(404).json({ message: "Consulta não encontrada" });
       }
       
       // Verificar se o usuário tem permissão para excluir
-      const user = req.user;
       if (user.role !== "admin" && user.dataScope === "own" && consultation.dentistId !== user.id) {
         return res.status(403).json({ message: "Acesso negado" });
       }

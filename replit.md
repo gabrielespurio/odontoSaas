@@ -631,6 +631,14 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Storage Layer**: Updated getPatients, getDashboardMetrics, and getAppointments methods to accept companyId parameter
   - **Access Control**: Users can only create/view/edit patients and data from their own company
   - **Security**: Added 403 Forbidden responses when users try to access data from other companies
+- July 22, 2025. **CONSULTATIONS MODULE SECURITY FIX**: Fixed severe multi-tenant data isolation vulnerability
+  - **CRITICAL VULNERABILITY RESOLVED**: Users from different companies could see each other's consultation data
+  - **Enhanced Storage Layer**: Updated getConsultations() and getConsultation() methods with companyId filtering
+  - **Authentication Integration**: Added authenticateToken middleware to all consultation endpoints (POST, PUT, DELETE)
+  - **Company Access Control**: All consultation operations now verify patient and dentist belong to user's company
+  - **Data Scope Enforcement**: Implemented proper data scope restrictions for users with "own" access level
+  - **Security Validation**: Added 403 Forbidden responses when users attempt cross-company data access
+  - **Complete Isolation**: Consultations module now properly isolated by company with bulletproof security
 - July 21, 2025. **SAAS MULTI-TENANT ARCHITECTURE IMPLEMENTATION**: Transformed OdontoSync into a true SaaS multi-tenant system
   - **Database Schema Migration**: Added companyId fields to all relevant tables (patients, appointments, consultations, procedures, financial records, etc.)
   - **Company Management System**: Created companies table with comprehensive business information, license tracking, and address management

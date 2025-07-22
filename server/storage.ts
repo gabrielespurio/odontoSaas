@@ -95,8 +95,8 @@ export interface IStorage {
   checkAppointmentConflicts(appointmentData: InsertAppointment, tx?: any, excludeId?: number): Promise<{ hasConflict: boolean; message: string }>;
   
   // Consultations
-  getConsultations(patientId?: number, dentistId?: number): Promise<(Consultation & { patient: Patient; dentist: User })[]>;
-  getConsultation(id: number): Promise<Consultation | undefined>;
+  getConsultations(patientId?: number, dentistId?: number, status?: string, companyId?: number): Promise<(Consultation & { patient: Patient; dentist: User })[]>;
+  getConsultation(id: number, companyId?: number): Promise<Consultation | undefined>;
   createConsultation(consultation: InsertConsultation): Promise<Consultation>;
   updateConsultation(id: number, consultation: Partial<InsertConsultation>): Promise<Consultation>;
   deleteConsultation(id: number): Promise<void>;
@@ -662,7 +662,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Consultations
-  async getConsultations(patientId?: number, dentistId?: number, status?: string): Promise<(Consultation & { patient: Patient; dentist: User })[]> {
+  async getConsultations(patientId?: number, dentistId?: number, status?: string, companyId?: number): Promise<(Consultation & { patient: Patient; dentist: User })[]> {
     let query = db.select({
       // Consultation fields
       id: consultations.id,
@@ -696,6 +696,7 @@ export class DatabaseStorage implements IStorage {
         neighborhood: patients.neighborhood,
         city: patients.city,
         state: patients.state,
+        companyId: patients.companyId,
       },
       // Dentist info
       dentist: {
@@ -709,6 +710,7 @@ export class DatabaseStorage implements IStorage {
         dataScope: users.dataScope,
         createdAt: users.createdAt,
         password: users.password,
+        companyId: users.companyId,
       }
     }).from(consultations)
       .innerJoin(patients, eq(consultations.patientId, patients.id))
@@ -716,6 +718,13 @@ export class DatabaseStorage implements IStorage {
     
     // Apply filters
     const conditions = [];
+    
+    // CRITICAL: Add company filtering for data isolation
+    if (companyId) {
+      conditions.push(eq(patients.companyId, companyId));
+      conditions.push(eq(users.companyId, companyId));
+    }
+    
     if (patientId) {
       conditions.push(eq(consultations.patientId, patientId));
     }
@@ -750,9 +759,37 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getConsultation(id: number): Promise<Consultation | undefined> {
-    const [consultation] = await db.select().from(consultations).where(eq(consultations.id, id));
-    return consultation || undefined;
+  async getConsultation(id: number, companyId?: number): Promise<Consultation | undefined> {
+    if (companyId) {
+      // Verify company access by checking if patient and dentist belong to the company
+      const result = await db.select({
+        id: consultations.id,
+        attendanceNumber: consultations.attendanceNumber,
+        patientId: consultations.patientId,
+        dentistId: consultations.dentistId,
+        appointmentId: consultations.appointmentId,
+        date: consultations.date,
+        procedures: consultations.procedures,
+        clinicalNotes: consultations.clinicalNotes,
+        observations: consultations.observations,
+        status: consultations.status,
+        createdAt: consultations.createdAt,
+        updatedAt: consultations.updatedAt,
+      })
+        .from(consultations)
+        .innerJoin(patients, eq(consultations.patientId, patients.id))
+        .innerJoin(users, eq(consultations.dentistId, users.id))
+        .where(and(
+          eq(consultations.id, id),
+          eq(patients.companyId, companyId),
+          eq(users.companyId, companyId)
+        ));
+      
+      return result[0] || undefined;
+    } else {
+      const [consultation] = await db.select().from(consultations).where(eq(consultations.id, id));
+      return consultation || undefined;
+    }
   }
 
   async createConsultation(insertConsultation: InsertConsultation): Promise<Consultation> {
