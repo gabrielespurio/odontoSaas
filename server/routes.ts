@@ -580,6 +580,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const userData = userCreateSchema.parse(req.body);
+      
+      // Check if email already exists
+      const existingUser = await storage.getUserByEmail(userData.email);
+      if (existingUser) {
+        return res.status(400).json({ 
+          message: "Um usuário com este email já existe no sistema." 
+        });
+      }
+      
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       
       // Generate unique username from email (part before @) with company suffix
