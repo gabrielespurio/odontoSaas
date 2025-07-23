@@ -1410,7 +1410,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       .leftJoin(patients, eq(appointments.patientId, patients.id))
       .leftJoin(users, eq(appointments.dentistId, users.id))
       .leftJoin(procedures, eq(appointments.procedureId, procedures.id))
-      .leftJoin(consultations, eq(appointments.id, consultations.appointmentId))
+      .leftJoin(consultations, and(
+        eq(appointments.id, consultations.appointmentId),
+        eq(consultations.companyId, appointments.companyId) // CRITICAL: Company-aware join
+      ))
       .where(and(...whereConditions))
       .orderBy(desc(appointments.scheduledDate));
 

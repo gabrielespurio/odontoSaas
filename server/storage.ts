@@ -845,7 +845,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db.execute(sql`
       INSERT INTO consultations (
         patient_id, dentist_id, appointment_id, date, 
-        procedures, clinical_notes, observations, status
+        procedures, clinical_notes, observations, status, company_id
       ) VALUES (
         ${consultationData.patientId}, 
         ${consultationData.dentistId}, 
@@ -854,7 +854,8 @@ export class DatabaseStorage implements IStorage {
         ${proceduresArray}, 
         ${consultationData.clinicalNotes || null}, 
         ${consultationData.observations || null}, 
-        ${consultationData.status}
+        ${consultationData.status},
+        ${consultationData.companyId}
       ) RETURNING *
     `);
     

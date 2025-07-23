@@ -732,6 +732,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Root Cause**: createConsultationFromAppointment was using toLocaleTimeString which applied timezone conversion to UTC dates
   - **Solution**: Extract time directly from ISO string (09:00:00 → 09:00) avoiding Date object timezone interpretation
   - **Impact**: Consultation form now shows correct appointment time (09:00) instead of converted time (06:00)
+- July 23, 2025. **CRITICAL APPOINTMENT DISAPPEARING BUG FIX**: Fixed appointments not disappearing from consultations table after creating consultation
+  - **Root Cause**: Two issues - consultation created with wrong company_id, and LEFT JOIN not considering company_id in appointments-without-consultation query
+  - **Technical Issues**: Consultation created with company_id=1 instead of user's company_id=4, and JOIN between appointments and consultations ignored company scope
+  - **Solution**: Fixed createConsultation to include companyId parameter, updated LEFT JOIN to use company-aware join condition
+  - **Impact**: Appointments now properly disappear from pending consultations table when consultation is created, maintaining proper multi-tenant data isolation
 - July 23, 2025. **SUPER ADMINISTRATOR CREATION**: Created system-wide Super Administrator account for Companies module access
   - **Email**: superadmin@odontosync.com
   - **Password**: superadmin123
