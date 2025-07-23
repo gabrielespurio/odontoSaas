@@ -1215,9 +1215,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/appointments", async (req, res) => {
+  app.post("/api/appointments", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const body = req.body;
+      const user = req.user!;
       
       // Keep the date as string for Zod validation, but process it correctly
       const appointmentData = insertAppointmentSchema.omit({ companyId: true }).parse(body);
@@ -1227,10 +1228,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         appointmentData.scheduledDate = formatDateForDatabase(appointmentData.scheduledDate);
       }
       
-      // Add companyId (assume default company for now, should be from authentication)
+      // Add companyId from authenticated user
       const appointmentWithCompany = {
         ...appointmentData,
-        companyId: 2 // TODO: Get from authentication
+        companyId: user.companyId || 2 // Use user's companyId with fallback
       };
       
       // Enhanced conflict validation is now handled in storage layer
