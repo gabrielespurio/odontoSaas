@@ -18,9 +18,9 @@ export function usePermissions() {
   const hasAccess = (module: string): boolean => {
     if (!user) return false;
     
-    // Companies module is only for system admin (admin role with null company_id)
+    // Companies module is for system admin and company administrators
     if (module === "companies") {
-      return (user.role === "admin" || user.role === "Administrador") && user.companyId === null;
+      return (user.role === "admin" || user.role === "Administrador");
     }
     
     // Admin role has access to everything (backward compatibility)
@@ -86,7 +86,7 @@ export function usePermissions() {
     // Admin always has access to all data
     if (user.role === "admin") return "all";
     
-    return user.dataScope || "all";
+    return (user.dataScope as "all" | "own") || "all";
   };
 
   return {
