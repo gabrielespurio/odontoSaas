@@ -1081,6 +1081,7 @@ export class DatabaseStorage implements IStorage {
         date: insertReceivable.paymentDate,
         description: `Recebimento: ${record.description || ''}`,
         category: 'receivable',
+        companyId: record.companyId, // Add companyId from the receivable record
       });
     }
     
@@ -1245,6 +1246,7 @@ export class DatabaseStorage implements IStorage {
         date: insertPayable.paymentDate,
         description: `Pagamento: ${record.description}`,
         category: 'payable',
+        companyId: record.companyId, // Add companyId from the payable record
       });
     }
     

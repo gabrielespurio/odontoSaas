@@ -680,6 +680,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Solution**: Enhanced PUT /api/anamnese/:id to fetch existing record and intelligently merge new values with existing ones
   - **Technical Details**: Changed logic to use !== undefined checks and preserve existing values when fields not provided
   - **Impact**: Users can now check health conditions (Diabetes, Heart Problems, etc.) and they will persist correctly when navigating between pages
+- July 23, 2025. **CASH FLOW COMPANY_ID FIX**: Fixed critical error preventing receivable payment registration
+  - **Root Cause**: createCashFlowEntry calls in updateReceivable and updatePayable were missing companyId parameter
+  - **Solution**: Added companyId from the receivable/payable record to createCashFlowEntry calls
+  - **Technical Details**: Updated both updateReceivable and updatePayable functions to include companyId: record.companyId
+  - **Impact**: Users can now mark receivables as paid without database constraint violations
 - July 21, 2025. **SAAS MULTI-TENANT ARCHITECTURE IMPLEMENTATION**: Transformed OdontoSync into a true SaaS multi-tenant system
   - **Database Schema Migration**: Added companyId fields to all relevant tables (patients, appointments, consultations, procedures, financial records, etc.)
   - **Company Management System**: Created companies table with comprehensive business information, license tracking, and address management
