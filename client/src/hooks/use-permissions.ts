@@ -18,9 +18,9 @@ export function usePermissions() {
   const hasAccess = (module: string): boolean => {
     if (!user) return false;
     
-    // Companies module is for system admin and company administrators
+    // Companies module is only for system admin (admin role with null company_id)
     if (module === "companies") {
-      return (user.role === "admin" || user.role === "Administrador");
+      return (user.role === "admin" || user.role === "Administrador") && user.companyId === null;
     }
     
     // Admin role has access to everything (backward compatibility)
