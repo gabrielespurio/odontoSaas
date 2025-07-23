@@ -411,126 +411,198 @@ export default function Companies() {
 
       {/* Edit Company Dialog */}
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Gerenciar Empresa - {selectedCompany?.name}</DialogTitle>
+        <DialogContent className="max-w-7xl w-[95vw] h-[95vh] flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b shrink-0">
+            <DialogTitle className="text-xl font-semibold flex items-center gap-3">
+              <Building2 className="h-6 w-6 text-teal-600" />
+              Gerenciar Empresa - {selectedCompany?.name}
+            </DialogTitle>
           </DialogHeader>
           
-          <Tabs defaultValue="company" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="company" className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                Dados da Empresa
-              </TabsTrigger>
-              <TabsTrigger value="users" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Usuários Administrativos
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="company" className="mt-6">
-              <CompanyForm 
-                company={selectedCompany ? {
-                  ...selectedCompany,
-                  number: selectedCompany.number || null,
-                  tradeName: selectedCompany.tradeName || null,
-                  cnpj: selectedCompany.cnpj || null,
-                  cep: selectedCompany.cep || null,
-                  street: selectedCompany.street || null,
-                  neighborhood: selectedCompany.neighborhood || null,
-                  city: selectedCompany.city || null,
-                  state: selectedCompany.state || null,
-                  trialEndDate: selectedCompany.trialEndDate || null,
-                  subscriptionStartDate: selectedCompany.subscriptionStartDate || null,
-                  subscriptionEndDate: selectedCompany.subscriptionEndDate || null,
-                  createdAt: new Date(selectedCompany.createdAt),
-                  updatedAt: new Date(selectedCompany.updatedAt),
-                } : null}
-                onSubmit={(data) => {
-                  if (selectedCompany) {
-                    updateCompanyMutation.mutate({ id: selectedCompany.id, data });
-                  }
-                }}
-                isLoading={updateCompanyMutation.isPending}
-              />
-            </TabsContent>
-            
-            <TabsContent value="users" className="mt-6">
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-semibold">Usuários Administrativos</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Gerencie os usuários que têm acesso administrativo a esta empresa
-                    </p>
-                  </div>
-                  <Button onClick={() => setIsCreateUserDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Novo Usuário Admin
-                  </Button>
-                </div>
-
-                {loadingUsers ? (
-                  <div className="text-center py-8">Carregando usuários...</div>
-                ) : (
-                  <Card>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nome</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Perfil</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="w-[100px]">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {companyUsers.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                              Nenhum usuário encontrado para esta empresa
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          companyUsers.map((user) => (
-                            <TableRow key={user.id}>
-                              <TableCell className="font-medium">{user.name}</TableCell>
-                              <TableCell>{user.email}</TableCell>
-                              <TableCell>{user.role || "Administrador"}</TableCell>
-                              <TableCell>
-                                <Badge variant={user.forcePasswordChange ? "secondary" : "default"}>
-                                  {user.forcePasswordChange ? "Trocar Senha" : "Ativo"}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem>
-                                      <Edit className="mr-2 h-4 w-4" />
-                                      Editar
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem className="text-red-600">
-                                      <Trash2 className="mr-2 h-4 w-4" />
-                                      Remover
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </Card>
-                )}
+          <div className="flex-1 overflow-hidden">
+            <Tabs defaultValue="company" className="h-full flex flex-col">
+              <div className="px-6 py-3 border-b shrink-0">
+                <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/30">
+                  <TabsTrigger value="company" className="flex items-center gap-2 data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700 data-[state=active]:border-teal-200">
+                    <Building2 className="h-4 w-4" />
+                    Dados da Empresa
+                  </TabsTrigger>
+                  <TabsTrigger value="users" className="flex items-center gap-2 data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700 data-[state=active]:border-teal-200">
+                    <Users className="h-4 w-4" />
+                    Usuários Administrativos
+                  </TabsTrigger>
+                </TabsList>
               </div>
-            </TabsContent>
-          </Tabs>
+              
+              <TabsContent value="company" className="flex-1 m-0 p-6 overflow-y-auto">
+                <div className="max-w-5xl mx-auto">
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Informações da Empresa</h3>
+                    <p className="text-sm text-gray-600">Atualize os dados da empresa conforme necessário</p>
+                  </div>
+                  
+                  <CompanyForm 
+                    company={selectedCompany ? {
+                      ...selectedCompany,
+                      number: selectedCompany.number || null,
+                      tradeName: selectedCompany.tradeName || null,
+                      cnpj: selectedCompany.cnpj || null,
+                      cep: selectedCompany.cep || null,
+                      street: selectedCompany.street || null,
+                      neighborhood: selectedCompany.neighborhood || null,
+                      city: selectedCompany.city || null,
+                      state: selectedCompany.state || null,
+                      trialEndDate: selectedCompany.trialEndDate || null,
+                      subscriptionStartDate: selectedCompany.subscriptionStartDate || null,
+                      subscriptionEndDate: selectedCompany.subscriptionEndDate || null,
+                      createdAt: new Date(selectedCompany.createdAt),
+                      updatedAt: new Date(selectedCompany.updatedAt),
+                    } : null}
+                    onSubmit={(data) => {
+                      if (selectedCompany) {
+                        updateCompanyMutation.mutate({ id: selectedCompany.id, data });
+                      }
+                    }}
+                    isLoading={updateCompanyMutation.isPending}
+                  />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="users" className="flex-1 m-0 p-6 overflow-y-auto">
+                <div className="max-w-6xl mx-auto space-y-6">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-6 bg-gradient-to-r from-teal-50 to-blue-50 rounded-xl border border-teal-100">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Usuários Administrativos</h3>
+                      <p className="text-sm text-gray-600">
+                        Gerencie os usuários que têm acesso administrativo a esta empresa
+                      </p>
+                      <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          {companyUsers.filter(u => !u.forcePasswordChange).length} Ativos
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          {companyUsers.filter(u => u.forcePasswordChange).length} Pendentes
+                        </span>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => setIsCreateUserDialogOpen(true)}
+                      className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 shadow-md hover:shadow-lg transition-all"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Novo Usuário Admin
+                    </Button>
+                  </div>
+
+                  {loadingUsers ? (
+                    <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+                      <p className="text-gray-600">Carregando usuários...</p>
+                    </div>
+                  ) : (
+                    <Card className="border-0 shadow-lg">
+                      <div className="overflow-hidden rounded-lg">
+                        <Table>
+                          <TableHeader className="bg-gray-50">
+                            <TableRow className="border-gray-200">
+                              <TableHead className="font-semibold text-gray-700 py-4">Nome</TableHead>
+                              <TableHead className="font-semibold text-gray-700 py-4">Email</TableHead>
+                              <TableHead className="font-semibold text-gray-700 py-4">Perfil</TableHead>
+                              <TableHead className="font-semibold text-gray-700 py-4">Status</TableHead>
+                              <TableHead className="font-semibold text-gray-700 py-4 w-[100px]">Ações</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {companyUsers.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={5} className="text-center py-16">
+                                  <div className="flex flex-col items-center space-y-4">
+                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                      <Users className="h-8 w-8 text-gray-400" />
+                                    </div>
+                                    <div>
+                                      <p className="text-gray-900 font-medium">Nenhum usuário encontrado</p>
+                                      <p className="text-gray-500 text-sm mt-1">
+                                        Crie o primeiro usuário administrativo para esta empresa
+                                      </p>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              companyUsers.map((user, index) => (
+                                <TableRow 
+                                  key={user.id} 
+                                  className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}
+                                >
+                                  <TableCell className="font-medium py-4">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
+                                        <span className="text-teal-700 font-semibold text-sm">
+                                          {user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <p className="font-semibold text-gray-900">{user.name}</p>
+                                        <p className="text-xs text-gray-500">ID: {user.id}</p>
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="py-4">
+                                    <div className="flex items-center space-x-2">
+                                      <Mail className="h-4 w-4 text-gray-400" />
+                                      <span className="text-gray-700">{user.email}</span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="py-4">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                      {user.role || "Administrador"}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="py-4">
+                                    <Badge 
+                                      variant={user.forcePasswordChange ? "secondary" : "default"}
+                                      className={user.forcePasswordChange 
+                                        ? "bg-yellow-100 text-yellow-800 border-yellow-200" 
+                                        : "bg-green-100 text-green-800 border-green-200"
+                                      }
+                                    >
+                                      {user.forcePasswordChange ? "Trocar Senha" : "Ativo"}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="py-4">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100">
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" className="w-48">
+                                        <DropdownMenuItem className="hover:bg-gray-50">
+                                          <Edit className="mr-2 h-4 w-4 text-blue-600" />
+                                          <span>Editar</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="text-red-600 hover:bg-red-50">
+                                          <Trash2 className="mr-2 h-4 w-4" />
+                                          <span>Remover</span>
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </Card>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
         </DialogContent>
       </Dialog>
 
