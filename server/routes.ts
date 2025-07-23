@@ -85,64 +85,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  // Debug appointment-consultation relationship (NO AUTH)
-  app.get("/api/debug/appointment-consultation", async (req, res) => {
+  // Debug endpoint para verificar agendamentos de hoje (NO AUTH)
+  app.get("/api/debug/today", async (req, res) => {
     try {
-      console.log("=== DEBUG APPOINTMENT-CONSULTATION ANALYSIS ===");
+      const companyId = parseInt(req.query.companyId as string) || 2;
       
-      // Check specific appointments (27, 28, 29)
-      const targetAppointments = await db.select({
-        id: appointments.id,
-        patientId: appointments.patientId,
-        dentistId: appointments.dentistId,
-        status: appointments.status,
-        scheduledDate: appointments.scheduledDate,
-        companyId: appointments.companyId
-      }).from(appointments).where(or(
-        eq(appointments.id, 27),
-        eq(appointments.id, 28), 
-        eq(appointments.id, 29)
-      ));
-      
-      console.log("Target appointments (27,28,29):", targetAppointments);
-      
-      // Check consultations for these appointments
-      const relatedConsultations = await db.select({
-        id: consultations.id,
-        appointmentId: consultations.appointmentId,
-        patientId: consultations.patientId,
-        dentistId: consultations.dentistId,
-        date: consultations.date
-      }).from(consultations).where(or(
-        eq(consultations.appointmentId, 27),
-        eq(consultations.appointmentId, 28),
-        eq(consultations.appointmentId, 29)
-      ));
-      
-      console.log("Related consultations:", relatedConsultations);
-      
-      // Check detailed JOIN for each appointment
-      for (const appointmentId of [27, 28, 29]) {
-        const joinResult = await db.select({
-          appointmentId: appointments.id,
-          appointmentDentistId: appointments.dentistId,
-          consultationId: consultations.id,
-          consultationDentistId: consultations.dentistId,
-          consultationAppointmentId: consultations.appointmentId
+      const todayAppointments = await db
+        .select({
+          id: appointments.id,
+          scheduledDate: appointments.scheduledDate,
+          status: appointments.status,
+          companyId: appointments.companyId,
+          patientId: appointments.patientId
         })
         .from(appointments)
-        .leftJoin(consultations, eq(appointments.id, consultations.appointmentId))
-        .where(eq(appointments.id, appointmentId));
-        
-        console.log(`JOIN result for appointment ${appointmentId}:`, joinResult);
-      }
+        .where(and(
+          sql`DATE(${appointments.scheduledDate}) = CURRENT_DATE`,
+          eq(appointments.companyId, companyId)
+        ));
+      
+      // Buscar consultas relacionadas aos agendamentos de hoje
+      const todayConsultations = await db
+        .select({
+          id: consultations.id,
+          appointmentId: consultations.appointmentId,
+          patientId: consultations.patientId,
+          dentistId: consultations.dentistId,
+          date: consultations.date
+        })
+        .from(consultations)
+        .where(and(
+          sql`DATE(${consultations.date}) = CURRENT_DATE`,
+          eq(consultations.companyId, companyId)
+        ));
+      
+      // Buscar agendamentos sem consulta
+      const appointmentsWithoutConsultation = await db.select({
+        id: appointments.id,
+        scheduledDate: appointments.scheduledDate,
+        status: appointments.status,
+        companyId: appointments.companyId,
+        patientId: appointments.patientId
+      })
+      .from(appointments)
+      .leftJoin(consultations, eq(appointments.id, consultations.appointmentId))
+      .where(and(
+        sql`DATE(${appointments.scheduledDate}) = CURRENT_DATE`,
+        eq(appointments.companyId, companyId),
+        sql`${appointments.status} != 'cancelado'`,
+        isNull(consultations.id)
+      ));
+      
+      const nonCancelledToday = todayAppointments.filter(apt => apt.status !== 'cancelado');
       
       res.json({
-        targetAppointments: targetAppointments,
-        relatedConsultations: relatedConsultations
+        companyId,
+        todayDate: new Date().toISOString().split('T')[0],
+        allTodayAppointments: todayAppointments,
+        todayConsultations: todayConsultations,
+        appointmentsWithoutConsultation: appointmentsWithoutConsultation,
+        nonCancelledCount: nonCancelledToday.length,
+        appointmentsWithoutConsultationCount: appointmentsWithoutConsultation.length,
+        cancelledCount: todayAppointments.length - nonCancelledToday.length
       });
     } catch (error) {
-      console.error("Debug appointment-consultation error:", error);
+      console.error("Error in debug endpoint:", error);
       res.status(500).json({ message: "Internal server error", error: error.message });
     }
   });
@@ -1498,6 +1505,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error in manual reminder test:", error);
       res.status(500).json({ message: "Error testing reminders", error: error.message });
+    }
+  });
+
+  // Debug endpoint (sem auth) para verificar agendamentos de hoje
+  app.get("/api/debug/appointments-today", async (req: Request, res: Response) => {
+    try {
+      const companyId = parseInt(req.query.companyId as string) || 2;
+      
+      const todayAppointments = await db
+        .select({
+          id: appointments.id,
+          scheduledDate: appointments.scheduledDate,
+          status: appointments.status,
+          companyId: appointments.companyId,
+          patientId: appointments.patientId
+        })
+        .from(appointments)
+        .where(and(
+          sql`DATE(${appointments.scheduledDate}) = CURRENT_DATE`,
+          eq(appointments.companyId, companyId)
+        ));
+      
+      const nonCancelledToday = todayAppointments.filter(apt => apt.status !== 'cancelado');
+      
+      res.json({
+        companyId,
+        todayDate: new Date().toISOString().split('T')[0],
+        allTodayAppointments: todayAppointments,
+        nonCancelledCount: nonCancelledToday.length,
+        cancelledCount: todayAppointments.length - nonCancelledToday.length
+      });
+    } catch (error) {
+      console.error("Error in debug endpoint:", error);
+      res.status(500).json({ error: "Failed to get debug data", details: error.message });
     }
   });
 
