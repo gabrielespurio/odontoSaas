@@ -638,7 +638,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
+  // Debug status synchronization (NO AUTH) - TEMPORARY
+  app.get("/debug-status", async (req, res) => {
+    try {
+      // Check appointments with "em_atendimento" status
+      const appointmentsInProgress = await db.select({
+        id: appointments.id,
+        patientId: appointments.patientId,
+        dentistId: appointments.dentistId,
+        status: appointments.status,
+        scheduledDate: appointments.scheduledDate,
+        appointmentId: appointments.appointmentId
+      }).from(appointments).where(eq(appointments.status, 'em_atendimento'));
+      
+      // Check consultations with "em_atendimento" status
+      const consultationsInProgress = await db.select({
+        id: consultations.id,
+        patientId: consultations.patientId,
+        dentistId: consultations.dentistId,
+        status: consultations.status,
+        appointmentId: consultations.appointmentId,
+        date: consultations.date
+      }).from(consultations).where(eq(consultations.status, 'em_atendimento'));
+      
+      res.json({
+        appointmentsInProgress,
+        consultationsInProgress,
+        appointmentCount: appointmentsInProgress.length,
+        consultationCount: consultationsInProgress.length
+      });
+    } catch (error) {
+      console.error("Debug status error:", error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+  });
 
   // Protected routes
   app.use("/api", authenticateToken);
@@ -1664,33 +1697,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Atualizar a consulta
       const consultation = await storage.updateConsultation(id, consultationData);
       
-      // Se o status foi alterado, sincronizar com agendamentos relacionados
+      // Se o status foi alterado, sincronizar APENAS com o agendamento específico (se existir)
       if (consultationData.status && currentConsultation && consultationData.status !== currentConsultation.status) {
         try {
-          // Buscar agendamentos do mesmo paciente, dentista e data usando SQL direto
-          const consultationDate = new Date(currentConsultation.date);
-          const appointmentsResult = await db.select({
-            id: appointments.id,
-            status: appointments.status,
-            patientId: appointments.patientId,
-            dentistId: appointments.dentistId,
-            scheduledDate: appointments.scheduledDate,
-          }).from(appointments).where(
-            and(
-              eq(appointments.patientId, currentConsultation.patientId),
-              eq(appointments.dentistId, currentConsultation.dentistId),
-              sql`DATE(${appointments.scheduledDate}) = DATE(${consultationDate.toISOString()})`
-            )
-          );
-          
-          // Atualizar status dos agendamentos relacionados
-          for (const appointment of appointmentsResult) {
-            if (appointment.status !== consultationData.status) {
-              await storage.updateAppointment(appointment.id, { status: consultationData.status });
+          // Se a consulta tem um appointmentId específico, sincronizar apenas com esse agendamento
+          if (currentConsultation.appointmentId) {
+            const specificAppointment = await db.select({
+              id: appointments.id,
+              status: appointments.status,
+            }).from(appointments).where(eq(appointments.id, currentConsultation.appointmentId));
+            
+            if (specificAppointment.length > 0 && specificAppointment[0].status !== consultationData.status) {
+              await storage.updateAppointment(specificAppointment[0].id, { status: consultationData.status });
+              console.log(`Synchronized status "${consultationData.status}" for specific appointment ${specificAppointment[0].id}`);
             }
+          } else {
+            // Fallback: se não tem appointmentId, buscar por data/hora exata
+            console.log(`No specific appointmentId found for consultation ${currentConsultation.id}, skipping synchronization to prevent multiple updates`);
           }
-          
-          console.log(`Synchronized status "${consultationData.status}" for ${appointmentsResult.length} related appointments`);
         } catch (syncError) {
           console.error("Error synchronizing appointment status:", syncError);
           // Não falhar a requisição principal por causa do erro de sincronização
