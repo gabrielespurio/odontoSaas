@@ -402,6 +402,7 @@ export default function Consultations() {
 
   // Função para criar consulta a partir de um agendamento
   const createConsultationFromAppointment = (appointment: any) => {
+    // Handle timezone correctly for appointment date
     const appointmentDate = new Date(appointment.scheduledDate);
     const dateStr = appointmentDate.toISOString().split('T')[0];
     const timeStr = appointmentDate.toLocaleTimeString('pt-BR', { 
@@ -512,12 +513,19 @@ export default function Consultations() {
   };
 
   const formatDate = (date: string) => {
+    // Force local timezone interpretation for date display
     return new Date(date).toLocaleDateString('pt-BR', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    });
+  };
+
+  const formatTime = (date: string) => {
+    // Force local timezone interpretation for time display
+    return new Date(date).toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
     });
   };
 
@@ -1000,13 +1008,10 @@ export default function Consultations() {
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-medium text-neutral-900">
-                          {new Date(appointment.scheduledDate).toLocaleDateString('pt-BR')}
+                          {formatDate(appointment.scheduledDate)}
                         </span>
                         <span className="text-sm text-neutral-600">
-                          {new Date(appointment.scheduledDate).toLocaleTimeString('pt-BR', { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
+                          {formatTime(appointment.scheduledDate)}
                         </span>
                       </div>
                     </TableCell>
@@ -1075,13 +1080,10 @@ export default function Consultations() {
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium text-neutral-900">
-                            {new Date(consultation.date).toLocaleDateString('pt-BR')}
+                            {formatDate(consultation.date)}
                           </span>
                           <span className="text-sm text-neutral-600">
-                            {new Date(consultation.date).toLocaleTimeString('pt-BR', { 
-                              hour: '2-digit', 
-                              minute: '2-digit' 
-                            })}
+                            {formatTime(consultation.date)}
                           </span>
                         </div>
                       </TableCell>
@@ -1320,10 +1322,7 @@ export default function Consultations() {
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-600">Data/Hora:</span>
                   <span className="font-medium">
-                    {new Date(appointment.scheduledDate).toLocaleDateString('pt-BR')} - {new Date(appointment.scheduledDate).toLocaleTimeString('pt-BR', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
+                    {formatDate(appointment.scheduledDate)} - {formatTime(appointment.scheduledDate)}
                   </span>
                 </div>
                 
@@ -1387,10 +1386,7 @@ export default function Consultations() {
                 <div className="flex justify-between text-sm">
                   <span className="text-neutral-600">Data/Hora:</span>
                   <span className="font-medium">
-                    {new Date(consultation.date).toLocaleDateString('pt-BR')} - {new Date(consultation.date).toLocaleTimeString('pt-BR', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
+                    {formatDate(consultation.date)} - {formatTime(consultation.date)}
                   </span>
                 </div>
                 
