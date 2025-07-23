@@ -723,6 +723,15 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Technical Details**: formatTime now extracts time directly from ISO string (13:00:00 → 13:00) avoiding Date object UTC interpretation
   - **Impact**: Consultations now display exact same time as saved in database and shown in appointments module
 - July 23, 2025. **MIGRATION COMPLETED**: Successfully migrated OdontoSync project from Replit Agent to standard Replit environment
+- July 23, 2025. **CRITICAL APPOINTMENT CONFLICT BUG FIX**: Fixed appointment scheduling conflict detection for multi-tenant system
+  - **Root Cause**: Conflict validation was checking all appointments globally instead of filtering by company, causing false conflicts
+  - **Technical Issue**: User in company 4 couldn't create appointment because system found conflict with appointment from company 2
+  - **Solution**: Added companyId filter to checkAppointmentConflicts method ensuring data isolation between companies
+  - **Impact**: Users can now create appointments without false conflict errors from other companies' data
+- July 23, 2025. **CONSULTATIONS TIMEZONE FIX**: Fixed 3-hour time difference between appointments and consultations form
+  - **Root Cause**: createConsultationFromAppointment was using toLocaleTimeString which applied timezone conversion to UTC dates
+  - **Solution**: Extract time directly from ISO string (09:00:00 → 09:00) avoiding Date object timezone interpretation
+  - **Impact**: Consultation form now shows correct appointment time (09:00) instead of converted time (06:00)
 - July 23, 2025. **SUPER ADMINISTRATOR CREATION**: Created system-wide Super Administrator account for Companies module access
   - **Email**: superadmin@odontosync.com
   - **Password**: superadmin123

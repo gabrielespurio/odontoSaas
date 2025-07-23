@@ -402,14 +402,25 @@ export default function Consultations() {
 
   // Função para criar consulta a partir de um agendamento
   const createConsultationFromAppointment = (appointment: any) => {
-    // Handle timezone correctly for appointment date
-    const appointmentDate = new Date(appointment.scheduledDate);
-    const dateStr = appointmentDate.toISOString().split('T')[0];
-    const timeStr = appointmentDate.toLocaleTimeString('pt-BR', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
-    });
+    // FIXED: Extract time directly from ISO string to avoid timezone conversion
+    const scheduledDateStr = appointment.scheduledDate;
+    let dateStr, timeStr;
+    
+    if (scheduledDateStr.includes('T')) {
+      // Extract date and time from ISO string directly
+      const [datePart, timePart] = scheduledDateStr.split('T');
+      dateStr = datePart;
+      timeStr = timePart.split(':').slice(0, 2).join(':'); // Get HH:MM format
+    } else {
+      // Fallback to date parsing if not ISO format
+      const appointmentDate = new Date(appointment.scheduledDate);
+      dateStr = appointmentDate.toISOString().split('T')[0];
+      timeStr = appointmentDate.toLocaleTimeString('pt-BR', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+    }
 
     form.reset({
       patientId: appointment.patientId,
