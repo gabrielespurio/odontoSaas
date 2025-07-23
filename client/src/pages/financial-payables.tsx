@@ -184,10 +184,27 @@ export default function FinancialPayables() {
   };
 
   const { data: payables, isLoading: payablesLoading } = useQuery<Payable[]>({
-    queryKey: ["/api/payables", {
-      status: selectedStatus !== "all" ? selectedStatus : undefined,
-      category: selectedCategory !== "all" ? selectedCategory : undefined
-    }],
+    queryKey: ["/api/payables", selectedStatus, selectedCategory],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedStatus !== "all") {
+        params.append("status", selectedStatus);
+      }
+      if (selectedCategory !== "all") {
+        params.append("category", selectedCategory);
+      }
+      const url = `/api/payables${params.toString() ? `?${params.toString()}` : ""}`;
+      const token = localStorage.getItem("token");
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      return await res.json();
+    },
   });
 
   const { data: users } = useQuery<any[]>({
