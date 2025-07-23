@@ -113,7 +113,10 @@ export const userProfiles = pgTable("user_profiles", {
   modules: jsonb("modules").notNull().default('[]'), // Array of module names
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Unique constraint per company (same name can exist in different companies)
+  uniqueNamePerCompany: unique().on(table.name, table.companyId),
+}));
 
 // Procedures table
 export const procedures = pgTable("procedures", {
