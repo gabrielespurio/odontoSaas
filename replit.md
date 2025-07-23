@@ -718,6 +718,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Password**: superadmin123
   - **Access Level**: System-wide access with company_id = null
   - **Purpose**: Manage multiple companies within the SaaS platform
+- July 23, 2025. **USER CREATION API FIX**: Fixed user creation endpoint to support Super Administrator creating users for specific companies
+  - **Root Cause**: API was rejecting Super Administrator (company_id = null) from creating users
+  - **Solution**: Modified POST /api/users endpoint to allow Super Admin to specify companyId in request body
+  - **Logic**: Super Admin must specify companyId, regular admins use their own companyId automatically
+  - **Impact**: Super Administrator can now create administrative users for any company in the system
 - July 21, 2025. **SAAS MULTI-TENANT ARCHITECTURE IMPLEMENTATION**: Transformed OdontoSync into a true SaaS multi-tenant system
   - **Database Schema Migration**: Added companyId fields to all relevant tables (patients, appointments, consultations, procedures, financial records, etc.)
   - **Company Management System**: Created companies table with comprehensive business information, license tracking, and address management

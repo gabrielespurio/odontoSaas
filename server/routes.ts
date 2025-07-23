@@ -861,11 +861,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const loggedUser = req.user;
       
-      // Verificar se o usuário logado tem companyId
-      if (!loggedUser.companyId) {
-        return res.status(400).json({ message: "User must belong to a company" });
-      }
-      
       // Create custom schema for user creation without username field
       const userCreateSchema = z.object({
         name: z.string().min(1),
@@ -874,12 +869,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: z.string().min(1), // Changed to accept any string (custom profiles)
         dataScope: z.enum(["all", "own"]).optional().default("all"),
         forcePasswordChange: z.boolean().optional(),
+        companyId: z.number().optional(), // Allow companyId to be specified
       });
       
       const userData = userCreateSchema.parse(req.body);
       
-      // CRITICAL: Use the company ID from the logged user
-      const companyId = loggedUser.companyId;
+      // Determine company ID: Super admin can specify companyId, regular admin uses their own
+      let companyId: number;
+      
+      if (loggedUser.companyId === null) {
+        // Super Administrator - must specify companyId
+        if (!userData.companyId) {
+          return res.status(400).json({ message: "Super Administrator must specify a company ID" });
+        }
+        companyId = userData.companyId;
+      } else {
+        // Regular Administrator - use their own companyId
+        companyId = loggedUser.companyId;
+      }
       
       // Check if email already exists within the same company
       const existingUser = await storage.getUserByEmailAndCompany(userData.email, companyId);
