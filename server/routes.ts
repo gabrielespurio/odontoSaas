@@ -2291,10 +2291,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
       
+      console.log(`Cash flow request - User: ${user.id}, Company: ${user.companyId}, Role: ${user.role}, DataScope: ${user.dataScope}`);
+      console.log(`Date range - Start: ${startDate}, End: ${endDate}`);
+      
       // Apply data scope filtering
       if (user.role === "admin" || user.dataScope === "all") {
         // CRITICAL: Always filter by company, even for admins and "all" scope users
         const cashFlow = await storage.getCashFlow(startDate, endDate, user.companyId);
+        console.log(`Retrieved ${cashFlow.length} cash flow entries for admin/all scope user`);
         res.json(cashFlow);
       } else {
         // Users with "own" scope only see cash flow from their own receivables
