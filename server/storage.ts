@@ -1410,7 +1410,7 @@ export class DatabaseStorage implements IStorage {
       // Build conditions with company filtering
       let appointmentConditions = [
         sql`DATE(${appointments.scheduledDate}) = CURRENT_DATE`,
-        ne(appointments.status, 'cancelado')
+        sql`${appointments.status} != 'cancelado'`
       ];
       let patientConditions = [eq(patients.isActive, true)];
       let receivableConditions = [];

@@ -1501,6 +1501,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+
   // Reports endpoints
   app.get("/api/reports/overview", authenticateToken, async (req, res) => {
     try {
