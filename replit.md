@@ -691,6 +691,8 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Technical Details**: Used direct database insertion to create missing entry with proper companyId association
   - **Impact**: All paid receivables now correctly appear in cash flow, showing accurate financial totals (R$ 250,00 total income)
 - July 23, 2025. **MIGRATION COMPLETED**: Successfully migrated OdontoSync project from Replit Agent to standard Replit environment
+- July 23, 2025. **ADMIN USER FIX**: Fixed "User must belong to a company" error by implementing automatic companyId assignment for admin user on startup
+- July 23, 2025. **JWT TOKEN FALLBACK**: Added fallback mechanism to fetch user data from database when JWT token lacks companyId information
 - July 23, 2025. **PAYABLES CREATION BUG FIX**: Fixed critical bug preventing payables creation due to companyId validation error
   - **Root Cause**: insertPayableSchema was requiring companyId field but user's companyId was null
   - **Solution**: Excluded companyId from frontend validation schema and added it in backend with fallback to companyId 2

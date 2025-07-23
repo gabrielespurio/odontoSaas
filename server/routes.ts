@@ -841,9 +841,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const loggedUser = req.user;
       
+      // Debug log to see what's in the JWT token
+      console.log("Logged user from JWT:", loggedUser);
+      
       // Verificar se o usuário logado tem companyId
       if (!loggedUser.companyId) {
-        return res.status(400).json({ message: "User must belong to a company" });
+        // If companyId is missing from JWT, fetch user from database to get updated info
+        console.log("CompanyId missing from JWT, fetching from database...");
+        
+        try {
+          const userFromDb = await storage.getUser(loggedUser.id);
+          if (userFromDb && userFromDb.companyId) {
+            // Use companyId from database
+            console.log("Found companyId in database:", userFromDb.companyId);
+            loggedUser.companyId = userFromDb.companyId;
+          } else {
+            return res.status(400).json({ message: "User must belong to a company" });
+          }
+        } catch (dbError) {
+          console.error("Error fetching user from database:", dbError);
+          return res.status(400).json({ message: "User must belong to a company" });
+        }
       }
       
       // Create custom schema for user creation without username field
