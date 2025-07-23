@@ -63,6 +63,8 @@ function authenticateToken(req: any, res: any, next: any) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
+
+
   // Debug appointment-consultation relationship (NO AUTH)
   app.get("/api/debug/appointment-consultation", async (req, res) => {
     try {
@@ -635,6 +637,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error", error: error.message });
     }
   });
+
+
 
   // Protected routes
   app.use("/api", authenticateToken);
