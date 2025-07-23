@@ -575,8 +575,10 @@ export class DatabaseStorage implements IStorage {
     const newEndTime = new Date(newStartTime.getTime() + (procedureDuration * 60 * 1000));
     
     // Build where conditions para buscar agendamentos do mesmo dentista que não estão cancelados
+    // IMPORTANTE: Adicionar filtro por empresa para garantir isolation de dados
     let whereConditions = [
       eq(appointments.dentistId, appointmentData.dentistId),
+      eq(appointments.companyId, appointmentData.companyId), // Filtro crucial para multi-tenant
       sql`${appointments.status} != 'cancelado'`
     ];
     

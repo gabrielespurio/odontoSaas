@@ -733,6 +733,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Solution**: Modified POST /api/users endpoint to allow Super Admin to specify companyId in request body
   - **Logic**: Super Admin must specify companyId, regular admins use their own companyId automatically
   - **Impact**: Super Administrator can now create administrative users for any company in the system
+- July 23, 2025. **CRITICAL APPOINTMENT CONFLICT BUG FIX**: Fixed appointment scheduling conflict detection for multi-tenant system
+  - **Root Cause**: Conflict validation was checking all appointments globally instead of filtering by company, causing false conflicts
+  - **Technical Issue**: User in company 4 couldn't create appointment because system found conflict with appointment from company 2
+  - **Solution**: Added companyId filter to checkAppointmentConflicts method ensuring data isolation between companies
+  - **Impact**: Users can now create appointments without false conflict errors from other companies' data
 - July 21, 2025. **SAAS MULTI-TENANT ARCHITECTURE IMPLEMENTATION**: Transformed OdontoSync into a true SaaS multi-tenant system
   - **Database Schema Migration**: Added companyId fields to all relevant tables (patients, appointments, consultations, procedures, financial records, etc.)
   - **Company Management System**: Created companies table with comprehensive business information, license tracking, and address management
