@@ -836,6 +836,10 @@ export class DatabaseStorage implements IStorage {
     console.log('Creating consultation with procedures:', procedures);
     
     // Use raw SQL with proper array formatting for PostgreSQL
+    const proceduresArray = procedures.length > 0 
+      ? sql`ARRAY[${sql.join(procedures.map(p => sql`${p}`), sql`, `)}]`
+      : sql`ARRAY[]::text[]`; // Explicitly cast empty array to text[]
+      
     const result = await db.execute(sql`
       INSERT INTO consultations (
         patient_id, dentist_id, appointment_id, date, 
@@ -845,7 +849,7 @@ export class DatabaseStorage implements IStorage {
         ${consultationData.dentistId}, 
         ${consultationData.appointmentId || null}, 
         ${consultationData.date}, 
-        ${sql`ARRAY[${sql.join(procedures.map(p => sql`${p}`), sql`, `)}]`}, 
+        ${proceduresArray}, 
         ${consultationData.clinicalNotes || null}, 
         ${consultationData.observations || null}, 
         ${consultationData.status}
