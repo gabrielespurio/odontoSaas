@@ -699,6 +699,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **SECURITY BREACH**: Users from different companies could see each other's data in all report types
   - **SOLUTION**: Added mandatory companyId filtering to all report queries ensuring complete company data isolation
   - **IMPACT**: Reports module now properly isolated by company with bulletproof multi-tenant security
+- July 23, 2025. **MULTI-TENANT CONSTRAINT FIXES**: Fixed database unique constraints for proper multi-tenant isolation
+  - **USER PROFILES FIX**: Changed unique constraint from (name) to (name, company_id) allowing same profile names across companies
+  - **PATIENTS FIX**: Changed unique constraint from (cpf) to (cpf, company_id) allowing same CPF across different companies
+  - **TECHNICAL DETAILS**: Updated database schema and applied SQL migrations to modify constraint definitions
+  - **IMPACT**: Companies can now create users with same profile names and register patients with same CPF without conflicts
 - July 23, 2025. **ADMIN USER FIX**: Fixed "User must belong to a company" error by implementing automatic companyId assignment for admin user on startup
 - July 23, 2025. **JWT TOKEN FALLBACK**: Added fallback mechanism to fetch user data from database when JWT token lacks companyId information
 - July 23, 2025. **AUTHENTICATION MIDDLEWARE OVERHAUL**: Modified authenticateToken middleware to always fetch fresh user data from database, ensuring current companyId is used regardless of JWT token age

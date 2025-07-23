@@ -73,7 +73,7 @@ export const patients = pgTable("patients", {
   id: serial("id").primaryKey(),
   companyId: integer("company_id").notNull(), // FK to companies table
   name: text("name").notNull(),
-  cpf: text("cpf").notNull().unique(),
+  cpf: text("cpf").notNull(),
   birthDate: date("birth_date").notNull(),
   phone: text("phone").notNull(),
   email: text("email"),
@@ -89,7 +89,10 @@ export const patients = pgTable("patients", {
   clinicalNotes: text("clinical_notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Unique constraint per company (same CPF can exist in different companies)
+  uniqueCpfPerCompany: unique().on(table.cpf, table.companyId),
+}));
 
 // Procedure Categories table
 export const procedureCategories = pgTable("procedure_categories", {
