@@ -42,7 +42,7 @@ import {
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
-// Middleware to verify JWT token
+// Middleware to verify JWT token and ensure fresh user data
 function authenticateToken(req: any, res: any, next: any) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -52,9 +52,29 @@ function authenticateToken(req: any, res: any, next: any) {
   }
 
   try {
-    const user = jwt.verify(token, JWT_SECRET);
-    req.user = user;
-    next();
+    const tokenUser = jwt.verify(token, JWT_SECRET) as any;
+    
+    // Always fetch fresh user data from database to ensure companyId is current
+    storage.getUser(tokenUser.id).then(freshUser => {
+      if (!freshUser) {
+        return res.status(403).json({ message: 'Invalid user' });
+      }
+      
+      // Use fresh data from database, but keep token structure
+      req.user = {
+        id: freshUser.id,
+        email: freshUser.email,
+        role: freshUser.role,
+        companyId: freshUser.companyId,
+        dataScope: freshUser.dataScope
+      };
+      
+      next();
+    }).catch(dbError => {
+      console.error('Database user fetch error:', dbError);
+      return res.status(500).json({ message: 'Internal server error' });
+    });
+    
   } catch (err) {
     console.error('JWT verification error:', err);
     return res.status(403).json({ message: 'Invalid token' });
@@ -841,27 +861,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const loggedUser = req.user;
       
-      // Debug log to see what's in the JWT token
-      console.log("Logged user from JWT:", loggedUser);
-      
       // Verificar se o usuário logado tem companyId
       if (!loggedUser.companyId) {
-        // If companyId is missing from JWT, fetch user from database to get updated info
-        console.log("CompanyId missing from JWT, fetching from database...");
-        
-        try {
-          const userFromDb = await storage.getUser(loggedUser.id);
-          if (userFromDb && userFromDb.companyId) {
-            // Use companyId from database
-            console.log("Found companyId in database:", userFromDb.companyId);
-            loggedUser.companyId = userFromDb.companyId;
-          } else {
-            return res.status(400).json({ message: "User must belong to a company" });
-          }
-        } catch (dbError) {
-          console.error("Error fetching user from database:", dbError);
-          return res.status(400).json({ message: "User must belong to a company" });
-        }
+        return res.status(400).json({ message: "User must belong to a company" });
       }
       
       // Create custom schema for user creation without username field
