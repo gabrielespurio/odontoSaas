@@ -512,20 +512,35 @@ export default function Consultations() {
     }
   };
 
+  // Helper functions to handle timezone correctly
+  const parseDateWithBrasilTimezone = (dateString: string): Date => {
+    // If the date doesn't have timezone info, assume it's in Brazil timezone
+    if (!dateString.includes('T')) {
+      return new Date(dateString + 'T00:00:00-03:00');
+    }
+    // If it has T but no timezone, add Brazil timezone
+    if (!dateString.includes('+') && !dateString.includes('Z') && !dateString.includes('-', 10)) {
+      return new Date(dateString + '-03:00');
+    }
+    return new Date(dateString);
+  };
+
   const formatDate = (date: string) => {
-    // Force local timezone interpretation for date display
-    return new Date(date).toLocaleDateString('pt-BR', {
+    const dateObj = parseDateWithBrasilTimezone(date);
+    return dateObj.toLocaleDateString('pt-BR', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+      timeZone: 'America/Sao_Paulo'
     });
   };
 
   const formatTime = (date: string) => {
-    // Force local timezone interpretation for time display
-    return new Date(date).toLocaleTimeString('pt-BR', { 
+    const dateObj = parseDateWithBrasilTimezone(date);
+    return dateObj.toLocaleTimeString('pt-BR', { 
       hour: '2-digit', 
-      minute: '2-digit' 
+      minute: '2-digit',
+      timeZone: 'America/Sao_Paulo'
     });
   };
 
