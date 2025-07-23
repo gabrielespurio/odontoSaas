@@ -260,12 +260,16 @@ export default function FinancialPayables() {
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('pt-BR');
+    // Force local timezone interpretation by adding time component
+    return new Date(date + 'T00:00:00').toLocaleDateString('pt-BR');
   };
 
   const getStatusBadge = (status: string, dueDate: string) => {
-    // Verificar se está vencido
-    const isOverdue = status === "pending" && new Date(dueDate) < new Date();
+    // Fix timezone issue for due date comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dueDate + 'T00:00:00');
+    const isOverdue = status === "pending" && due < today;
     const actualStatus = isOverdue ? "overdue" : status;
     
     const statusMap = {

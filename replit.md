@@ -696,6 +696,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Solution**: Excluded companyId from frontend validation schema and added it in backend with fallback to companyId 2
   - **Technical Details**: Modified insertPayableSchema to omit companyId like other entities, updated route to handle null companyId
   - **Impact**: Users can now create payables without validation errors, system uses default companyId when user's is null
+- July 23, 2025. **TIMEZONE DATE DISPLAY FIX**: Fixed date display issue in payables module where dates were showing one day earlier
+  - **Root Cause**: Date created as "23/07/2025" was being interpreted as UTC and displayed as "22/07/2025" in Brazil timezone
+  - **Solution**: Enhanced formatDate function to force local timezone interpretation by adding 'T00:00:00' to date strings
+  - **Technical Details**: Updated formatDate and getStatusBadge functions to handle timezone correctly for both display and overdue calculations
+  - **Impact**: Due dates now display correctly matching the date entered by users (23/07/2025 shows as 23/07/2025)
 - July 21, 2025. **SAAS MULTI-TENANT ARCHITECTURE IMPLEMENTATION**: Transformed OdontoSync into a true SaaS multi-tenant system
   - **Database Schema Migration**: Added companyId fields to all relevant tables (patients, appointments, consultations, procedures, financial records, etc.)
   - **Company Management System**: Created companies table with comprehensive business information, license tracking, and address management
