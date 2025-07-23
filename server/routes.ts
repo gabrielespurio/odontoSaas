@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
@@ -42,8 +42,19 @@ import {
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
+// Extend Express Request to include user
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: number;
+    email: string;
+    role: string;
+    companyId: number | null;
+    dataScope: string;
+  };
+}
+
 // Middleware to verify JWT token and ensure fresh user data
-function authenticateToken(req: any, res: any, next: any) {
+function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
