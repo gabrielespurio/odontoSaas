@@ -76,7 +76,7 @@ export default function Companies() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: companies = [], isLoading } = useQuery({
+  const { data: companies = [], isLoading } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
   });
 
@@ -105,7 +105,7 @@ export default function Companies() {
       setIsSuccessDialogOpen(true);
       toast({
         title: "Empresa criada com sucesso!",
-        description: `Admin criado: ${data.adminUser.username}`,
+        description: `Admin criado: ${data.adminUser?.username || data.adminUser?.email || 'N/A'}`,
       });
     },
     onError: (error: Error) => {
@@ -430,7 +430,22 @@ export default function Companies() {
             
             <TabsContent value="company" className="mt-6">
               <CompanyForm 
-                company={selectedCompany}
+                company={selectedCompany ? {
+                  ...selectedCompany,
+                  number: selectedCompany.number || null,
+                  tradeName: selectedCompany.tradeName || null,
+                  cnpj: selectedCompany.cnpj || null,
+                  cep: selectedCompany.cep || null,
+                  street: selectedCompany.street || null,
+                  neighborhood: selectedCompany.neighborhood || null,
+                  city: selectedCompany.city || null,
+                  state: selectedCompany.state || null,
+                  trialEndDate: selectedCompany.trialEndDate || null,
+                  subscriptionStartDate: selectedCompany.subscriptionStartDate || null,
+                  subscriptionEndDate: selectedCompany.subscriptionEndDate || null,
+                  createdAt: new Date(selectedCompany.createdAt),
+                  updatedAt: new Date(selectedCompany.updatedAt),
+                } : null}
                 onSubmit={(data) => {
                   if (selectedCompany) {
                     updateCompanyMutation.mutate({ id: selectedCompany.id, data });
@@ -525,14 +540,14 @@ export default function Companies() {
           <DialogHeader>
             <DialogTitle>Empresa Criada com Sucesso!</DialogTitle>
           </DialogHeader>
-          {createdAdmin && (
+          {createdAdmin && createdAdmin.adminUser && (
             <div className="space-y-4">
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <h3 className="font-semibold text-green-800 mb-2">Usuário Admin Criado</h3>
                 <div className="space-y-2 text-sm">
-                  <p><strong>Nome:</strong> {createdAdmin.adminUser.name}</p>
-                  <p><strong>Email:</strong> {createdAdmin.adminUser.email}</p>
-                  <p><strong>Senha Temporária:</strong> {createdAdmin.adminUser.generatedPassword}</p>
+                  <p><strong>Nome:</strong> {createdAdmin.adminUser.name || 'N/A'}</p>
+                  <p><strong>Email:</strong> {createdAdmin.adminUser.email || 'N/A'}</p>
+                  <p><strong>Senha Temporária:</strong> {createdAdmin.adminUser.generatedPassword || 'N/A'}</p>
                 </div>
               </div>
               
