@@ -1477,6 +1477,15 @@ export class DatabaseStorage implements IStorage {
     const whereReceivables = [];
     const wherePayables = [];
     
+    // Company filters - CRITICAL: All queries must filter by user's company
+    if (user.companyId || user.companyId === null) {
+      const companyId = user.companyId || 2; // Fallback to company 2 if null
+      whereAppointments.push(eq(appointments.companyId, companyId));
+      whereConsultations.push(eq(consultations.companyId, companyId));
+      whereReceivables.push(eq(receivables.companyId, companyId));
+      wherePayables.push(eq(payables.companyId, companyId));
+    }
+    
     // Date filters
     if (startDate) {
       whereAppointments.push(sql`${appointments.scheduledDate} >= ${startDate}`);
@@ -1542,8 +1551,9 @@ export class DatabaseStorage implements IStorage {
       payablesList = await payablesQuery;
     }
 
-    // Get patients
-    const patientsList = await db.select().from(patients);
+    // Get patients (filtered by company)
+    const companyId = user.companyId || 2; // Fallback to company 2 if null
+    const patientsList = await db.select().from(patients).where(eq(patients.companyId, companyId));
 
     // Calculate statistics
     const stats = {
@@ -1591,6 +1601,11 @@ export class DatabaseStorage implements IStorage {
   async getFinancialReport(user: any, startDate?: Date, endDate?: Date) {
     const whereReceivables = [];
     const wherePayables = [];
+    
+    // Company filters - CRITICAL: All queries must filter by user's company
+    const companyId = user.companyId || 2; // Fallback to company 2 if null
+    whereReceivables.push(eq(receivables.companyId, companyId));
+    wherePayables.push(eq(payables.companyId, companyId));
     
     if (startDate) {
       whereReceivables.push(sql`${receivables.dueDate} >= ${startDate}`);
@@ -1702,6 +1717,11 @@ export class DatabaseStorage implements IStorage {
     const whereAppointments = [];
     const whereConsultations = [];
     
+    // Company filters - CRITICAL: All queries must filter by user's company
+    const companyId = user.companyId || 2; // Fallback to company 2 if null
+    whereAppointments.push(eq(appointments.companyId, companyId));
+    whereConsultations.push(eq(consultations.companyId, companyId));
+    
     if (startDate) {
       whereAppointments.push(sql`${appointments.scheduledDate} >= ${startDate}`);
       whereConsultations.push(sql`${consultations.date} >= ${startDate}`);
@@ -1809,6 +1829,10 @@ export class DatabaseStorage implements IStorage {
 
   async getProceduresReport(user: any, startDate?: Date, endDate?: Date) {
     const whereConsultations = [];
+    
+    // Company filters - CRITICAL: All queries must filter by user's company
+    const companyId = user.companyId || 2; // Fallback to company 2 if null
+    whereConsultations.push(eq(consultations.companyId, companyId));
     
     if (startDate) {
       whereConsultations.push(sql`${consultations.date} >= ${startDate}`);
