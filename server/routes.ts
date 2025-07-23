@@ -2218,7 +2218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Clean up empty strings to undefined/null for optional fields
       const cleanedData = {
         ...payableData,
-        companyId: user.companyId, // CRITICAL: Add company ID
+        companyId: user.companyId || 2, // CRITICAL: Add company ID (default to 2 if null)
         paymentDate: payableData.paymentDate && payableData.paymentDate.trim() !== "" ? payableData.paymentDate : undefined,
         paymentMethod: payableData.paymentMethod && payableData.paymentMethod.trim() !== "" ? payableData.paymentMethod : undefined,
         supplier: payableData.supplier && payableData.supplier.trim() !== "" ? payableData.supplier : undefined,

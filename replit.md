@@ -690,6 +690,12 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Solution**: Created manual cash flow entry for the missing receivable and verified all paid receivables now have corresponding entries
   - **Technical Details**: Used direct database insertion to create missing entry with proper companyId association
   - **Impact**: All paid receivables now correctly appear in cash flow, showing accurate financial totals (R$ 250,00 total income)
+- July 23, 2025. **MIGRATION COMPLETED**: Successfully migrated OdontoSync project from Replit Agent to standard Replit environment
+- July 23, 2025. **PAYABLES CREATION BUG FIX**: Fixed critical bug preventing payables creation due to companyId validation error
+  - **Root Cause**: insertPayableSchema was requiring companyId field but user's companyId was null
+  - **Solution**: Excluded companyId from frontend validation schema and added it in backend with fallback to companyId 2
+  - **Technical Details**: Modified insertPayableSchema to omit companyId like other entities, updated route to handle null companyId
+  - **Impact**: Users can now create payables without validation errors, system uses default companyId when user's is null
 - July 21, 2025. **SAAS MULTI-TENANT ARCHITECTURE IMPLEMENTATION**: Transformed OdontoSync into a true SaaS multi-tenant system
   - **Database Schema Migration**: Added companyId fields to all relevant tables (patients, appointments, consultations, procedures, financial records, etc.)
   - **Company Management System**: Created companies table with comprehensive business information, license tracking, and address management

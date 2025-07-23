@@ -535,6 +535,7 @@ export const insertPayableSchema = createInsertSchema(payables).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  companyId: true, // Excluir companyId pois será adicionado no backend
 }).extend({
   amount: z.number().positive("Valor deve ser positivo"),
   paymentDate: z.string().optional().nullable(),
