@@ -685,6 +685,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Solution**: Added companyId from the receivable/payable record to createCashFlowEntry calls
   - **Technical Details**: Updated both updateReceivable and updatePayable functions to include companyId: record.companyId
   - **Impact**: Users can now mark receivables as paid without database constraint violations
+- July 23, 2025. **CASH FLOW SYNC ISSUE RESOLVED**: Fixed missing cash flow entries for previously paid receivables
+  - **Root Cause**: One receivable (ID 24, R$ 150,00) was marked as paid before the companyId fix, missing its cash flow entry
+  - **Solution**: Created manual cash flow entry for the missing receivable and verified all paid receivables now have corresponding entries
+  - **Technical Details**: Used direct database insertion to create missing entry with proper companyId association
+  - **Impact**: All paid receivables now correctly appear in cash flow, showing accurate financial totals (R$ 250,00 total income)
 - July 21, 2025. **SAAS MULTI-TENANT ARCHITECTURE IMPLEMENTATION**: Transformed OdontoSync into a true SaaS multi-tenant system
   - **Database Schema Migration**: Added companyId fields to all relevant tables (patients, appointments, consultations, procedures, financial records, etc.)
   - **Company Management System**: Created companies table with comprehensive business information, license tracking, and address management

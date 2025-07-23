@@ -1070,16 +1070,10 @@ export class DatabaseStorage implements IStorage {
 
   async updateReceivable(id: number, insertReceivable: Partial<InsertReceivable>): Promise<Receivable> {
     const currentRecord = await this.getReceivable(id);
-    console.log(`Update receivable - Current status: ${currentRecord?.status}, New status: ${insertReceivable.status}, Payment date: ${insertReceivable.paymentDate}`);
-    
     const [record] = await db.update(receivables).set(insertReceivable).where(eq(receivables.id, id)).returning();
     
     // Se o status mudou para "pago", criar entrada no fluxo de caixa
-    const shouldCreateCashFlow = currentRecord?.status !== 'paid' && insertReceivable.status === 'paid' && insertReceivable.paymentDate;
-    console.log(`Should create cash flow entry: ${shouldCreateCashFlow}`);
-    
-    if (shouldCreateCashFlow) {
-      console.log(`Creating cash flow entry for receivable ${record.id} with amount ${record.amount}`);
+    if (currentRecord?.status !== 'paid' && insertReceivable.status === 'paid' && insertReceivable.paymentDate) {
       await this.createCashFlowEntry({
         type: 'income',
         receivableId: record.id,
@@ -1089,7 +1083,6 @@ export class DatabaseStorage implements IStorage {
         category: 'receivable',
         companyId: record.companyId, // Add companyId from the receivable record
       });
-      console.log(`Cash flow entry created successfully`);
     }
     
     return record;
