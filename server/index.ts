@@ -88,6 +88,36 @@ app.use((req, res, next) => {
     
     // Run SaaS migration
     await runSaasMigration();
+    
+    // Fix admin user - ensure admin has a company assigned
+    try {
+      const { users, companies } = await import('../shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      // Get admin user
+      const adminUsers = await db.select().from(users).where(eq(users.username, 'admin')).limit(1);
+      
+      if (adminUsers.length > 0) {
+        const adminUser = adminUsers[0];
+        
+        // If admin doesn't have a company, assign the first available company
+        if (!adminUser.companyId) {
+          const allCompanies = await db.select().from(companies).limit(1);
+          
+          if (allCompanies.length > 0) {
+            const firstCompany = allCompanies[0];
+            
+            await db.update(users)
+              .set({ companyId: firstCompany.id })
+              .where(eq(users.id, adminUser.id));
+              
+            console.log(`Admin user fixed - assigned to company: ${firstCompany.name}`);
+          }
+        }
+      }
+    } catch (fixError) {
+      console.log("Admin fix warning:", fixError);
+    }
   } catch (error) {
     console.error("Migration error:", error);
   }
