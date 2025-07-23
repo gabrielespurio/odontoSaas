@@ -138,6 +138,11 @@ export default function AnamneseForm({ patientId }: AnamneseFormProps) {
   });
 
   const onSubmit = (data: AnamneseFormData) => {
+    console.log("=== FRONTEND FORM SUBMISSION ===");
+    console.log("Form data:", JSON.stringify(data, null, 2));
+    console.log("additionalQuestions:", JSON.stringify(data.additionalQuestions, null, 2));
+    console.log("=== END FRONTEND DEBUG ===");
+    
     if (anamnese) {
       updateMutation.mutate(data);
     } else {
