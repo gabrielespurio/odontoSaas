@@ -2589,37 +2589,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/companies", async (req, res) => {
-    try {
-      const companyData = insertCompanySchema.parse(req.body);
-      
-      // Convert date strings to Date objects if they exist
-      const processedData = {
-        ...companyData,
-        trialEndDate: companyData.trialEndDate ? companyData.trialEndDate : undefined,
-        subscriptionStartDate: companyData.subscriptionStartDate ? companyData.subscriptionStartDate : undefined,
-        subscriptionEndDate: companyData.subscriptionEndDate ? companyData.subscriptionEndDate : undefined,
-      };
-      
-      // Create company with automatic admin user
-      const result = await storage.createCompanyWithAdmin(processedData);
-      
-      res.status(201).json({
-        company: result.company,
-        adminUser: {
-          id: result.adminUser.id,
-          username: result.adminUser.username,
-          name: result.adminUser.name,
-          email: result.adminUser.email,
-          // Note: Do not return the password in production
-          generatedPassword: `${companyData.name.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10)}123`
-        }
-      });
-    } catch (error) {
-      console.error("Create company error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+
 
   app.put("/api/companies/:id", async (req, res) => {
     try {
