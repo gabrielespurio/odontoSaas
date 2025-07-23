@@ -512,35 +512,30 @@ export default function Consultations() {
     }
   };
 
-  // Helper functions to handle timezone correctly
-  const parseDateWithBrasilTimezone = (dateString: string): Date => {
-    // If the date doesn't have timezone info, assume it's in Brazil timezone
-    if (!dateString.includes('T')) {
-      return new Date(dateString + 'T00:00:00-03:00');
-    }
-    // If it has T but no timezone, add Brazil timezone
-    if (!dateString.includes('+') && !dateString.includes('Z') && !dateString.includes('-', 10)) {
-      return new Date(dateString + '-03:00');
-    }
-    return new Date(dateString);
-  };
-
   const formatDate = (date: string) => {
-    const dateObj = parseDateWithBrasilTimezone(date);
+    // Simple approach: just extract date part and format
+    const dateObj = new Date(date);
     return dateObj.toLocaleDateString('pt-BR', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-      timeZone: 'America/Sao_Paulo'
     });
   };
 
   const formatTime = (date: string) => {
-    const dateObj = parseDateWithBrasilTimezone(date);
-    return dateObj.toLocaleTimeString('pt-BR', { 
+    // Extract time from ISO string and format it directly
+    const isoString = date;
+    if (isoString.includes('T')) {
+      const timePart = isoString.split('T')[1];
+      if (timePart) {
+        const timeOnly = timePart.split(':').slice(0, 2).join(':');
+        return timeOnly;
+      }
+    }
+    // Fallback to regular date parsing
+    return new Date(date).toLocaleTimeString('pt-BR', { 
       hour: '2-digit', 
-      minute: '2-digit',
-      timeZone: 'America/Sao_Paulo'
+      minute: '2-digit' 
     });
   };
 

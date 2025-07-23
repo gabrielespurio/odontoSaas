@@ -702,10 +702,10 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Technical Details**: Updated formatDate and getStatusBadge functions to handle timezone correctly for both display and overdue calculations
   - **Impact**: Due dates now display correctly matching the date entered by users (23/07/2025 shows as 23/07/2025)
 - July 23, 2025. **CONSULTATIONS TIMEZONE FIX**: Fixed 3-hour time difference between appointments and consultations modules
-  - **Root Cause**: Appointments showing correct time but consultations displaying 3 hours earlier due to UTC vs Brazil timezone handling
-  - **Solution**: Created separate formatDate and formatTime functions with proper timezone handling for consultations module
-  - **Technical Details**: Updated all date/time display functions to use consistent timezone interpretation across modules
-  - **Impact**: Consultations now display same date/time as appointments (e.g., appointment at 13:00 shows as 13:00 in consultations, not 10:00)
+  - **Root Cause**: Database saves appointments as "2025-07-25T13:00:00" but consultations module interprets as UTC (-3 hours)
+  - **Solution**: Implemented direct ISO string parsing in formatTime function to extract time without timezone conversion
+  - **Technical Details**: formatTime now extracts time directly from ISO string (13:00:00 → 13:00) avoiding Date object UTC interpretation
+  - **Impact**: Consultations now display exact same time as saved in database and shown in appointments module
 - July 21, 2025. **SAAS MULTI-TENANT ARCHITECTURE IMPLEMENTATION**: Transformed OdontoSync into a true SaaS multi-tenant system
   - **Database Schema Migration**: Added companyId fields to all relevant tables (patients, appointments, consultations, procedures, financial records, etc.)
   - **Company Management System**: Created companies table with comprehensive business information, license tracking, and address management
