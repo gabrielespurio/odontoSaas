@@ -737,6 +737,12 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Technical Issues**: Consultation created with company_id=1 instead of user's company_id=4, and JOIN between appointments and consultations ignored company scope
   - **Solution**: Fixed createConsultation to include companyId parameter, updated LEFT JOIN to use company-aware join condition
   - **Impact**: Appointments now properly disappear from pending consultations table when consultation is created, maintaining proper multi-tenant data isolation
+- July 24, 2025. **CACHE INVALIDATION BUG FIX**: Fixed persistent appointment visibility issue in consultations UI despite correct backend filtering
+  - **Root Cause**: Frontend cache not updating correctly after consultation creation, causing converted appointments to remain visible
+  - **Backend Verification**: Database queries working correctly - only appointments without consultations should appear (verified: appointments 38,40 visible; 36,37,39 should be hidden)
+  - **Solution**: Added forced cache invalidation and immediate refetch in createConsultationMutation and updateConsultationMutation
+  - **Technical Details**: Added queryClient.refetchQueries() calls to force immediate data refresh after consultation operations
+  - **Impact**: UI now immediately updates when appointments are converted to consultations, showing accurate pending appointments list
 - July 23, 2025. **SUPER ADMINISTRATOR CREATION**: Created system-wide Super Administrator account for Companies module access
   - **Email**: superadmin@odontosync.com
   - **Password**: superadmin123

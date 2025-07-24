@@ -379,9 +379,15 @@ export default function Consultations() {
   const createConsultationMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/consultations", data),
     onSuccess: () => {
+      // CRITICAL: Force cache invalidation and refetch to ensure UI updates immediately
       queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
+      
+      // Force immediate refetch to ensure data consistency
+      queryClient.refetchQueries({ queryKey: ["/api/appointments-without-consultation"] });
+      queryClient.refetchQueries({ queryKey: ["/api/consultations"] });
+      
       toast({
         title: "Sucesso",
         description: "Consulta registrada e agendamentos criados automaticamente na agenda",
@@ -447,9 +453,15 @@ export default function Consultations() {
   const updateConsultationMutation = useMutation({
     mutationFn: (data: any) => apiRequest("PUT", `/api/consultations/${editingConsultation?.id}`, data),
     onSuccess: () => {
+      // CRITICAL: Force cache invalidation and refetch to ensure UI updates immediately
       queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
+      
+      // Force immediate refetch to ensure data consistency
+      queryClient.refetchQueries({ queryKey: ["/api/appointments-without-consultation"] });
+      queryClient.refetchQueries({ queryKey: ["/api/consultations"] });
+      
       toast({
         title: "Sucesso",
         description: "Consulta atualizada com sucesso!",
