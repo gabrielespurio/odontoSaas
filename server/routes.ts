@@ -1364,18 +1364,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Apply data scope control
       const user = req.user;
-      let whereConditions = [
-        isNull(consultations.id), // CRITICAL: Only appointments WITHOUT consultation
+      console.log(`[DEBUG] User ${user.id} (company ${user.companyId}) requesting appointments without consultation`);
+      
+      // NOVA ABORDAGEM: Buscar todos os agendamentos e filtrar os que NÃO têm consulta
+      let appointmentWhereConditions = [
         sql`${appointments.status} != 'cancelado'`, // Filter out cancelled appointments
         eq(appointments.companyId, user.companyId) // CRITICAL: Filter by company
       ];
       
       if (user.dataScope === "own") {
         // Users with "own" scope can only see their own appointments (regardless of role)
-        whereConditions.push(eq(appointments.dentistId, user.id));
+        appointmentWhereConditions.push(eq(appointments.dentistId, user.id));
       }
       
-      const appointmentsWithoutConsultation = await db.select({
+      // Buscar todos os agendamentos (sem LEFT JOIN com consultations)
+      const allAppointments = await db.select({
         id: appointments.id,
         patientId: appointments.patientId,
         dentistId: appointments.dentistId,
@@ -1410,12 +1413,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       .leftJoin(patients, eq(appointments.patientId, patients.id))
       .leftJoin(users, eq(appointments.dentistId, users.id))
       .leftJoin(procedures, eq(appointments.procedureId, procedures.id))
-      .leftJoin(consultations, and(
-        eq(appointments.id, consultations.appointmentId),
-        eq(consultations.companyId, appointments.companyId) // CRITICAL: Company-aware join
-      ))
-      .where(and(...whereConditions))
+      .where(and(...appointmentWhereConditions))
       .orderBy(desc(appointments.scheduledDate));
+      
+      console.log(`[DEBUG] Found ${allAppointments.length} total appointments`);
+      
+      // Buscar todos os IDs de agendamentos que JÁ TÊM consulta
+      const appointmentIdsWithConsultation = await db.select({
+        appointmentId: consultations.appointmentId
+      })
+      .from(consultations)
+      .where(eq(consultations.companyId, user.companyId));
+      
+      const appointmentIdsWithConsultationSet = new Set(
+        appointmentIdsWithConsultation.map(c => c.appointmentId)
+      );
+      
+      console.log(`[DEBUG] Found ${appointmentIdsWithConsultationSet.size} appointments with consultation: ${Array.from(appointmentIdsWithConsultationSet).join(', ')}`);
+      
+      // Filtrar agendamentos que NÃO têm consulta
+      const appointmentsWithoutConsultation = allAppointments.filter(apt => 
+        !appointmentIdsWithConsultationSet.has(apt.id)
+      );
+      
+      console.log(`[DEBUG] Appointments WITHOUT consultation: ${appointmentsWithoutConsultation.map(a => a.id).join(', ')}`);
+      console.log(`[DEBUG] Final result: ${appointmentsWithoutConsultation.length} appointments without consultation`);
 
 
 
@@ -1423,6 +1445,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get appointments without consultation error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // DEBUG: Endpoint temporário para debug do problema de consultas
+  app.get("/api/debug/appointments-consultations", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      
+      // Buscar todos os agendamentos da empresa
+      const allAppointments = await db.select({
+        id: appointments.id,
+        patientId: appointments.patientId,
+        dentistId: appointments.dentistId,
+        scheduledDate: appointments.scheduledDate,
+        status: appointments.status,
+      })
+      .from(appointments)
+      .where(eq(appointments.companyId, user.companyId))
+      .orderBy(desc(appointments.scheduledDate));
+      
+      // Buscar todas as consultas da empresa
+      const allConsultations = await db.select({
+        id: consultations.id,
+        appointmentId: consultations.appointmentId,
+        attendanceNumber: consultations.attendanceNumber,
+        status: consultations.status,
+      })
+      .from(consultations)
+      .where(eq(consultations.companyId, user.companyId));
+      
+      // Fazer o LEFT JOIN manualmente para debug
+      const appointmentsWithConsultationInfo = allAppointments.map(apt => {
+        const relatedConsultation = allConsultations.find(cons => cons.appointmentId === apt.id);
+        return {
+          ...apt,
+          consultation: relatedConsultation || null
+        };
+      });
+      
+      res.json({
+        totalAppointments: allAppointments.length,
+        totalConsultations: allConsultations.length,
+        appointmentsWithConsultationInfo,
+        appointmentsWithoutConsultation: appointmentsWithConsultationInfo.filter(apt => 
+          !apt.consultation && apt.status !== 'cancelado'
+        )
+      });
+    } catch (error) {
+      console.error("Debug error:", error);
+      res.status(500).json({ message: "Debug error" });
     }
   });
 

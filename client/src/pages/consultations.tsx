@@ -88,7 +88,7 @@ export default function Consultations() {
   const [consultationForReceivable, setConsultationForReceivable] = useState<Consultation | null>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [consultationToDelete, setConsultationToDelete] = useState<Consultation | null>(null);
-  const [appointmentRefreshKey, setAppointmentRefreshKey] = useState(0);
+  const [appointmentRefreshKey, setAppointmentRefreshKey] = useState(Date.now());
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
