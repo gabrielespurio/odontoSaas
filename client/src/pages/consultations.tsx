@@ -88,6 +88,7 @@ export default function Consultations() {
   const [consultationForReceivable, setConsultationForReceivable] = useState<Consultation | null>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [consultationToDelete, setConsultationToDelete] = useState<Consultation | null>(null);
+  const [appointmentRefreshKey, setAppointmentRefreshKey] = useState(0);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -164,22 +165,16 @@ export default function Consultations() {
 
   // Buscar agendamentos que não têm consulta correspondente
   const { data: appointmentsWithoutConsultation } = useQuery({
-    queryKey: ["/api/appointments-without-consultation"],
+    queryKey: ["/api/appointments-without-consultation", appointmentRefreshKey],
     queryFn: async () => {
       const response = await fetch("/api/appointments-without-consultation", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
-          'Cache-Control': 'no-cache', // CRITICAL: Force no cache
-          'Pragma': 'no-cache', // CRITICAL: Force no cache for HTTP/1.0
         },
       });
       if (!response.ok) throw new Error("Failed to fetch appointments");
       return response.json();
     },
-    staleTime: 0, // Sempre considera dados como obsoletos
-    gcTime: 0, // Remove do cache imediatamente após não estar sendo usado
-    refetchOnMount: true, // CRITICAL: Always refetch on mount
-    refetchOnWindowFocus: true, // CRITICAL: Refetch on window focus
   });
 
   const { data: patients } = useQuery<Patient[]>({
@@ -271,9 +266,11 @@ export default function Consultations() {
     mutationFn: (id: number) =>
       apiRequest("DELETE", `/api/consultations/${id}`),
     onSuccess: () => {
+      // Incrementar a chave de refresh para mostrar agendamento novamente
+      setAppointmentRefreshKey(prev => prev + 1);
+      
       queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
       setShowDeleteConfirmation(false);
       setConsultationToDelete(null);
       toast({
@@ -383,21 +380,20 @@ export default function Consultations() {
   const createConsultationMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/consultations", data),
     onSuccess: () => {
-      // DEFINITIVE: Complete cache reset for all related queries
-      queryClient.clear(); // Nuclear option: clear ALL cache
+      // Incrementar a chave de refresh para forçar nova busca
+      setAppointmentRefreshKey(prev => prev + 1);
+      
+      // Invalidar caches relacionados
+      queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
       
       toast({
         title: "Sucesso",
-        description: "Consulta registrada e agendamentos criados automaticamente na agenda",
+        description: "Consulta registrada com sucesso",
       });
       setShowForm(false);
       form.reset();
       setSelectedProcedures([]);
-      
-      // Force immediate data reload after success message
-      setTimeout(() => {
-        window.location.reload(); // Force complete page reload to ensure fresh data
-      }, 1000);
     },
     onError: (error: any) => {
       const errorMessage = error?.message || "Erro ao registrar consulta";
