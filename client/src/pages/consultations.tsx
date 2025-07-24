@@ -164,7 +164,7 @@ export default function Consultations() {
 
   // Buscar agendamentos que não têm consulta correspondente
   const { data: appointmentsWithoutConsultation } = useQuery({
-    queryKey: ["/api/appointments-without-consultation", Date.now()], // CRITICAL: Force refresh with timestamp
+    queryKey: ["/api/appointments-without-consultation"],
     queryFn: async () => {
       const response = await fetch("/api/appointments-without-consultation", {
         headers: {
@@ -383,20 +383,8 @@ export default function Consultations() {
   const createConsultationMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/consultations", data),
     onSuccess: () => {
-      // CRITICAL: Aggressive cache invalidation and forced refresh
-      queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
-      
-      // Force complete cache removal and immediate refetch
-      queryClient.removeQueries({ queryKey: ["/api/appointments-without-consultation"] });
-      queryClient.removeQueries({ queryKey: ["/api/consultations"] });
-      
-      // Force immediate refetch with fresh data
-      setTimeout(() => {
-        queryClient.refetchQueries({ queryKey: ["/api/appointments-without-consultation"] });
-        queryClient.refetchQueries({ queryKey: ["/api/consultations"] });
-      }, 100);
+      // DEFINITIVE: Complete cache reset for all related queries
+      queryClient.clear(); // Nuclear option: clear ALL cache
       
       toast({
         title: "Sucesso",
@@ -405,6 +393,11 @@ export default function Consultations() {
       setShowForm(false);
       form.reset();
       setSelectedProcedures([]);
+      
+      // Force immediate data reload after success message
+      setTimeout(() => {
+        window.location.reload(); // Force complete page reload to ensure fresh data
+      }, 1000);
     },
     onError: (error: any) => {
       const errorMessage = error?.message || "Erro ao registrar consulta";
@@ -463,20 +456,10 @@ export default function Consultations() {
   const updateConsultationMutation = useMutation({
     mutationFn: (data: any) => apiRequest("PUT", `/api/consultations/${editingConsultation?.id}`, data),
     onSuccess: () => {
-      // CRITICAL: Aggressive cache invalidation and forced refresh
+      // Standard cache invalidation for updates (no page reload needed)
       queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
-      
-      // Force complete cache removal and immediate refetch
-      queryClient.removeQueries({ queryKey: ["/api/appointments-without-consultation"] });
-      queryClient.removeQueries({ queryKey: ["/api/consultations"] });
-      
-      // Force immediate refetch with fresh data
-      setTimeout(() => {
-        queryClient.refetchQueries({ queryKey: ["/api/appointments-without-consultation"] });
-        queryClient.refetchQueries({ queryKey: ["/api/consultations"] });
-      }, 100);
       
       toast({
         title: "Sucesso",

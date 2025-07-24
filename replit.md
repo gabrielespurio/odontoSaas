@@ -748,6 +748,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Backend Confirmation**: System correctly returns only 1 appointment (ID 41) after consultation 23 creation - all converted appointments properly filtered
   - **Frontend Enhancement**: Query now uses Date.now() in queryKey, Cache-Control headers, and queryClient.removeQueries() for complete cache purge
   - **Final Result**: Real-time UI updates confirmed - appointments disappear immediately when converted to consultations
+- July 24, 2025. **NUCLEAR CACHE SOLUTION**: Implemented nuclear cache clearing with page reload for consultation creation
+  - **Root Cause**: Frontend cache was extremely persistent - database showed 3 appointments (IDs 42,41,38) but UI showed only 1
+  - **Nuclear Solution**: Replaced complex cache invalidation with queryClient.clear() followed by window.location.reload()
+  - **Impact**: When user creates consultation from appointment, entire cache is cleared and page reloads with fresh data
+  - **Trade-off**: Less elegant UX but guarantees data consistency - appointments immediately disappear after consultation creation
 - July 23, 2025. **SUPER ADMINISTRATOR CREATION**: Created system-wide Super Administrator account for Companies module access
   - **Email**: superadmin@odontosync.com
   - **Password**: superadmin123

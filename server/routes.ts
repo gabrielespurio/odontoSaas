@@ -1370,8 +1370,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         eq(appointments.companyId, user.companyId) // CRITICAL: Filter by company
       ];
       
-      if (user.role !== "admin" && user.dataScope === "own") {
-        // Users with "own" scope can only see their own appointments
+      if (user.dataScope === "own") {
+        // Users with "own" scope can only see their own appointments (regardless of role)
         whereConditions.push(eq(appointments.dentistId, user.id));
       }
       
