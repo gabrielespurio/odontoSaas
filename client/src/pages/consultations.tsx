@@ -26,7 +26,8 @@ import {
   Trash2,
   Play,
   CheckCircle,
-  DollarSign
+  DollarSign,
+  RefreshCw
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -163,7 +164,7 @@ export default function Consultations() {
     }],
   });
 
-  // Buscar agendamentos que não têm consulta correspondente
+  // Buscar agendamentos que não têm consulta correspondente com POLLING automático
   const { data: appointmentsWithoutConsultation } = useQuery({
     queryKey: ["/api/appointments-without-consultation", appointmentRefreshKey],
     queryFn: async () => {
@@ -179,6 +180,8 @@ export default function Consultations() {
     },
     staleTime: 0, // Always consider data stale
     gcTime: 0, // Don't cache
+    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchIntervalInBackground: true, // Continue polling in background
   });
 
   const { data: patients } = useQuery<Patient[]>({
@@ -384,28 +387,15 @@ export default function Consultations() {
   const createConsultationMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/consultations", data),
     onSuccess: () => {
-      // CRÍTICO: Forçar atualização imediata da lista de agendamentos
-      setAppointmentRefreshKey(Date.now());
-      
-      // Remover todas as queries do cache para forçar refetch
-      queryClient.removeQueries({ queryKey: ["/api/appointments-without-consultation"] });
-      queryClient.removeQueries({ queryKey: ["/api/consultations"] });
-      queryClient.removeQueries({ queryKey: ["/api/appointments"] });
-      
-      // Forçar refetch imediato
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-      }, 100);
-      
       toast({
         title: "Sucesso",
-        description: "Consulta registrada com sucesso",
+        description: "Consulta registrada com sucesso - atualizando dados...",
       });
-      setShowForm(false);
-      form.reset();
-      setSelectedProcedures([]);
+      
+      // SOLUÇÃO DEFINITIVA: Recarregar a página após 1 segundo
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     },
     onError: (error: any) => {
       const errorMessage = error?.message || "Erro ao registrar consulta";
@@ -464,29 +454,15 @@ export default function Consultations() {
   const updateConsultationMutation = useMutation({
     mutationFn: (data: any) => apiRequest("PUT", `/api/consultations/${editingConsultation?.id}`, data),
     onSuccess: () => {
-      // CRÍTICO: Forçar atualização imediata da lista de agendamentos
-      setAppointmentRefreshKey(Date.now());
-      
-      // Remover todas as queries do cache para forçar refetch
-      queryClient.removeQueries({ queryKey: ["/api/appointments-without-consultation"] });
-      queryClient.removeQueries({ queryKey: ["/api/consultations"] });
-      queryClient.removeQueries({ queryKey: ["/api/appointments"] });
-      
-      // Forçar refetch imediato
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-      }, 100);
-      
       toast({
         title: "Sucesso",
-        description: "Consulta atualizada com sucesso!",
+        description: "Consulta atualizada com sucesso - atualizando dados...",
       });
-      setShowEditForm(false);
-      setEditingConsultation(null);
-      form.reset();
-      setSelectedProcedures([]);
+      
+      // SOLUÇÃO DEFINITIVA: Recarregar a página após 1 segundo
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     },
     onError: (error: any) => {
       const errorMessage = error?.message || "Erro ao atualizar consulta";
