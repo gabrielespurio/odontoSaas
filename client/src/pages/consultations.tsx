@@ -170,11 +170,15 @@ export default function Consultations() {
       const response = await fetch("/api/appointments-without-consultation", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
         },
       });
       if (!response.ok) throw new Error("Failed to fetch appointments");
       return response.json();
     },
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache
   });
 
   const { data: patients } = useQuery<Patient[]>({
@@ -380,12 +384,20 @@ export default function Consultations() {
   const createConsultationMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/consultations", data),
     onSuccess: () => {
-      // Incrementar a chave de refresh para forçar nova busca
-      setAppointmentRefreshKey(prev => prev + 1);
+      // CRÍTICO: Forçar atualização imediata da lista de agendamentos
+      setAppointmentRefreshKey(Date.now());
       
-      // Invalidar caches relacionados
-      queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      // Remover todas as queries do cache para forçar refetch
+      queryClient.removeQueries({ queryKey: ["/api/appointments-without-consultation"] });
+      queryClient.removeQueries({ queryKey: ["/api/consultations"] });
+      queryClient.removeQueries({ queryKey: ["/api/appointments"] });
+      
+      // Forçar refetch imediato
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      }, 100);
       
       toast({
         title: "Sucesso",
@@ -452,10 +464,20 @@ export default function Consultations() {
   const updateConsultationMutation = useMutation({
     mutationFn: (data: any) => apiRequest("PUT", `/api/consultations/${editingConsultation?.id}`, data),
     onSuccess: () => {
-      // Standard cache invalidation for updates (no page reload needed)
-      queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
+      // CRÍTICO: Forçar atualização imediata da lista de agendamentos
+      setAppointmentRefreshKey(Date.now());
+      
+      // Remover todas as queries do cache para forçar refetch
+      queryClient.removeQueries({ queryKey: ["/api/appointments-without-consultation"] });
+      queryClient.removeQueries({ queryKey: ["/api/consultations"] });
+      queryClient.removeQueries({ queryKey: ["/api/appointments"] });
+      
+      // Forçar refetch imediato
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      }, 100);
       
       toast({
         title: "Sucesso",

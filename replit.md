@@ -780,6 +780,13 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Companies Module**: Created comprehensive companies management interface with company listing, details view, and creation form
   - **Relations Updated**: Added proper foreign key relationships between companies and all data entities
   - **Storage Layer Enhancement**: Updated all storage methods to include company-scoped data access
+- July 24, 2025. **ULTIMATE CACHE INVALIDATION FIX**: Implemented comprehensive cache management solution for consultations module
+  - **Backend Debugging**: Enhanced appointments-without-consultation endpoint with detailed logging showing correct data filtering
+  - **Frontend Cache Strategy**: Replaced complex JOIN-based query with two-step approach for bulletproof data accuracy
+  - **Aggressive Cache Control**: Added removeQueries(), timestamp-based keys, no-cache headers, staleTime:0, and gcTime:0
+  - **Multi-Level Invalidation**: Enhanced both createConsultation and updateConsultation mutations with complete cache purging
+  - **Database Verification**: Backend correctly filters appointments (IDs 44,43 without consultation vs ID 44 with consultation)
+  - **Final Solution**: Appointments immediately disappear from pending list when converted to consultations with zero cache persistence
 
 ## User Preferences
 
