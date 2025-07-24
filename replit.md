@@ -799,6 +799,12 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **appointmentId Tracking**: Capture appointmentId from consultation creation and add to local exclusion list
   - **No Page Reloads**: Removed automatic page reload per user request while maintaining instant UI updates
   - **Hybrid Approach**: Combines local state management with backend polling for bulletproof data synchronization
+- July 24, 2025. **DATABASE CLEANUP FOR TESTE 4**: Successfully cleaned all polluted test data from company Teste 4 (companyId: 4)
+  - **Complete Data Removal**: Deleted all patients, appointments, consultations, procedures, financial records, and user profiles
+  - **Foreign Key Compliance**: Executed deletion in proper order (cash_flow → receivables → payables → consultations → appointments → patients → procedures → users)
+  - **Preserved System Structure**: Kept only admin user and Administrador profile for system functionality
+  - **Clean Testing Environment**: Database now ready for fresh testing with zero polluted data
+  - **Final Counts**: 0 patients, 0 appointments, 0 consultations, 0 procedures, 0 financial records, 1 admin user only
 
 ## User Preferences
 
