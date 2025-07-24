@@ -90,6 +90,7 @@ export default function Consultations() {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [consultationToDelete, setConsultationToDelete] = useState<Consultation | null>(null);
   const [appointmentRefreshKey, setAppointmentRefreshKey] = useState(Date.now());
+  const [locallyCreatedConsultations, setLocallyCreatedConsultations] = useState<number[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -165,7 +166,7 @@ export default function Consultations() {
   });
 
   // Buscar agendamentos que não têm consulta correspondente com POLLING automático
-  const { data: appointmentsWithoutConsultation } = useQuery({
+  const { data: rawAppointmentsWithoutConsultation } = useQuery({
     queryKey: ["/api/appointments-without-consultation", appointmentRefreshKey],
     queryFn: async () => {
       const response = await fetch("/api/appointments-without-consultation", {
@@ -183,6 +184,11 @@ export default function Consultations() {
     refetchInterval: 5000, // Refetch every 5 seconds
     refetchIntervalInBackground: true, // Continue polling in background
   });
+
+  // Aplicar filtro local para remover agendamentos convertidos em consultas
+  const appointmentsWithoutConsultation = rawAppointmentsWithoutConsultation?.filter(
+    (appointment: any) => !locallyCreatedConsultations.includes(appointment.id)
+  ) || [];
 
   const { data: patients } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
@@ -386,16 +392,25 @@ export default function Consultations() {
 
   const createConsultationMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/consultations", data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast({
         title: "Sucesso",
-        description: "Consulta registrada com sucesso - atualizando dados...",
+        description: "Consulta registrada com sucesso",
       });
       
-      // SOLUÇÃO DEFINITIVA: Recarregar a página após 1 segundo
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // SOLUÇÃO DEFINITIVA: Remover agendamento localmente de forma imediata
+      if (variables.appointmentId) {
+        setLocallyCreatedConsultations(prev => [...prev, variables.appointmentId]);
+      }
+      
+      // Forçar invalidação para sincronizar com backend
+      setAppointmentRefreshKey(Date.now());
+      queryClient.resetQueries({ queryKey: ["/api/appointments-without-consultation"] });
+      queryClient.resetQueries({ queryKey: ["/api/consultations"] });
+      
+      setShowForm(false);
+      form.reset();
+      setSelectedProcedures([]);
     },
     onError: (error: any) => {
       const errorMessage = error?.message || "Erro ao registrar consulta";
