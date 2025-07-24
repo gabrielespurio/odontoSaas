@@ -1365,7 +1365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply data scope control
       const user = req.user;
       let whereConditions = [
-        isNull(consultations.id),
+        isNull(consultations.id), // CRITICAL: Only appointments WITHOUT consultation
         sql`${appointments.status} != 'cancelado'`, // Filter out cancelled appointments
         eq(appointments.companyId, user.companyId) // CRITICAL: Filter by company
       ];
