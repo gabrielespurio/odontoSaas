@@ -689,17 +689,21 @@ export default function Consultations() {
     return matchesSearch && matchesStatus;
   }) || [];
 
-  // Filtrar agendamentos sem consulta
+  // Filtrar agendamentos sem consulta - CORRIGIDO: agendamentos não têm filtro de status como consultas
   const filteredAppointmentsWithoutConsultation = appointmentsWithoutConsultation?.filter(appointment => {
     const matchesSearch = !search || 
       appointment.patient?.name.toLowerCase().includes(search.toLowerCase()) ||
       appointment.dentist?.name.toLowerCase().includes(search.toLowerCase()) ||
       appointment.procedure?.name.toLowerCase().includes(search.toLowerCase());
     
-    const matchesStatus = selectedStatus === "all" || appointment.status === selectedStatus;
-    
-    return matchesSearch && matchesStatus;
+    // IMPORTANTE: Agendamentos pendentes não devem ser filtrados por status como as consultas
+    // Eles são sempre exibidos pois precisam ser convertidos em consultas
+    return matchesSearch;
   }) || [];
+
+  console.log('[DEBUG] Search term:', search);
+  console.log('[DEBUG] Selected status:', selectedStatus);
+  console.log('[DEBUG] Sample appointment for filtering:', appointmentsWithoutConsultation?.[0]);
 
   // Paginação para consultas (histórico)
   const consultationsPagination = usePagination({

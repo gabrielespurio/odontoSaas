@@ -805,6 +805,12 @@ OdontoSync is a comprehensive dental clinic management SaaS system built as a fu
   - **Preserved System Structure**: Kept only admin user and Administrador profile for system functionality
   - **Clean Testing Environment**: Database now ready for fresh testing with zero polluted data
   - **Final Counts**: 0 patients, 0 appointments, 0 consultations, 0 procedures, 0 financial records, 1 admin user only
+- July 30, 2025. **CRITICAL CONSULTATION MODULE BUG FIX**: Fixed appointment visibility issue in consultations module
+  - **Root Cause**: Frontend filtering logic was incorrectly applying consultation status filters to pending appointments
+  - **Problem**: Appointments without consultations were being filtered out by status filter, showing 0 results instead of 5 pending appointments
+  - **Solution**: Removed status filtering for pending appointments - they should always be visible regardless of consultation status filter
+  - **Technical Details**: Modified filteredAppointmentsWithoutConsultation to only apply search filtering, not status filtering
+  - **Impact**: Pending appointments now correctly display in consultations module for conversion to consultations
 
 ## User Preferences
 
