@@ -194,17 +194,21 @@ export default function Consultations() {
     queryKey: ["/api/patients"],
   });
 
-  const { data: dentists } = useQuery<User[]>({
+  const { data: dentists, refetch: refetchDentists } = useQuery<User[]>({
     queryKey: ["/api/users/dentists"],
     queryFn: async () => {
       const response = await fetch("/api/users/dentists", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
         },
       });
       if (!response.ok) throw new Error("Failed to fetch dentists");
       return response.json();
     },
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache
   });
 
   const { data: procedures } = useQuery<Procedure[]>({
@@ -424,6 +428,9 @@ export default function Consultations() {
 
   // Função para criar consulta a partir de um agendamento
   const createConsultationFromAppointment = (appointment: any) => {
+    // Force refetch dentists to ensure fresh data
+    refetchDentists();
+    
     // FIXED: Extract time directly from ISO string to avoid timezone conversion
     const scheduledDateStr = appointment.scheduledDate;
     let dateStr, timeStr;
@@ -554,7 +561,7 @@ export default function Consultations() {
   };
 
   const formatTime = (date: string) => {
-    // Extract time from ISO string and format it directly
+    // Extract time from ISO string directly to avoid timezone conversion
     const isoString = date;
     if (isoString.includes('T')) {
       const timePart = isoString.split('T')[1];
@@ -563,11 +570,11 @@ export default function Consultations() {
         return timeOnly;
       }
     }
-    // Fallback to regular date parsing
-    return new Date(date).toLocaleTimeString('pt-BR', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+    // Fallback: create date with explicit timezone
+    const dateObj = new Date(date);
+    const hours = dateObj.getUTCHours().toString().padStart(2, '0');
+    const minutes = dateObj.getUTCMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
   };
 
   const getInitials = (name: string) => {
@@ -588,13 +595,23 @@ export default function Consultations() {
     setEditingConsultation(consultation);
     
     // Preenche o formulário com os dados da consulta
-    const consultationDate = new Date(consultation.date);
+    // Extract time directly from ISO string to avoid timezone conversion
+    const isoDate = consultation.date;
+    let timeValue = "09:00";
+    
+    if (isoDate.includes('T')) {
+      const timePart = isoDate.split('T')[1];
+      if (timePart) {
+        timeValue = timePart.split(':').slice(0, 2).join(':');
+      }
+    }
+    
     form.reset({
       patientId: consultation.patientId,
       dentistId: consultation.dentistId,
       appointmentId: consultation.appointmentId,
-      date: consultationDate.toISOString().split('T')[0],
-      time: consultationDate.toTimeString().slice(0, 5),
+      date: isoDate.split('T')[0],
+      time: timeValue,
       procedureIds: [],
       clinicalNotes: consultation.clinicalNotes || "",
       observations: consultation.observations || "",
@@ -696,7 +713,10 @@ export default function Consultations() {
         <h1 className="text-2xl font-bold text-neutral-900">Atendimentos</h1>
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => {
+              // Force refetch dentists when opening new consultation modal
+              refetchDentists();
+            }}>
               <Plus className="w-4 h-4 mr-2" />
               Nova Consulta
             </Button>

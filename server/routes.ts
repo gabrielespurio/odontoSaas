@@ -94,7 +94,73 @@ function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextF
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
+  // Quick timezone debug endpoint (no auth)
+  app.get("/api/timezone-debug", async (req, res) => {
+    try {
+      const result = await db.select({
+        id: appointments.id,
+        scheduledDate: appointments.scheduledDate,
+      }).from(appointments)
+        .where(eq(appointments.companyId, 3))
+        .limit(3);
 
+      console.log("=== TIMEZONE DEBUG ===");
+      result.forEach(apt => {
+        console.log(`Appointment ${apt.id}:`);
+        console.log(`  Raw DB value: ${apt.scheduledDate}`);
+        console.log(`  As ISO: ${new Date(apt.scheduledDate).toISOString()}`);
+        console.log(`  Hours/Minutes: ${new Date(apt.scheduledDate).getHours()}:${new Date(apt.scheduledDate).getMinutes()}`);
+      });
+
+      res.json({ appointments: result, message: "Check console" });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+
+
+  // Debug endpoint for timezone issues (temporary - no auth)
+  app.get("/api/debug/timezone-data", async (req, res) => {
+    try {
+      console.log("=== DEBUG TIMEZONE DATA ===");
+      
+      const companyId = 3; // Focus on company 3 for debugging
+      
+      // Get appointments with raw values to see exact database values
+      const appointmentsQuery = await db.select({
+        id: appointments.id,
+        scheduledDate: appointments.scheduledDate,
+        patientId: appointments.patientId,
+        dentistId: appointments.dentistId,
+      }).from(appointments)
+        .where(eq(appointments.companyId, companyId))
+        .orderBy(appointments.id);
+      
+      console.log("Raw appointment data from database:");
+      appointmentsQuery.forEach(apt => {
+        console.log(`ID: ${apt.id}, Raw scheduled_date: ${apt.scheduledDate}`);
+        if (apt.scheduledDate instanceof Date) {
+          console.log(`  - As Date object ISO: ${apt.scheduledDate.toISOString()}`);
+          console.log(`  - Hours: ${apt.scheduledDate.getHours()}, Minutes: ${apt.scheduledDate.getMinutes()}`);
+          console.log(`  - Brazil time: ${apt.scheduledDate.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`);
+        }
+      });
+      
+      res.json({
+        message: "Check console for timezone debug info",
+        appointments: appointmentsQuery.map(apt => ({
+          id: apt.id,
+          scheduledDate: apt.scheduledDate,
+          scheduledDateISO: apt.scheduledDate instanceof Date ? apt.scheduledDate.toISOString() : apt.scheduledDate,
+          scheduledDateString: String(apt.scheduledDate),
+        }))
+      });
+    } catch (error) {
+      console.error("Debug timezone error:", error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+  });
 
   // Debug endpoint para verificar agendamentos de hoje (NO AUTH)
   app.get("/api/debug/today", async (req, res) => {
@@ -2777,7 +2843,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
-
 
   const httpServer = createServer(app);
   return httpServer;

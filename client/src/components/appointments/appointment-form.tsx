@@ -45,6 +45,17 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
 
   const { data: dentists, refetch: refetchDentists } = useQuery<User[]>({
     queryKey: ["/api/users/dentists"],
+    queryFn: async () => {
+      const response = await fetch("/api/users/dentists", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch dentists");
+      return response.json();
+    },
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache
   });
@@ -99,7 +110,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
       dentistId: appointment?.dentistId || (user?.role === "dentist" ? user.id : 0),
       procedureIds: appointment?.procedureId ? [appointment.procedureId] : [],
       scheduledDate: getInitialScheduledDate(),
-      status: appointment?.status || "agendado",
+      status: "agendado" as const,
       notes: appointment?.notes || "",
     },
   });
