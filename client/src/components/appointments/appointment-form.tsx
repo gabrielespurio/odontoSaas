@@ -43,8 +43,10 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
     queryKey: ["/api/patients"],
   });
 
-  const { data: dentists } = useQuery<User[]>({
+  const { data: dentists, refetch: refetchDentists } = useQuery<User[]>({
     queryKey: ["/api/users/dentists"],
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache
   });
 
   const { data: procedures } = useQuery<Procedure[]>({
@@ -115,6 +117,13 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
       setSelectedProcedures([{ id: Date.now(), procedureId: 0 }]);
     }
   }, [appointment]);
+
+  // Force refresh dentists data when form opens
+  useEffect(() => {
+    // Clear cache and refetch dentists data
+    queryClient.removeQueries({ queryKey: ["/api/users/dentists"] });
+    refetchDentists();
+  }, [refetchDentists, queryClient]);
 
   // Update form values when prefilledDateTime changes
   useEffect(() => {

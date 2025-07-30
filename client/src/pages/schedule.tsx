@@ -127,6 +127,8 @@ export default function Schedule() {
 
   const { data: dentists } = useQuery<User[]>({
     queryKey: ["/api/users/dentists"],
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache
   });
 
   const updateAppointmentMutation = useMutation({
