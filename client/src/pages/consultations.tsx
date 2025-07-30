@@ -166,18 +166,30 @@ export default function Consultations() {
   });
 
   // Buscar agendamentos que não têm consulta correspondente com POLLING automático
-  const { data: rawAppointmentsWithoutConsultation } = useQuery({
+  const { data: rawAppointmentsWithoutConsultation, error: appointmentsError, isLoading: appointmentsLoading } = useQuery({
     queryKey: ["/api/appointments-without-consultation", appointmentRefreshKey, Date.now()],
     queryFn: async () => {
+      console.log('[DEBUG] Starting fetch for appointments without consultation...');
+      const token = localStorage.getItem("token");
+      console.log('[DEBUG] Token exists:', !!token);
+      
       const response = await fetch("/api/appointments-without-consultation", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
           'Expires': '0',
         },
       });
-      if (!response.ok) throw new Error("Failed to fetch appointments");
+      
+      console.log('[DEBUG] Response status:', response.status);
+      console.log('[DEBUG] Response ok:', response.ok);
+      
+      if (!response.ok) {
+        console.error('[DEBUG] Fetch failed with status:', response.status);
+        throw new Error(`Failed to fetch appointments: ${response.status}`);
+      }
+      
       const data = await response.json();
       console.log('[DEBUG] Fetched appointments without consultation:', data.length, 'appointments');
       console.log('[DEBUG] Appointments data:', data);
@@ -189,6 +201,8 @@ export default function Consultations() {
     refetchIntervalInBackground: true, // Continue polling in background
     retry: false, // Don't retry failed requests
   });
+
+  console.log('[DEBUG] Query state - loading:', appointmentsLoading, 'error:', appointmentsError, 'data length:', rawAppointmentsWithoutConsultation?.length || 'undefined');
 
   // Aplicar filtro local para remover agendamentos convertidos em consultas
   const appointmentsWithoutConsultation = rawAppointmentsWithoutConsultation?.filter(
@@ -704,6 +718,8 @@ export default function Consultations() {
   console.log('[DEBUG] Search term:', search);
   console.log('[DEBUG] Selected status:', selectedStatus);
   console.log('[DEBUG] Sample appointment for filtering:', appointmentsWithoutConsultation?.[0]);
+  console.log('[DEBUG] appointmentsWithoutConsultation full array:', appointmentsWithoutConsultation);
+  console.log('[DEBUG] rawAppointmentsWithoutConsultation full array:', rawAppointmentsWithoutConsultation);
 
   // Paginação para consultas (histórico)
   const consultationsPagination = usePagination({
