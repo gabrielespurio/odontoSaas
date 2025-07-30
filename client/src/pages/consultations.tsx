@@ -165,41 +165,10 @@ export default function Consultations() {
     }],
   });
 
-  // Buscar agendamentos que não têm consulta correspondente com POLLING automático
+  // Buscar agendamentos que não têm consulta correspondente - SIMPLIFICADO
   const { data: rawAppointmentsWithoutConsultation, error: appointmentsError, isLoading: appointmentsLoading } = useQuery({
-    queryKey: ["/api/appointments-without-consultation", appointmentRefreshKey, Date.now()],
-    queryFn: async () => {
-      console.log('[DEBUG] Starting fetch for appointments without consultation...');
-      const token = localStorage.getItem("token");
-      console.log('[DEBUG] Token exists:', !!token);
-      
-      const response = await fetch("/api/appointments-without-consultation", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-        },
-      });
-      
-      console.log('[DEBUG] Response status:', response.status);
-      console.log('[DEBUG] Response ok:', response.ok);
-      
-      if (!response.ok) {
-        console.error('[DEBUG] Fetch failed with status:', response.status);
-        throw new Error(`Failed to fetch appointments: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('[DEBUG] Fetched appointments without consultation:', data.length, 'appointments');
-      console.log('[DEBUG] Appointments data:', data);
-      return data;
-    },
-    staleTime: 0, // Always consider data stale
-    gcTime: 0, // Don't cache
-    refetchInterval: 3000, // Refetch every 3 seconds (faster)
-    refetchIntervalInBackground: true, // Continue polling in background
-    retry: false, // Don't retry failed requests
+    queryKey: ["/api/appointments-without-consultation"],
+    enabled: !!user, // Only run if user is authenticated
   });
 
   console.log('[DEBUG] Query state - loading:', appointmentsLoading, 'error:', appointmentsError, 'data length:', rawAppointmentsWithoutConsultation?.length || 'undefined');
