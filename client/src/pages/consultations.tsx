@@ -180,6 +180,7 @@ export default function Consultations() {
       if (!response.ok) throw new Error("Failed to fetch appointments");
       const data = await response.json();
       console.log('[DEBUG] Fetched appointments without consultation:', data.length, 'appointments');
+      console.log('[DEBUG] Appointments data:', data);
       return data;
     },
     staleTime: 0, // Always consider data stale
@@ -711,6 +712,12 @@ export default function Consultations() {
     data: filteredAppointmentsWithoutConsultation,
     itemsPerPage: 5,
   });
+
+  // Debug logging para entender o problema
+  console.log('[DEBUG] Filtered appointments without consultation:', filteredAppointmentsWithoutConsultation?.length || 0);
+  console.log('[DEBUG] Appointments pagination currentData:', appointmentsPagination.currentData?.length || 0);
+  console.log('[DEBUG] Raw appointments:', rawAppointmentsWithoutConsultation?.length || 0);
+  console.log('[DEBUG] LocallyCreatedConsultations:', locallyCreatedConsultations);
 
   if (consultationsLoading) {
     return (
