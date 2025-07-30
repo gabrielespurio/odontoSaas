@@ -1815,6 +1815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Patient:", patient ? { id: patient.id, companyId: patient.companyId } : "not found");
       console.log("Dentist:", dentist ? { id: dentist.id, companyId: dentist.companyId } : "not found");
       console.log("Consultation data:", consultationData);
+      console.log("AppointmentId being linked:", consultationData.appointmentId);
       
       if (!patient || patient.companyId !== user.companyId) {
         return res.status(403).json({ message: "Paciente não encontrado ou não pertence à sua empresa" });
@@ -1836,7 +1837,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       // Criar a consulta primeiro
+      console.log("Creating consultation with data:", consultationDataWithCompany);
       const consultation = await storage.createConsultation(consultationDataWithCompany);
+      console.log("Consultation created successfully:", { id: consultation.id, appointmentId: consultation.appointmentId });
       
       // Se a consulta tem procedimentos, criar agendamentos correspondentes
       if (consultationData.procedures && consultationData.procedures.length > 0) {

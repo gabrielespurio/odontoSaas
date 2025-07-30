@@ -167,22 +167,26 @@ export default function Consultations() {
 
   // Buscar agendamentos que não têm consulta correspondente com POLLING automático
   const { data: rawAppointmentsWithoutConsultation } = useQuery({
-    queryKey: ["/api/appointments-without-consultation", appointmentRefreshKey],
+    queryKey: ["/api/appointments-without-consultation", appointmentRefreshKey, Date.now()],
     queryFn: async () => {
       const response = await fetch("/api/appointments-without-consultation", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
-          'Cache-Control': 'no-cache',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
+          'Expires': '0',
         },
       });
       if (!response.ok) throw new Error("Failed to fetch appointments");
-      return response.json();
+      const data = await response.json();
+      console.log('[DEBUG] Fetched appointments without consultation:', data.length, 'appointments');
+      return data;
     },
     staleTime: 0, // Always consider data stale
     gcTime: 0, // Don't cache
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: 3000, // Refetch every 3 seconds (faster)
     refetchIntervalInBackground: true, // Continue polling in background
+    retry: false, // Don't retry failed requests
   });
 
   // Aplicar filtro local para remover agendamentos convertidos em consultas
@@ -407,10 +411,14 @@ export default function Consultations() {
         setLocallyCreatedConsultations(prev => [...prev, variables.appointmentId]);
       }
       
-      // Forçar invalidação para sincronizar com backend
-      setAppointmentRefreshKey(Date.now());
-      queryClient.resetQueries({ queryKey: ["/api/appointments-without-consultation"] });
-      queryClient.resetQueries({ queryKey: ["/api/consultations"] });
+      // NUCLEAR CACHE CLEARING - Garantir atualização completa
+      queryClient.clear(); // Remove todos os dados do cache
+      
+      // Forçar revalidação imediata
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ["/api/appointments-without-consultation"] });
+        queryClient.refetchQueries({ queryKey: ["/api/consultations"] });
+      }, 100);
       
       setShowForm(false);
       form.reset();
@@ -478,13 +486,22 @@ export default function Consultations() {
     onSuccess: () => {
       toast({
         title: "Sucesso",
-        description: "Consulta atualizada com sucesso - atualizando dados...",
+        description: "Consulta atualizada com sucesso",
       });
       
-      // SOLUÇÃO DEFINITIVA: Recarregar a página após 1 segundo
+      // NUCLEAR CACHE CLEARING - Garantir atualização completa
+      queryClient.clear(); // Remove todos os dados do cache
+      
+      // Forçar revalidação imediata
       setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+        queryClient.refetchQueries({ queryKey: ["/api/appointments-without-consultation"] });
+        queryClient.refetchQueries({ queryKey: ["/api/consultations"] });
+      }, 100);
+      
+      setShowEditForm(false);
+      setEditingConsultation(null);
+      form.reset();
+      setSelectedProcedures([]);
     },
     onError: (error: any) => {
       const errorMessage = error?.message || "Erro ao atualizar consulta";
