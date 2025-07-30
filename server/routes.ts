@@ -1841,51 +1841,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const consultation = await storage.createConsultation(consultationDataWithCompany);
       console.log("Consultation created successfully:", { id: consultation.id, appointmentId: consultation.appointmentId });
       
-      // Se a consulta tem procedimentos, criar agendamentos correspondentes
-      if (consultationData.procedures && consultationData.procedures.length > 0) {
-        let currentDateTime = new Date(consultationData.date);
-        
-        for (const procedureName of consultationData.procedures) {
-          // Buscar informações do procedimento pelo nome
-          const procedures = await storage.getProcedures();
-          const procedure = procedures.find(p => p.name === procedureName);
-          
-          if (procedure) {
-            // Verificar se o horário está disponível
-            const startTime = currentDateTime.getTime();
-            const existingAppointments = await storage.getAppointments(currentDateTime, consultationData.dentistId);
-            
-            // Verificar conflitos
-            const conflictingAppointment = existingAppointments.find(apt => {
-              const aptDate = new Date(apt.scheduledDate);
-              const aptStartTime = aptDate.getTime();
-              const aptEndTime = aptStartTime + (apt.procedure.duration * 60 * 1000);
-              
-              return startTime >= aptStartTime && startTime < aptEndTime;
-            });
-            
-            if (!conflictingAppointment) {
-              // Criar o agendamento
-              const appointmentData = {
-                companyId: user.companyId,
-                patientId: consultationData.patientId,
-                dentistId: consultationData.dentistId,
-                procedureId: procedure.id,
-                scheduledDate: currentDateTime,
-                status: "agendado" as const,
-                notes: `Agendamento criado automaticamente pela consulta #${consultation.id}`
-              };
-              
-              await storage.createAppointment(appointmentData);
-              
-              // Avançar o horário para o próximo procedimento
-              currentDateTime = new Date(currentDateTime.getTime() + (procedure.duration * 60 * 1000));
-            } else {
-              console.warn(`Conflito de horário detectado para procedimento ${procedureName} às ${currentDateTime.toLocaleTimeString('pt-BR')}`);
-            }
-          }
-        }
-      }
+      // NOTA: Removido código de criação automática de agendamentos
+      // Quando convertendo um agendamento existente em consulta, não devemos criar novos agendamentos
       
       res.json(consultation);
     } catch (error) {
