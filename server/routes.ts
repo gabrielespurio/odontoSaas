@@ -528,9 +528,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/dentists", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
+      console.log("DEBUG: Current user requesting dentists:", { id: user.id, role: user.role, companyId: user.companyId, dataScope: user.dataScope });
       
       // If user has "own" scope and is not admin, only return themselves if they are a dentist
-      if (user.role !== "admin" && user.dataScope === "own") {
+      if (user.role !== "admin" && user.role !== "Administrador" && user.dataScope === "own") {
+        console.log("DEBUG: User has own scope, checking if they are a dentist");
         if (user.role === "Dentista" || user.role === "dentista" || user.role === "dentist" || 
             user.role.toLowerCase().includes("dentist") || user.role.toLowerCase().includes("dentista")) {
           const dentists = await db.select({
@@ -548,12 +550,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
               eq(users.companyId, user.companyId) // CRITICAL: Filter by company for data isolation
             )
           );
+          console.log("DEBUG: Found dentists for own scope:", dentists);
           res.json(dentists);
         } else {
+          console.log("DEBUG: User is not a dentist, returning empty array");
           res.json([]);
         }
       } else {
+        console.log("DEBUG: Admin or all scope user, getting all dentists from company");
         // Admin or users with "all" scope can see all dentists FROM THEIR COMPANY
+        
+        // First, get all users from the company to debug
+        const allCompanyUsers = await db.select({
+          id: users.id,
+          name: users.name,
+          role: users.role,
+          isActive: users.isActive,
+        }).from(users).where(
+          and(
+            eq(users.isActive, true),
+            eq(users.companyId, user.companyId)
+          )
+        );
+        console.log("DEBUG: All active users in company:", allCompanyUsers);
+        
         const dentistsData = await db.select({
           id: users.id,
           username: users.username,
@@ -568,13 +588,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
               eq(users.role, "Dentista"),
               eq(users.role, "dentista"),
               eq(users.role, "dentist"),
+              eq(users.role, "Dentist"),
               ilike(users.role, "%dentist%"),
-              ilike(users.role, "%dentista%")
+              ilike(users.role, "%dentista%"),
+              ilike(users.role, "%Dentist%"),
+              sql`LOWER(${users.role}) LIKE '%dentist%'`,
+              sql`LOWER(${users.role}) LIKE '%dentista%'`
             ),
             eq(users.isActive, true),
             eq(users.companyId, user.companyId) // CRITICAL: Filter by company for data isolation
           )
         ).orderBy(users.name);
+        console.log("DEBUG: Filtered dentists data:", dentistsData);
         res.json(dentistsData);
       }
     } catch (error) {
