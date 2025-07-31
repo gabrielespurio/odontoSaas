@@ -218,6 +218,7 @@ export const receivables = pgTable("receivables", {
 export const payables = pgTable("payables", {
   id: serial("id").primaryKey(),
   companyId: integer("company_id").notNull(), // FK to companies table
+  consultationId: integer("consultation_id"), // FK para consultations - para vincular com atendimentos
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   dueDate: date("due_date").notNull(),
   paymentDate: date("payment_date"),
@@ -547,6 +548,7 @@ export const insertPayableSchema = createInsertSchema(payables).omit({
   paymentDate: z.string().optional().nullable(),
   accountType: z.enum(["clinic", "dentist"]).default("clinic"),
   dentistId: z.number().optional().nullable(),
+  consultationId: z.number().optional().nullable(),
 });
 
 export const insertCashFlowSchema = createInsertSchema(cashFlow).omit({

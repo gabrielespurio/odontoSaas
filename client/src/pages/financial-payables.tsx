@@ -36,6 +36,7 @@ import { usePagination } from "@/hooks/use-pagination";
 
 type Payable = {
   id: number;
+  consultationId?: number; // Campo para vincular com atendimentos
   amount: string;
   dueDate: string;
   paymentDate?: string;
@@ -48,6 +49,13 @@ type Payable = {
   createdAt: string;
   updatedAt: string;
   createdBy?: number;
+  // Campos adicionais para exibição
+  consultation?: {
+    attendanceNumber: string;
+    patient: {
+      name: string;
+    };
+  };
 };
 
 const payableSchema = z.object({
@@ -62,6 +70,7 @@ const payableSchema = z.object({
   paymentMethod: z.enum(["cash", "credit_card", "debit_card", "pix", "bank_transfer", "check"]).optional(),
   accountType: z.enum(["clinic", "dentist"]).default("clinic"),
   dentistId: z.number().optional(),
+  consultationId: z.number().optional(), // Campo para vincular com atendimentos
 }).refine((data) => {
   if (data.accountType === "dentist" && !data.dentistId) {
     return false;
@@ -95,6 +104,7 @@ export default function FinancialPayables() {
       paymentMethod: undefined,
       accountType: "clinic",
       dentistId: undefined,
+      consultationId: undefined,
     },
   });
 
@@ -179,6 +189,7 @@ export default function FinancialPayables() {
       paymentMethod: payable.paymentMethod as any,
       accountType: (payable as any).accountType || "clinic",
       dentistId: (payable as any).dentistId || undefined,
+      consultationId: payable.consultationId || undefined,
     });
     setShowForm(true);
   };
@@ -213,6 +224,12 @@ export default function FinancialPayables() {
 
   const { data: dentists } = useQuery<any[]>({
     queryKey: ["/api/users/dentists"],
+  });
+
+  // Buscar consultas para vincular aos pagamentos
+  const { data: consultations } = useQuery({
+    queryKey: ["/api/consultations"],
+    enabled: showForm || editingPayable !== null,
   });
 
   const markAsPaidMutation = useMutation({
@@ -480,6 +497,33 @@ export default function FinancialPayables() {
                   )}
                 </div>
 
+                {/* Campo para selecionar consulta/atendimento */}
+                <FormField
+                  control={form.control}
+                  name="consultationId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Atendimento (Opcional)</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)} value={field.value?.toString() || ""}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar atendimento relacionado" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">Nenhum atendimento</SelectItem>
+                          {consultations?.map((consultation) => (
+                            <SelectItem key={consultation.id} value={consultation.id.toString()}>
+                              {consultation.attendanceNumber} - {consultation.patient?.name} ({new Date(consultation.date).toLocaleDateString('pt-BR')})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -728,6 +772,7 @@ export default function FinancialPayables() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Identificador</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead>Responsável</TableHead>
                     <TableHead>Fornecedor</TableHead>
@@ -744,6 +789,20 @@ export default function FinancialPayables() {
                     
                     return (
                       <TableRow key={payable.id}>
+                        <TableCell>
+                          {payable.consultation ? (
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="outline" className="text-xs bg-teal-50 border-teal-200 text-teal-700">
+                                {payable.consultation.attendanceNumber}
+                              </Badge>
+                              <span className="text-xs text-gray-500">
+                                {payable.consultation.patient?.name}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">-</span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <div>
                             <p className="font-medium text-gray-900">

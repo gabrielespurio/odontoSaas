@@ -1197,13 +1197,72 @@ export class DatabaseStorage implements IStorage {
       whereConditions.push(sql`${payables.dueDate} <= ${endDate}`);
     }
 
-    let query = db.select().from(payables);
+    // Build query with consultation data when available
+    let query = db.select({
+      id: payables.id,
+      companyId: payables.companyId,
+      consultationId: payables.consultationId,
+      amount: payables.amount,
+      dueDate: payables.dueDate,
+      paymentDate: payables.paymentDate,
+      paymentMethod: payables.paymentMethod,
+      status: payables.status,
+      category: payables.category,
+      description: payables.description,
+      supplier: payables.supplier,
+      notes: payables.notes,
+      attachmentPath: payables.attachmentPath,
+      accountType: payables.accountType,
+      dentistId: payables.dentistId,
+      createdBy: payables.createdBy,
+      createdAt: payables.createdAt,
+      updatedAt: payables.updatedAt,
+      // Consultation data
+      consultation: {
+        id: consultations.id,
+        attendanceNumber: consultations.attendanceNumber,
+        patient: {
+          name: patients.name,
+        }
+      }
+    }).from(payables)
+      .leftJoin(consultations, eq(payables.consultationId, consultations.id))
+      .leftJoin(patients, eq(consultations.patientId, patients.id));
 
     if (whereConditions.length > 0) {
       query = query.where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions)!) as any;
     }
 
-    return await query.orderBy(desc(payables.dueDate));
+    const results = await query.orderBy(desc(payables.dueDate));
+    
+    // Format the results to match the expected Payable type
+    return results.map(row => ({
+      id: row.id,
+      companyId: row.companyId,
+      consultationId: row.consultationId,
+      amount: row.amount,
+      dueDate: row.dueDate,
+      paymentDate: row.paymentDate,
+      paymentMethod: row.paymentMethod,
+      status: row.status,
+      category: row.category,
+      description: row.description,
+      supplier: row.supplier,
+      notes: row.notes,
+      attachmentPath: row.attachmentPath,
+      accountType: row.accountType,
+      dentistId: row.dentistId,
+      createdBy: row.createdBy,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      // Include consultation data if available
+      consultation: row.consultation?.id ? {
+        attendanceNumber: row.consultation.attendanceNumber,
+        patient: {
+          name: row.consultation.patient?.name
+        }
+      } : undefined
+    }));
   }
 
   async getPayable(id: number, companyId?: number): Promise<Payable | undefined> {
