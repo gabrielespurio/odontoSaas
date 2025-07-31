@@ -48,7 +48,7 @@ app.use((req, res, next) => {
     await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS account_type VARCHAR(20) NOT NULL DEFAULT 'clinic'`);
     await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS dentist_id INTEGER`);
     await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS created_by INTEGER`);
-    await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS consultation_id INTEGER`);
+
     
     // Remove limit fields from companies table
     await db.execute(sql`ALTER TABLE companies DROP COLUMN IF EXISTS plan_type`);
