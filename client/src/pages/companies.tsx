@@ -502,23 +502,22 @@ export default function Companies() {
                       <p className="text-gray-600">Carregando usuários...</p>
                     </div>
                   ) : (
-                    <Card className="border-0 shadow-lg flex-1 min-h-0">
-                      <div className="h-full overflow-x-auto overflow-y-auto rounded-lg">
-                        <div className="min-w-full">
-                          <Table className="min-w-[750px]">
-                            <TableHeader className="bg-gray-50 sticky top-0 z-10">
-                              <TableRow className="border-gray-200">
-                                <TableHead className="font-semibold text-gray-700 py-3 w-[200px]">Nome</TableHead>
-                                <TableHead className="font-semibold text-gray-700 py-3 w-[250px]">Email</TableHead>
-                                <TableHead className="font-semibold text-gray-700 py-3 w-[120px]">Perfil</TableHead>
-                                <TableHead className="font-semibold text-gray-700 py-3 w-[100px]">Status</TableHead>
-                                <TableHead className="font-semibold text-gray-700 py-3 w-[80px]">Ações</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                          <TableBody>
+                    <div className="flex-1 border rounded-lg shadow-sm bg-white overflow-hidden">
+                      <div className="overflow-x-auto max-h-[400px]">
+                        <table className="w-full min-w-[800px] table-fixed">
+                          <thead className="bg-gray-50 border-b sticky top-0 z-10">
+                            <tr>
+                              <th className="w-[200px] px-4 py-3 text-left font-semibold text-gray-700 border-r">Nome</th>
+                              <th className="w-[250px] px-4 py-3 text-left font-semibold text-gray-700 border-r">Email</th>
+                              <th className="w-[120px] px-4 py-3 text-left font-semibold text-gray-700 border-r">Perfil</th>
+                              <th className="w-[120px] px-4 py-3 text-left font-semibold text-gray-700 border-r">Status</th>
+                              <th className="w-[100px] px-4 py-3 text-left font-semibold text-gray-700">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200">
                             {companyUsers.length === 0 ? (
-                              <TableRow>
-                                <TableCell colSpan={5} className="text-center py-16">
+                              <tr>
+                                <td colSpan={5} className="text-center py-16 px-4">
                                   <div className="flex flex-col items-center space-y-4">
                                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                                       <Users className="h-8 w-8 text-gray-400" />
@@ -530,15 +529,15 @@ export default function Companies() {
                                       </p>
                                     </div>
                                   </div>
-                                </TableCell>
-                              </TableRow>
+                                </td>
+                              </tr>
                             ) : (
                               companyUsers.map((user, index) => (
-                                <TableRow 
+                                <tr 
                                   key={user.id} 
                                   className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}
                                 >
-                                  <TableCell className="font-medium py-3">
+                                  <td className="px-4 py-3">
                                     <div className="flex items-center space-x-3">
                                       <div className="w-9 h-9 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <span className="text-teal-700 font-semibold text-xs">
@@ -550,19 +549,19 @@ export default function Companies() {
                                         <p className="text-xs text-gray-500">ID: {user.id}</p>
                                       </div>
                                     </div>
-                                  </TableCell>
-                                  <TableCell className="py-3">
+                                  </td>
+                                  <td className="px-4 py-3">
                                     <div className="flex items-center space-x-2 min-w-0">
                                       <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
                                       <span className="text-gray-700 truncate">{user.email}</span>
                                     </div>
-                                  </TableCell>
-                                  <TableCell className="py-3">
+                                  </td>
+                                  <td className="px-4 py-3">
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                       {user.role || "Administrador"}
                                     </span>
-                                  </TableCell>
-                                  <TableCell className="py-3">
+                                  </td>
+                                  <td className="px-4 py-3">
                                     <Badge 
                                       variant={user.forcePasswordChange ? "secondary" : "default"}
                                       className={user.forcePasswordChange 
@@ -572,8 +571,8 @@ export default function Companies() {
                                     >
                                       {user.forcePasswordChange ? "Pendente" : "Ativo"}
                                     </Badge>
-                                  </TableCell>
-                                  <TableCell className="py-3">
+                                  </td>
+                                  <td className="px-4 py-3">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100">
@@ -591,15 +590,14 @@ export default function Companies() {
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
-                                  </TableCell>
-                                </TableRow>
+                                  </td>
+                                </tr>
                               ))
                             )}
-                          </TableBody>
-                          </Table>
-                        </div>
+                          </tbody>
+                        </table>
                       </div>
-                    </Card>
+                    </div>
                   )}
                 </div>
               </TabsContent>
