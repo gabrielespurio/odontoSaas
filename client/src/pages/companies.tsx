@@ -411,7 +411,7 @@ export default function Companies() {
 
       {/* Edit Company Dialog */}
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
-        <DialogContent className="max-w-7xl w-[95vw] h-[95vh] flex flex-col p-0">
+        <DialogContent className="max-w-[95vw] w-[95vw] h-[95vh] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 border-b shrink-0">
             <DialogTitle className="text-xl font-semibold flex items-center gap-3">
               <Building2 className="h-6 w-6 text-teal-600" />
@@ -468,11 +468,11 @@ export default function Companies() {
                 </div>
               </TabsContent>
               
-              <TabsContent value="users" className="flex-1 m-0 p-6 overflow-y-auto">
-                <div className="max-w-6xl mx-auto space-y-6">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-6 bg-gradient-to-r from-teal-50 to-blue-50 rounded-xl border border-teal-100">
+              <TabsContent value="users" className="flex-1 m-0 p-4 overflow-hidden flex flex-col">
+                <div className="flex-1 space-y-4">
+                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 p-4 bg-gradient-to-r from-teal-50 to-blue-50 rounded-xl border border-teal-100">
                     <div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Usuários Administrativos</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">Usuários Administrativos</h3>
                       <p className="text-sm text-gray-600">
                         Gerencie os usuários que têm acesso administrativo a esta empresa
                       </p>
@@ -502,16 +502,16 @@ export default function Companies() {
                       <p className="text-gray-600">Carregando usuários...</p>
                     </div>
                   ) : (
-                    <Card className="border-0 shadow-lg">
-                      <div className="overflow-hidden rounded-lg">
+                    <Card className="border-0 shadow-lg flex-1 min-h-0">
+                      <div className="h-full overflow-auto rounded-lg">
                         <Table>
-                          <TableHeader className="bg-gray-50">
+                          <TableHeader className="bg-gray-50 sticky top-0 z-10">
                             <TableRow className="border-gray-200">
-                              <TableHead className="font-semibold text-gray-700 py-4">Nome</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-4">Email</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-4">Perfil</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-4">Status</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-4 w-[100px]">Ações</TableHead>
+                              <TableHead className="font-semibold text-gray-700 py-3 min-w-[200px]">Nome</TableHead>
+                              <TableHead className="font-semibold text-gray-700 py-3 min-w-[250px]">Email</TableHead>
+                              <TableHead className="font-semibold text-gray-700 py-3 min-w-[120px]">Perfil</TableHead>
+                              <TableHead className="font-semibold text-gray-700 py-3 min-w-[100px]">Status</TableHead>
+                              <TableHead className="font-semibold text-gray-700 py-3 w-[80px]">Ações</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -537,31 +537,31 @@ export default function Companies() {
                                   key={user.id} 
                                   className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}
                                 >
-                                  <TableCell className="font-medium py-4">
+                                  <TableCell className="font-medium py-3">
                                     <div className="flex items-center space-x-3">
-                                      <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
-                                        <span className="text-teal-700 font-semibold text-sm">
+                                      <div className="w-9 h-9 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span className="text-teal-700 font-semibold text-xs">
                                           {user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
                                         </span>
                                       </div>
-                                      <div>
-                                        <p className="font-semibold text-gray-900">{user.name}</p>
+                                      <div className="min-w-0 flex-1">
+                                        <p className="font-semibold text-gray-900 truncate">{user.name}</p>
                                         <p className="text-xs text-gray-500">ID: {user.id}</p>
                                       </div>
                                     </div>
                                   </TableCell>
-                                  <TableCell className="py-4">
-                                    <div className="flex items-center space-x-2">
-                                      <Mail className="h-4 w-4 text-gray-400" />
-                                      <span className="text-gray-700">{user.email}</span>
+                                  <TableCell className="py-3">
+                                    <div className="flex items-center space-x-2 min-w-0">
+                                      <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                      <span className="text-gray-700 truncate">{user.email}</span>
                                     </div>
                                   </TableCell>
-                                  <TableCell className="py-4">
+                                  <TableCell className="py-3">
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                       {user.role || "Administrador"}
                                     </span>
                                   </TableCell>
-                                  <TableCell className="py-4">
+                                  <TableCell className="py-3">
                                     <Badge 
                                       variant={user.forcePasswordChange ? "secondary" : "default"}
                                       className={user.forcePasswordChange 
@@ -569,10 +569,10 @@ export default function Companies() {
                                         : "bg-green-100 text-green-800 border-green-200"
                                       }
                                     >
-                                      {user.forcePasswordChange ? "Trocar Senha" : "Ativo"}
+                                      {user.forcePasswordChange ? "Pendente" : "Ativo"}
                                     </Badge>
                                   </TableCell>
-                                  <TableCell className="py-4">
+                                  <TableCell className="py-3">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100">
