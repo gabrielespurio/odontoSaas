@@ -1788,7 +1788,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/consultations", authenticateToken, async (req, res) => {
     try {
+      console.log("=== CRIAÇÃO DE CONSULTA ===");
+      console.log("Request body received:", JSON.stringify(req.body, null, 2));
+      
       const consultationData = insertConsultationSchema.parse(req.body);
+      console.log("Parsed consultation data:", JSON.stringify(consultationData, null, 2));
       
       // Get user from authentication
       const user = req.user;
@@ -1854,8 +1858,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(consultation);
     } catch (error) {
-      console.error("Create consultation error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      console.error("=== ERRO NA CRIAÇÃO DE CONSULTA ===");
+      console.error("Error details:", error);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      
+      // Retornar erro mais específico baseado no tipo de erro
+      if (error.name === 'ZodError') {
+        console.error("Validation error details:", error.issues);
+        return res.status(400).json({ 
+          message: "Dados inválidos", 
+          details: error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(', ')
+        });
+      }
+      
+      res.status(500).json({ 
+        message: "Erro interno do servidor",
+        error: error.message 
+      });
     }
   });
 
