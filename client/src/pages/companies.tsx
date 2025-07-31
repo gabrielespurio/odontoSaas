@@ -503,17 +503,18 @@ export default function Companies() {
                     </div>
                   ) : (
                     <Card className="border-0 shadow-lg flex-1 min-h-0">
-                      <div className="h-full overflow-auto rounded-lg">
-                        <Table>
-                          <TableHeader className="bg-gray-50 sticky top-0 z-10">
-                            <TableRow className="border-gray-200">
-                              <TableHead className="font-semibold text-gray-700 py-3 min-w-[200px]">Nome</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-3 min-w-[250px]">Email</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-3 min-w-[120px]">Perfil</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-3 min-w-[100px]">Status</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-3 w-[80px]">Ações</TableHead>
-                            </TableRow>
-                          </TableHeader>
+                      <div className="h-full overflow-x-auto overflow-y-auto rounded-lg">
+                        <div className="min-w-full">
+                          <Table className="min-w-[750px]">
+                            <TableHeader className="bg-gray-50 sticky top-0 z-10">
+                              <TableRow className="border-gray-200">
+                                <TableHead className="font-semibold text-gray-700 py-3 w-[200px]">Nome</TableHead>
+                                <TableHead className="font-semibold text-gray-700 py-3 w-[250px]">Email</TableHead>
+                                <TableHead className="font-semibold text-gray-700 py-3 w-[120px]">Perfil</TableHead>
+                                <TableHead className="font-semibold text-gray-700 py-3 w-[100px]">Status</TableHead>
+                                <TableHead className="font-semibold text-gray-700 py-3 w-[80px]">Ações</TableHead>
+                              </TableRow>
+                            </TableHeader>
                           <TableBody>
                             {companyUsers.length === 0 ? (
                               <TableRow>
@@ -595,7 +596,8 @@ export default function Companies() {
                               ))
                             )}
                           </TableBody>
-                        </Table>
+                          </Table>
+                        </div>
                       </div>
                     </Card>
                   )}
