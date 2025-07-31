@@ -423,24 +423,32 @@ export default function Consultations() {
     // Force refetch dentists to ensure fresh data
     refetchDentists();
     
-    // FIXED: Extract time directly from ISO string to avoid timezone conversion
+    // CORRIGIDO: Tratar corretamente o horário sem conversão de fuso horário
     const scheduledDateStr = appointment.scheduledDate;
     let dateStr, timeStr;
     
     if (scheduledDateStr.includes('T')) {
-      // Extract date and time from ISO string directly
+      // Extrair data e hora diretamente da string ISO sem conversão
       const [datePart, timePart] = scheduledDateStr.split('T');
       dateStr = datePart;
-      timeStr = timePart.split(':').slice(0, 2).join(':'); // Get HH:MM format
+      // Extrair apenas HH:MM sem segundos/timezone
+      timeStr = timePart.substring(0, 5); // Pega apenas HH:MM
     } else {
-      // Fallback to date parsing if not ISO format
-      const appointmentDate = new Date(appointment.scheduledDate);
-      dateStr = appointmentDate.toISOString().split('T')[0];
-      timeStr = appointmentDate.toLocaleTimeString('pt-BR', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      });
+      // Se não estiver em formato ISO, tentar parser direto
+      const parts = scheduledDateStr.split(' ');
+      if (parts.length >= 2) {
+        // Formato: "YYYY-MM-DD HH:MM:SS" ou similar
+        dateStr = parts[0];
+        timeStr = parts[1].substring(0, 5); // Pega apenas HH:MM
+      } else {
+        // Fallback mais seguro - usar Date mas manter horário local
+        const appointmentDate = new Date(appointment.scheduledDate);
+        dateStr = appointmentDate.getFullYear() + '-' + 
+                  String(appointmentDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                  String(appointmentDate.getDate()).padStart(2, '0');
+        timeStr = String(appointmentDate.getHours()).padStart(2, '0') + ':' + 
+                  String(appointmentDate.getMinutes()).padStart(2, '0');
+      }
     }
 
     form.reset({
@@ -528,12 +536,13 @@ export default function Consultations() {
       .map(sp => procedures?.find(p => p.id === sp.procedureId)?.name)
       .filter(Boolean);
 
-    // Combinar data e horário
-    const dateTime = new Date(`${data.date}T${data.time}:00`);
+    // CORRIGIDO: Combinar data e horário sem conversão de timezone
+    // Envia a data/hora como string ISO diretamente, sem criar objeto Date
+    const dateTimeString = `${data.date}T${data.time}:00`;
 
     const consultationData = {
       ...data,
-      date: dateTime.toISOString(),
+      date: dateTimeString, // Envia como string diretamente
       procedures: procedureNames,
     };
 

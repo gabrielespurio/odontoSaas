@@ -1793,14 +1793,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user from authentication
       const user = req.user;
       
-      // Validar se a data não está no passado
-      const consultationDate = new Date(consultationData.date);
+      // CORRIGIDO: Validar se a data não está no passado sem conversão de timezone
+      // Tratar a data como local Brazil time diretamente
+      const consultationDateStr = consultationData.date;
+      
+      // Extrair a data/hora da string ISO diretamente
+      const consultationDate = new Date(consultationDateStr);
       const now = new Date();
       
-      // Adiciona uma margem de 1 minuto para evitar problemas de timing
+      // Comparar com uma margem pequena para evitar problemas de timing
       const nowWithMargin = new Date(now.getTime() + 60000);
       
-      if (consultationDate < nowWithMargin) {
+      // Ajustar o horário atual para Brazil timezone para comparação justa
+      const brazilNow = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+      const brazilNowWithMargin = new Date(brazilNow.getTime() + 60000);
+      
+      if (consultationDate < brazilNowWithMargin) {
         return res.status(400).json({ 
           message: "Não é possível criar consultas com data e horário no passado." 
         });

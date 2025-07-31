@@ -475,7 +475,7 @@ export const insertConsultationSchema = createInsertSchema(consultations).omit({
   updatedAt: true,
   companyId: true, // Excluir companyId pois será adicionado no backend
 }).extend({
-  date: z.string().transform((str) => new Date(str)),
+  date: z.string(), // CORRIGIDO: Manter como string para evitar conversão de timezone
 });
 
 export const insertDentalChartSchema = createInsertSchema(dentalChart).omit({
