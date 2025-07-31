@@ -416,23 +416,13 @@ export default function FinancialReceivables() {
                         <TableRow key={receivable.id}>
                           <TableCell>
                             {receivable.consultation ? (
-                              <div className="flex items-center space-x-2">
-                                <Badge variant="outline" className="text-xs bg-teal-50 border-teal-200 text-teal-700">
-                                  {receivable.consultation.attendanceNumber}
-                                </Badge>
-                                <span className="text-xs text-gray-500">
-                                  Atendimento
-                                </span>
-                              </div>
+                              <Badge variant="outline" className="text-xs bg-teal-50 border-teal-200 text-teal-700">
+                                {receivable.consultation.attendanceNumber}
+                              </Badge>
                             ) : receivable.appointmentId ? (
-                              <div className="flex items-center space-x-2">
-                                <Badge variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-700">
-                                  AG-{receivable.appointmentId}
-                                </Badge>
-                                <span className="text-xs text-gray-500">
-                                  Agendamento
-                                </span>
-                              </div>
+                              <Badge variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-700">
+                                AG-{receivable.appointmentId}
+                              </Badge>
                             ) : (
                               <span className="text-xs text-gray-400">-</span>
                             )}
