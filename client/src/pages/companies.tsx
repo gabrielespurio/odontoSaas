@@ -411,7 +411,7 @@ export default function Companies() {
 
       {/* Edit Company Dialog */}
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
-        <DialogContent className="max-w-[95vw] w-[95vw] h-[95vh] flex flex-col p-0">
+        <DialogContent className="max-w-[98vw] w-[98vw] h-[95vh] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 border-b shrink-0">
             <DialogTitle className="text-xl font-semibold flex items-center gap-3">
               <Building2 className="h-6 w-6 text-teal-600" />
@@ -502,66 +502,56 @@ export default function Companies() {
                       <p className="text-gray-600">Carregando usuários...</p>
                     </div>
                   ) : (
-                    <Card className="border-0 shadow-lg flex-1 min-h-0">
-                      <div className="overflow-x-auto overflow-y-auto rounded-lg max-h-[400px]">
-                        <Table className="w-full" style={{ minWidth: '900px' }}>
-                          <TableHeader className="bg-gray-50 sticky top-0 z-10">
-                            <TableRow className="border-gray-200">
-                              <TableHead className="font-semibold text-gray-700 py-3" style={{ width: '220px', minWidth: '220px' }}>Nome</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-3" style={{ width: '300px', minWidth: '300px' }}>Email</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-3" style={{ width: '120px', minWidth: '120px' }}>Perfil</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-3" style={{ width: '120px', minWidth: '120px' }}>Status</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-3" style={{ width: '140px', minWidth: '140px' }}>Ações</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {companyUsers.length === 0 ? (
-                              <TableRow>
-                                <TableCell colSpan={5} className="text-center py-16">
-                                  <div className="flex flex-col items-center space-y-4">
-                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                                      <Users className="h-8 w-8 text-gray-400" />
+                    <div className="flex-1 bg-white rounded-lg border shadow-sm overflow-hidden">
+                      <div className="overflow-y-auto max-h-[400px]">
+                        {companyUsers.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                              <Users className="h-8 w-8 text-gray-400" />
+                            </div>
+                            <div className="text-center">
+                              <p className="text-gray-900 font-medium">Nenhum usuário encontrado</p>
+                              <p className="text-gray-500 text-sm mt-1">
+                                Crie o primeiro usuário administrativo para esta empresa
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-gray-200">
+                            {companyUsers.map((user, index) => (
+                              <div 
+                                key={user.id} 
+                                className={`p-4 hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}
+                              >
+                                <div className="flex items-center justify-between space-x-4">
+                                  {/* Nome e Avatar */}
+                                  <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                    <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                      <span className="text-teal-700 font-semibold text-sm">
+                                        {user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                                      </span>
                                     </div>
-                                    <div>
-                                      <p className="text-gray-900 font-medium">Nenhum usuário encontrado</p>
-                                      <p className="text-gray-500 text-sm mt-1">
-                                        Crie o primeiro usuário administrativo para esta empresa
-                                      </p>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="font-semibold text-gray-900 truncate">{user.name}</p>
+                                      <p className="text-xs text-gray-500">ID: {user.id}</p>
                                     </div>
                                   </div>
-                                </TableCell>
-                              </TableRow>
-                            ) : (
-                              companyUsers.map((user, index) => (
-                                <TableRow 
-                                  key={user.id} 
-                                  className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}
-                                >
-                                  <TableCell className="py-3" style={{ width: '220px', minWidth: '220px' }}>
-                                    <div className="flex items-center space-x-3">
-                                      <div className="w-9 h-9 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <span className="text-teal-700 font-semibold text-xs">
-                                          {user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                                        </span>
-                                      </div>
-                                      <div className="min-w-0 flex-1">
-                                        <p className="font-semibold text-gray-900">{user.name}</p>
-                                        <p className="text-xs text-gray-500">ID: {user.id}</p>
-                                      </div>
-                                    </div>
-                                  </TableCell>
-                                  <TableCell className="py-3" style={{ width: '300px', minWidth: '300px' }}>
-                                    <div className="flex items-center space-x-2 min-w-0">
-                                      <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                                      <span className="text-gray-700">{user.email}</span>
-                                    </div>
-                                  </TableCell>
-                                  <TableCell className="py-3" style={{ width: '120px', minWidth: '120px' }}>
+
+                                  {/* Email */}
+                                  <div className="flex items-center space-x-2 flex-1 min-w-0">
+                                    <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                    <span className="text-gray-700 text-sm truncate">{user.email}</span>
+                                  </div>
+
+                                  {/* Perfil */}
+                                  <div className="flex-shrink-0">
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                      {user.role || "Administrador"}
+                                      Administrador
                                     </span>
-                                  </TableCell>
-                                  <TableCell className="py-3" style={{ width: '120px', minWidth: '120px' }}>
+                                  </div>
+
+                                  {/* Status */}
+                                  <div className="flex-shrink-0">
                                     <Badge 
                                       variant={user.forcePasswordChange ? "secondary" : "default"}
                                       className={user.forcePasswordChange 
@@ -571,8 +561,10 @@ export default function Companies() {
                                     >
                                       {user.forcePasswordChange ? "Pendente" : "Ativo"}
                                     </Badge>
-                                  </TableCell>
-                                  <TableCell className="py-3" style={{ width: '140px', minWidth: '140px' }}>
+                                  </div>
+
+                                  {/* Ações */}
+                                  <div className="flex-shrink-0">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100">
@@ -590,14 +582,14 @@ export default function Companies() {
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            )}
-                          </TableBody>
-                        </Table>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </Card>
+                    </div>
                   )}
                 </div>
               </TabsContent>
