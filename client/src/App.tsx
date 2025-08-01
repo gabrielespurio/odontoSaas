@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
+import { useTokenCleanup } from "@/hooks/use-token-cleanup";
 import { authApi } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { useEffect } from "react";
@@ -34,6 +35,9 @@ import NotFound from "@/pages/not-found";
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [location, setLocation] = useLocation();
+  
+  // Clean up expired tokens automatically
+  useTokenCleanup();
 
   // Check if user needs to change password
   const needsPasswordChange = isAuthenticated && user?.forcePasswordChange;

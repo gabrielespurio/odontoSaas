@@ -10,6 +10,14 @@ async function throwIfResNotOk(res: Response) {
       errorData = { message: res.statusText };
     }
     
+    // Handle token expiration - redirect to login
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+      return;
+    }
+    
     const error = new Error(errorData.message || `HTTP ${res.status}`);
     (error as any).response = { data: errorData, status: res.status };
     throw error;
@@ -61,7 +69,15 @@ export const getQueryFn: <T>(options: {
       headers,
     });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+    if (unauthorizedBehavior === "returnNull" && (res.status === 401 || res.status === 403)) {
+      return null;
+    }
+
+    // Handle token expiration in queries
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
       return null;
     }
 
