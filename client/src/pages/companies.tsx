@@ -502,41 +502,42 @@ export default function Companies() {
                       <p className="text-gray-600">Carregando usuários...</p>
                     </div>
                   ) : (
-                    <div className="flex-1 border rounded-lg shadow-sm bg-white overflow-hidden">
-                      <div className="overflow-x-auto max-h-[400px]" style={{ minWidth: '100%' }}>
-                        <div className="min-w-[1000px]">
-                          {/* Header */}
-                          <div className="grid grid-cols-5 bg-gray-50 border-b sticky top-0 z-10" style={{ gridTemplateColumns: '200px 280px 120px 120px 100px' }}>
-                            <div className="px-4 py-3 text-left font-semibold text-gray-700 border-r">Nome</div>
-                            <div className="px-4 py-3 text-left font-semibold text-gray-700 border-r">Email</div>
-                            <div className="px-4 py-3 text-left font-semibold text-gray-700 border-r">Perfil</div>
-                            <div className="px-4 py-3 text-left font-semibold text-gray-700 border-r">Status</div>
-                            <div className="px-4 py-3 text-left font-semibold text-gray-700">Ações</div>
-                          </div>
-                          {/* Content */}
-                          <div className="divide-y divide-gray-200">
+                    <Card className="border-0 shadow-lg flex-1 min-h-0">
+                      <div className="overflow-x-auto overflow-y-auto rounded-lg max-h-[400px]">
+                        <Table className="w-full" style={{ minWidth: '900px' }}>
+                          <TableHeader className="bg-gray-50 sticky top-0 z-10">
+                            <TableRow className="border-gray-200">
+                              <TableHead className="font-semibold text-gray-700 py-3" style={{ width: '220px', minWidth: '220px' }}>Nome</TableHead>
+                              <TableHead className="font-semibold text-gray-700 py-3" style={{ width: '300px', minWidth: '300px' }}>Email</TableHead>
+                              <TableHead className="font-semibold text-gray-700 py-3" style={{ width: '120px', minWidth: '120px' }}>Perfil</TableHead>
+                              <TableHead className="font-semibold text-gray-700 py-3" style={{ width: '120px', minWidth: '120px' }}>Status</TableHead>
+                              <TableHead className="font-semibold text-gray-700 py-3" style={{ width: '140px', minWidth: '140px' }}>Ações</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
                             {companyUsers.length === 0 ? (
-                              <div className="py-16 px-4 text-center">
-                                <div className="flex flex-col items-center space-y-4">
-                                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                                    <Users className="h-8 w-8 text-gray-400" />
+                              <TableRow>
+                                <TableCell colSpan={5} className="text-center py-16">
+                                  <div className="flex flex-col items-center space-y-4">
+                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                      <Users className="h-8 w-8 text-gray-400" />
+                                    </div>
+                                    <div>
+                                      <p className="text-gray-900 font-medium">Nenhum usuário encontrado</p>
+                                      <p className="text-gray-500 text-sm mt-1">
+                                        Crie o primeiro usuário administrativo para esta empresa
+                                      </p>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <p className="text-gray-900 font-medium">Nenhum usuário encontrado</p>
-                                    <p className="text-gray-500 text-sm mt-1">
-                                      Crie o primeiro usuário administrativo para esta empresa
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
+                                </TableCell>
+                              </TableRow>
                             ) : (
                               companyUsers.map((user, index) => (
-                                <div 
+                                <TableRow 
                                   key={user.id} 
-                                  className={`grid grid-cols-5 hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}
-                                  style={{ gridTemplateColumns: '200px 280px 120px 120px 100px' }}
+                                  className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}
                                 >
-                                  <div className="px-4 py-3">
+                                  <TableCell className="py-3" style={{ width: '220px', minWidth: '220px' }}>
                                     <div className="flex items-center space-x-3">
                                       <div className="w-9 h-9 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <span className="text-teal-700 font-semibold text-xs">
@@ -544,23 +545,23 @@ export default function Companies() {
                                         </span>
                                       </div>
                                       <div className="min-w-0 flex-1">
-                                        <p className="font-semibold text-gray-900 truncate">{user.name}</p>
+                                        <p className="font-semibold text-gray-900">{user.name}</p>
                                         <p className="text-xs text-gray-500">ID: {user.id}</p>
                                       </div>
                                     </div>
-                                  </div>
-                                  <div className="px-4 py-3">
-                                    <div className="flex items-center space-x-2">
+                                  </TableCell>
+                                  <TableCell className="py-3" style={{ width: '300px', minWidth: '300px' }}>
+                                    <div className="flex items-center space-x-2 min-w-0">
                                       <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                                      <span className="text-gray-700 truncate">{user.email}</span>
+                                      <span className="text-gray-700">{user.email}</span>
                                     </div>
-                                  </div>
-                                  <div className="px-4 py-3">
+                                  </TableCell>
+                                  <TableCell className="py-3" style={{ width: '120px', minWidth: '120px' }}>
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                      {user.role || "Admin"}
+                                      {user.role || "Administrador"}
                                     </span>
-                                  </div>
-                                  <div className="px-4 py-3">
+                                  </TableCell>
+                                  <TableCell className="py-3" style={{ width: '120px', minWidth: '120px' }}>
                                     <Badge 
                                       variant={user.forcePasswordChange ? "secondary" : "default"}
                                       className={user.forcePasswordChange 
@@ -570,8 +571,8 @@ export default function Companies() {
                                     >
                                       {user.forcePasswordChange ? "Pendente" : "Ativo"}
                                     </Badge>
-                                  </div>
-                                  <div className="px-4 py-3">
+                                  </TableCell>
+                                  <TableCell className="py-3" style={{ width: '140px', minWidth: '140px' }}>
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100">
@@ -589,14 +590,14 @@ export default function Companies() {
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
-                                  </div>
-                                </div>
+                                  </TableCell>
+                                </TableRow>
                               ))
                             )}
-                          </div>
-                        </div>
+                          </TableBody>
+                        </Table>
                       </div>
-                    </div>
+                    </Card>
                   )}
                 </div>
               </TabsContent>
