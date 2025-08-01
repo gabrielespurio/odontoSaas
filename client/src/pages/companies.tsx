@@ -504,14 +504,14 @@ export default function Companies() {
                   ) : (
                     <div className="flex-1 border rounded-lg shadow-sm bg-white overflow-hidden">
                       <div className="overflow-x-auto max-h-[400px]">
-                        <table className="w-full min-w-[800px] table-fixed">
+                        <table className="w-full min-w-[1000px] table-fixed">
                           <thead className="bg-gray-50 border-b sticky top-0 z-10">
                             <tr>
-                              <th className="w-[200px] px-4 py-3 text-left font-semibold text-gray-700 border-r">Nome</th>
-                              <th className="w-[250px] px-4 py-3 text-left font-semibold text-gray-700 border-r">Email</th>
-                              <th className="w-[120px] px-4 py-3 text-left font-semibold text-gray-700 border-r">Perfil</th>
-                              <th className="w-[120px] px-4 py-3 text-left font-semibold text-gray-700 border-r">Status</th>
-                              <th className="w-[100px] px-4 py-3 text-left font-semibold text-gray-700">Ações</th>
+                              <th className="w-[220px] px-4 py-3 text-left font-semibold text-gray-700 border-r">Nome</th>
+                              <th className="w-[280px] px-4 py-3 text-left font-semibold text-gray-700 border-r">Email</th>
+                              <th className="w-[150px] px-4 py-3 text-left font-semibold text-gray-700 border-r">Perfil</th>
+                              <th className="w-[140px] px-4 py-3 text-left font-semibold text-gray-700 border-r">Status</th>
+                              <th className="w-[110px] px-4 py-3 text-left font-semibold text-gray-700">Ações</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-200">
