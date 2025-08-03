@@ -411,7 +411,7 @@ export default function Companies() {
 
       {/* Edit Company Dialog */}
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
-        <DialogContent className="max-w-[95vw] w-[95vw] h-[95vh] flex flex-col p-0">
+        <DialogContent className="max-w-[90vw] w-[90vw] h-[95vh] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 border-b shrink-0">
             <DialogTitle className="text-xl font-semibold flex items-center gap-3">
               <Building2 className="h-6 w-6 text-teal-600" />
@@ -503,65 +503,72 @@ export default function Companies() {
                     </div>
                   ) : (
                     <div className="flex-1 bg-white rounded-lg border shadow-sm overflow-hidden">
-                      {/* Header da tabela */}
-                      <div className="bg-gray-50 border-b px-4 py-3">
-                        <div className="grid grid-cols-12 gap-6 items-center text-sm font-medium text-gray-700">
-                          <div className="col-span-4">Nome</div>
-                          <div className="col-span-4">Email</div>
-                          <div className="col-span-2 text-center">Perfil</div>
-                          <div className="col-span-1 text-center">Status</div>
-                          <div className="col-span-1 text-center">Ações</div>
-                        </div>
-                      </div>
-                      <div className="overflow-y-auto max-h-[400px]">
-                        {companyUsers.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                              <Users className="h-8 w-8 text-gray-400" />
-                            </div>
-                            <div className="text-center">
-                              <p className="text-gray-900 font-medium">Nenhum usuário encontrado</p>
-                              <p className="text-gray-500 text-sm mt-1">
-                                Crie o primeiro usuário administrativo para esta empresa
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="divide-y divide-gray-200">
-                            {companyUsers.map((user, index) => (
-                              <div 
-                                key={user.id} 
-                                className={`p-4 hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}
-                              >
-                                <div className="grid grid-cols-12 gap-6 items-center">
-                                  {/* Nome e Avatar */}
-                                  <div className="col-span-4 flex items-center space-x-3">
-                                    <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                      <span className="text-teal-700 font-semibold text-sm">
-                                        {user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                                      </span>
+                      <div className="overflow-x-auto overflow-y-auto max-h-[400px]">
+                        <table className="w-full min-w-[800px]">
+                          <thead className="bg-gray-50 border-b sticky top-0">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700 w-1/3">Nome</th>
+                              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700 w-1/3">Email</th>
+                              <th className="px-4 py-3 text-center text-sm font-medium text-gray-700 w-24">Perfil</th>
+                              <th className="px-4 py-3 text-center text-sm font-medium text-gray-700 w-20">Status</th>
+                              <th className="px-4 py-3 text-center text-sm font-medium text-gray-700 w-16">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200">
+                            {companyUsers.length === 0 ? (
+                              <tr>
+                                <td colSpan={5} className="px-6 py-16">
+                                  <div className="flex flex-col items-center justify-center space-y-4">
+                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                      <Users className="h-8 w-8 text-gray-400" />
                                     </div>
-                                    <div className="min-w-0 flex-1">
-                                      <p className="font-semibold text-gray-900" title={user.name}>{user.name}</p>
-                                      <p className="text-xs text-gray-500">ID: {user.id}</p>
+                                    <div className="text-center">
+                                      <p className="text-gray-900 font-medium">Nenhum usuário encontrado</p>
+                                      <p className="text-gray-500 text-sm mt-1">
+                                        Crie o primeiro usuário administrativo para esta empresa
+                                      </p>
                                     </div>
                                   </div>
+                                </td>
+                              </tr>
+                            ) : (
+                              companyUsers.map((user, index) => (
+                                <tr 
+                                  key={user.id} 
+                                  className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+                                >
+                                  {/* Nome e Avatar */}
+                                  <td className="px-6 py-4">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span className="text-teal-700 font-semibold text-sm">
+                                          {user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                                        </span>
+                                      </div>
+                                      <div className="flex-1">
+                                        <p className="font-semibold text-gray-900" title={user.name}>{user.name}</p>
+                                        <p className="text-xs text-gray-500">ID: {user.id}</p>
+                                      </div>
+                                    </div>
+                                  </td>
 
                                   {/* Email */}
-                                  <div className="col-span-4 flex items-center space-x-2">
-                                    <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                                    <span className="text-gray-700 text-sm" title={user.email}>{user.email}</span>
-                                  </div>
+                                  <td className="px-6 py-4">
+                                    <div className="flex items-center space-x-2">
+                                      <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                      <span className="text-gray-700 text-sm" title={user.email}>{user.email}</span>
+                                    </div>
+                                  </td>
 
                                   {/* Perfil */}
-                                  <div className="col-span-2 flex justify-center">
+                                  <td className="px-4 py-4 text-center">
                                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                       Admin
                                     </span>
-                                  </div>
+                                  </td>
 
                                   {/* Status */}
-                                  <div className="col-span-1 flex justify-center">
+                                  <td className="px-4 py-4 text-center">
                                     <Badge 
                                       variant={user.forcePasswordChange ? "secondary" : "default"}
                                       className={user.forcePasswordChange 
@@ -571,10 +578,10 @@ export default function Companies() {
                                     >
                                       {user.forcePasswordChange ? "Pendente" : "Ativo"}
                                     </Badge>
-                                  </div>
+                                  </td>
 
                                   {/* Ações */}
-                                  <div className="col-span-1 flex justify-center">
+                                  <td className="px-4 py-4 text-center">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100">
@@ -592,12 +599,12 @@ export default function Companies() {
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
