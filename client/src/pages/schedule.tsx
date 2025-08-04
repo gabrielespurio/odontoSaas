@@ -483,13 +483,13 @@ export default function Schedule() {
                                       : `${duration}min`}
                                   </div>
                                   
-                                  {/* Botão de ações - posicionado absolutamente no canto superior direito DENTRO do card */}
-                                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded"
+                                  {/* Botão de ações - SEMPRE VISÍVEL para teste */}
+                                  <div className="absolute top-1 right-1 bg-red-500 rounded p-1"
                                        onClick={(e) => e.stopPropagation()}
-                                       style={{ zIndex: 30 }}>
+                                       style={{ zIndex: 50 }}>
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-white/30 rounded text-white">
+                                        <Button variant="ghost" size="sm" className="h-4 w-4 p-0 bg-red-600 hover:bg-red-700 text-white">
                                           <MoreHorizontal className="h-3 w-3" />
                                         </Button>
                                       </DropdownMenuTrigger>
