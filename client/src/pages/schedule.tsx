@@ -483,13 +483,13 @@ export default function Schedule() {
                                       : `${duration}min`}
                                   </div>
                                   
-                                  {/* Botão de ações - SEMPRE VISÍVEL para teste */}
-                                  <div className="absolute top-1 right-1 bg-red-500 rounded p-1"
+                                  {/* Botão de ações no canto superior direito */}
+                                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                        onClick={(e) => e.stopPropagation()}
-                                       style={{ zIndex: 50 }}>
+                                       style={{ zIndex: 30 }}>
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-4 w-4 p-0 bg-red-600 hover:bg-red-700 text-white">
+                                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-white/20 rounded text-white">
                                           <MoreHorizontal className="h-3 w-3" />
                                         </Button>
                                       </DropdownMenuTrigger>
