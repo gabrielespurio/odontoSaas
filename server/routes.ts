@@ -594,6 +594,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/dentists", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
+      
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
       
       // If user has "own" scope and is not admin, only return themselves if they are a dentist
       if (user.role !== "admin" && user.role !== "Administrador" && user.dataScope === "own") {
@@ -611,7 +620,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             and(
               eq(users.id, user.id),
               eq(users.isActive, true),
-              eq(users.companyId, user.companyId) // CRITICAL: Filter by company for data isolation
+              eq(users.companyId, companyId)
             )
           );
           res.json(dentists);
@@ -646,7 +655,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               sql`${users.role} ~ '^[Dd]entista?[0-9]*$'`
             ),
             eq(users.isActive, true),
-            eq(users.companyId, user.companyId) // CRITICAL: Filter by company for data isolation
+            eq(users.companyId, companyId)
           )
         ).orderBy(users.name);
         
@@ -929,7 +938,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      const companyId = req.query.companyId || user.companyId;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
+      
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
       
       let query = db.select({
         id: users.id,
@@ -945,7 +962,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Always filter by company for data isolation
       if (companyId) {
-        query = query.where(eq(users.companyId, parseInt(companyId as string)));
+        query = query.where(eq(users.companyId, companyId));
       }
       
       const usersData = await query.orderBy(users.name);
@@ -1108,8 +1125,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/procedure-categories", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      // CRITICAL: Filter categories by company
-      const categories = await storage.getProcedureCategories(user.companyId);
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
+      
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
+      
+      const categories = await storage.getProcedureCategories(companyId);
       res.json(categories);
     } catch (error) {
       console.error("Get procedure categories error:", error);
@@ -1152,8 +1178,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/user-profiles", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      // CRITICAL: Filter user profiles by company
-      const profiles = await storage.getUserProfiles(user.companyId);
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
+      
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
+      
+      const profiles = await storage.getUserProfiles(companyId);
       res.json(profiles);
     } catch (error) {
       console.error("Get user profiles error:", error);
@@ -1735,8 +1770,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = (req as any).user;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
       
-      const report = await storage.getOverviewReport(user, startDate, endDate);
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
+      
+      const userWithCompany = { ...user, companyId };
+      const report = await storage.getOverviewReport(userWithCompany, startDate, endDate);
       res.json(report);
     } catch (error) {
       console.error("Get overview report error:", error);
@@ -1749,8 +1794,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = (req as any).user;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
       
-      const report = await storage.getFinancialReport(user, startDate, endDate);
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
+      
+      const userWithCompany = { ...user, companyId };
+      const report = await storage.getFinancialReport(userWithCompany, startDate, endDate);
       res.json(report);
     } catch (error) {
       console.error("Get financial report error:", error);
@@ -1763,8 +1818,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = (req as any).user;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
       
-      const report = await storage.getAppointmentsReport(user, startDate, endDate);
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
+      
+      const userWithCompany = { ...user, companyId };
+      const report = await storage.getAppointmentsReport(userWithCompany, startDate, endDate);
       res.json(report);
     } catch (error) {
       console.error("Get appointments report error:", error);
@@ -1777,8 +1842,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = (req as any).user;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
       
-      const report = await storage.getProceduresReport(user, startDate, endDate);
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
+      
+      const userWithCompany = { ...user, companyId };
+      const report = await storage.getProceduresReport(userWithCompany, startDate, endDate);
       res.json(report);
     } catch (error) {
       console.error("Get procedures report error:", error);

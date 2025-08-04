@@ -18,6 +18,7 @@ import {
   Activity,
   Loader2
 } from "lucide-react";
+import { useCompanyFilter } from "@/contexts/company-context";
 
 export default function Reports() {
   const [dateFrom, setDateFrom] = useState(
@@ -26,11 +27,36 @@ export default function Reports() {
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [reportType, setReportType] = useState("overview");
   const [reportGenerated, setReportGenerated] = useState(false);
+  const companyFilter = useCompanyFilter();
 
   // Dynamic report data based on selected type
   const { data: reportData, isLoading, refetch } = useQuery({
-    queryKey: [`/api/reports/${reportType}`, { startDate: dateFrom, endDate: dateTo }],
+    queryKey: [`/api/reports/${reportType}`, { startDate: dateFrom, endDate: dateTo, companyId: companyFilter }],
     enabled: reportGenerated,
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const params = new URLSearchParams({
+        startDate: dateFrom,
+        endDate: dateTo
+      });
+      
+      if (companyFilter) {
+        params.append('companyId', companyFilter.toString());
+      }
+      
+      const response = await fetch(`/api/reports/${reportType}?${params.toString()}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
   });
 
   const formatCurrency = (amount: number) => {
