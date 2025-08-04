@@ -460,16 +460,15 @@ export default function Schedule() {
                               <div className={`rounded p-2 text-xs relative group ${getStatusColor(appointment.status)} text-white`}
                                    style={{ 
                                      height: `${slotSpan * 60}px`, // Full slot height
-                                     width: '100%',
+                                     width: 'calc(100% - 2px)',
                                      position: 'absolute',
-                                     top: '0',
-                                     left: '0',
+                                     top: '1px',
+                                     left: '1px',
                                      zIndex: 10,
-                                     border: '1px solid rgba(255,255,255,0.2)',
-                                     overflow: 'visible'
+                                     border: '1px solid rgba(255,255,255,0.2)'
                                    }}>
-                                <div className="flex justify-between items-start" style={{ position: 'relative', zIndex: 1 }}>
-                                  <div className="flex-1 cursor-pointer pr-8" onClick={() => {
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1 cursor-pointer" onClick={() => {
                                     setEditingAppointment(appointment);
                                     setShowForm(true);
                                   }}>
@@ -484,10 +483,7 @@ export default function Schedule() {
                                         : `${duration}min`}
                                     </div>
                                   </div>
-                                  
-                                  {/* Posicionar o botão absolutamente no canto superior direito */}
-                                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity" 
-                                       style={{ zIndex: 50 }}
+                                  <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity self-start"
                                        onClick={(e) => e.stopPropagation()}>
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
