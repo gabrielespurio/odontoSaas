@@ -1087,13 +1087,19 @@ export class DatabaseStorage implements IStorage {
     
     // Criar entrada no fluxo de caixa se for um recebimento
     if (insertReceivable.status === 'paid' && insertReceivable.paymentDate) {
+      // Garantir que a data de pagamento seja interpretada corretamente
+      const paymentDate = typeof insertReceivable.paymentDate === 'string' 
+        ? insertReceivable.paymentDate 
+        : insertReceivable.paymentDate.toISOString().split('T')[0];
+      
       await this.createCashFlowEntry({
         type: 'income',
         receivableId: record.id,
         amount: insertReceivable.amount,
-        date: insertReceivable.paymentDate,
+        date: paymentDate,
         description: `Recebimento: ${insertReceivable.description || ''}`,
         category: 'receivable',
+        companyId: insertReceivable.companyId, // Add companyId from the insertReceivable
       });
     }
     
@@ -1106,11 +1112,16 @@ export class DatabaseStorage implements IStorage {
     
     // Se o status mudou para "pago", criar entrada no fluxo de caixa
     if (currentRecord?.status !== 'paid' && insertReceivable.status === 'paid' && insertReceivable.paymentDate) {
+      // Garantir que a data de pagamento seja interpretada corretamente
+      const paymentDate = typeof insertReceivable.paymentDate === 'string' 
+        ? insertReceivable.paymentDate 
+        : insertReceivable.paymentDate.toISOString().split('T')[0];
+      
       await this.createCashFlowEntry({
         type: 'income',
         receivableId: record.id,
         amount: record.amount,
-        date: insertReceivable.paymentDate,
+        date: paymentDate,
         description: `Recebimento: ${record.description || ''}`,
         category: 'receivable',
         companyId: record.companyId, // Add companyId from the receivable record
@@ -1252,11 +1263,16 @@ export class DatabaseStorage implements IStorage {
     
     // Criar entrada no fluxo de caixa se for um pagamento
     if (insertPayable.status === 'paid' && insertPayable.paymentDate) {
+      // Garantir que a data de pagamento seja interpretada corretamente
+      const paymentDate = typeof insertPayable.paymentDate === 'string' 
+        ? insertPayable.paymentDate 
+        : insertPayable.paymentDate.toISOString().split('T')[0];
+      
       await this.createCashFlowEntry({
         type: 'expense',
         payableId: record.id,
         amount: `-${insertPayable.amount}`, // Negativo para saída
-        date: insertPayable.paymentDate,
+        date: paymentDate,
         description: `Pagamento: ${insertPayable.description}`,
         category: 'payable',
       });
@@ -1271,11 +1287,16 @@ export class DatabaseStorage implements IStorage {
     
     // Se o status mudou para "pago", criar entrada no fluxo de caixa
     if (currentRecord?.status !== 'paid' && insertPayable.status === 'paid' && insertPayable.paymentDate) {
+      // Garantir que a data de pagamento seja interpretada corretamente
+      const paymentDate = typeof insertPayable.paymentDate === 'string' 
+        ? insertPayable.paymentDate 
+        : insertPayable.paymentDate.toISOString().split('T')[0];
+      
       await this.createCashFlowEntry({
         type: 'expense',
         payableId: record.id,
         amount: `-${record.amount}`, // Negativo para saída
-        date: insertPayable.paymentDate,
+        date: paymentDate,
         description: `Pagamento: ${record.description}`,
         category: 'payable',
         companyId: record.companyId, // Add companyId from the payable record
