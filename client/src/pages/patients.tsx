@@ -13,6 +13,7 @@ import { apiRequest } from "@/lib/queryClient";
 import PatientForm from "@/components/patients/patient-form";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/use-pagination";
+import { useCompanyFilter } from "@/contexts/company-context";
 import type { Patient } from "@/lib/types";
 
 export default function Patients() {
@@ -25,6 +26,7 @@ export default function Patients() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const companyFilter = useCompanyFilter();
 
   // Debounce search to avoid too many API calls
   useEffect(() => {
@@ -36,10 +38,20 @@ export default function Patients() {
   }, [search]);
 
   const { data: patients, isLoading, error } = useQuery<Patient[]>({
-    queryKey: ["/api/patients", { search: debouncedSearch }],
+    queryKey: ["/api/patients", { search: debouncedSearch, companyId: companyFilter }],
     queryFn: async () => {
       const token = localStorage.getItem("token");
-      const url = debouncedSearch ? `/api/patients?search=${encodeURIComponent(debouncedSearch)}` : "/api/patients";
+      const params = new URLSearchParams();
+      
+      if (debouncedSearch) {
+        params.append('search', debouncedSearch);
+      }
+      
+      if (companyFilter) {
+        params.append('companyId', companyFilter.toString());
+      }
+      
+      const url = `/api/patients${params.toString() ? '?' + params.toString() : ''}`;
       
       const response = await fetch(url, {
         headers: {

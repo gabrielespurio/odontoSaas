@@ -807,10 +807,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       const search = req.query.search as string;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
       
       // Apply company-based data isolation
       const user = req.user;
-      const companyId = user.companyId;
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
       
       const patients = await storage.getPatients(limit, offset, search, companyId);
       res.json(patients);

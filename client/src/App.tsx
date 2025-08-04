@@ -27,6 +27,7 @@ import Companies from "@/pages/companies";
 import MainLayout from "@/components/layout/main-layout";
 import ProtectedRoute from "@/components/protected-route";
 import NotFound from "@/pages/not-found";
+import { CompanyProvider } from "@/contexts/company-context";
 
 
 
@@ -94,8 +95,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <CompanyProvider>
+          <Toaster />
+          <Router />
+        </CompanyProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
