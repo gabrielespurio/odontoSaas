@@ -22,6 +22,7 @@ import {
 import AppointmentForm from "@/components/appointments/appointment-form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useCompanyFilter } from "@/contexts/company-context";
 import type { Appointment, User, Procedure } from "@/lib/types";
 
 export default function Schedule() {
@@ -32,6 +33,7 @@ export default function Schedule() {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const companyFilter = useCompanyFilter();
 
   // Time slots for schedule (8 AM to 6 PM)
   const timeSlots = Array.from({ length: 20 }, (_, i) => {
@@ -121,8 +123,37 @@ export default function Schedule() {
     queryKey: ["/api/appointments", { 
       startDate: weekDates[0].toISOString().split('T')[0], 
       endDate: weekDates[6].toISOString().split('T')[0],
-      dentistId: selectedDentist !== "all" ? parseInt(selectedDentist) : undefined 
+      dentistId: selectedDentist !== "all" ? parseInt(selectedDentist) : undefined,
+      companyId: companyFilter
     }],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const params = new URLSearchParams({
+        startDate: weekDates[0].toISOString().split('T')[0],
+        endDate: weekDates[6].toISOString().split('T')[0]
+      });
+      
+      if (selectedDentist !== "all") {
+        params.append('dentistId', selectedDentist);
+      }
+      
+      if (companyFilter) {
+        params.append('companyId', companyFilter.toString());
+      }
+      
+      const response = await fetch(`/api/appointments?${params.toString()}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
   });
 
   const { data: dentists } = useQuery<User[]>({

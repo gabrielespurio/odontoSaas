@@ -37,6 +37,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useAuth } from "@/hooks/use-auth";
+import { useCompanyFilter } from "@/contexts/company-context";
 import GenerateReceivableModal from "@/components/financial/generate-receivable-modal";
 import type { Consultation, Patient, User, Procedure } from "@/lib/types";
 
@@ -94,6 +95,7 @@ export default function Consultations() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const companyFilter = useCompanyFilter();
 
   // Status management functions
   const getStatusColor = (status: string) => {
@@ -161,8 +163,40 @@ export default function Consultations() {
   const { data: consultations, isLoading: consultationsLoading } = useQuery<Consultation[]>({
     queryKey: ["/api/consultations", { 
       status: selectedStatus !== "all" ? selectedStatus : undefined,
-      dentistId: user?.role === "dentist" ? user.id : undefined 
+      dentistId: user?.role === "dentist" ? user.id : undefined,
+      companyId: companyFilter
     }],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const params = new URLSearchParams();
+      
+      if (selectedStatus !== "all") {
+        params.append('status', selectedStatus);
+      }
+      
+      if (user?.role === "dentist") {
+        params.append('dentistId', user.id.toString());
+      }
+      
+      if (companyFilter) {
+        params.append('companyId', companyFilter.toString());
+      }
+      
+      const url = `/api/consultations${params.toString() ? '?' + params.toString() : ''}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
   });
 
   // Buscar agendamentos que não têm consulta correspondente - SIMPLIFICADO

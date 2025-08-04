@@ -1273,6 +1273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
       let dentistId = req.query.dentistId ? parseInt(req.query.dentistId as string) : undefined;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
       
       // Apply data scope control
       const user = req.user;
@@ -1281,7 +1282,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dentistId = user.id;
       }
       
-      const appointments = await storage.getAppointments(date, dentistId, startDate, endDate, user.companyId);
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
+      
+      const appointments = await storage.getAppointments(date, dentistId, startDate, endDate, companyId);
       
       // Format dates for frontend
       const formattedAppointments = appointments.map(appointment => ({
@@ -1775,6 +1784,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const patientId = req.query.patientId ? parseInt(req.query.patientId as string) : undefined;
       let dentistId = req.query.dentistId ? parseInt(req.query.dentistId as string) : undefined;
       const status = req.query.status as string | undefined;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
       
       // Apply data scope control
       const user = req.user;
@@ -1783,8 +1793,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dentistId = user.id;
       }
       
-      // CRITICAL: Pass user's companyId for data isolation
-      const consultations = await storage.getConsultations(patientId, dentistId, status, user.companyId);
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
+      
+      const consultations = await storage.getConsultations(patientId, dentistId, status, companyId);
       res.json(consultations);
     } catch (error) {
       console.error("Get consultations error:", error);
