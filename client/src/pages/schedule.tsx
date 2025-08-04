@@ -465,10 +465,11 @@ export default function Schedule() {
                                      top: '0',
                                      left: '0',
                                      zIndex: 10,
-                                     border: '1px solid rgba(255,255,255,0.2)'
+                                     border: '1px solid rgba(255,255,255,0.2)',
+                                     overflow: 'visible'
                                    }}>
-                                <div className="flex justify-between items-start">
-                                  <div className="flex-1 cursor-pointer" onClick={() => {
+                                <div className="flex justify-between items-start" style={{ position: 'relative', zIndex: 1 }}>
+                                  <div className="flex-1 cursor-pointer pr-8" onClick={() => {
                                     setEditingAppointment(appointment);
                                     setShowForm(true);
                                   }}>
@@ -483,14 +484,18 @@ export default function Schedule() {
                                         : `${duration}min`}
                                     </div>
                                   </div>
-                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                                  
+                                  {/* Posicionar o botão absolutamente no canto superior direito */}
+                                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity" 
+                                       style={{ zIndex: 50 }}
+                                       onClick={(e) => e.stopPropagation()}>
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-white/20">
                                           <MoreHorizontal className="h-3 w-3" />
                                         </Button>
                                       </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end" className="w-48">
+                                      <DropdownMenuContent align="end" className="w-48" style={{ zIndex: 1000 }}>
                                         {getStatusActions(appointment.status).map((action) => (
                                           <DropdownMenuItem 
                                             key={action.value}
