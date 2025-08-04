@@ -1502,7 +1502,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // NOVA ABORDAGEM: Buscar todos os agendamentos e filtrar os que NÃO têm consulta
       let appointmentWhereConditions = [
         sql`${appointments.status} != 'cancelado'`, // Filter out cancelled appointments
-        eq(appointments.companyId, user.companyId) // CRITICAL: Filter by company
+        eq(appointments.companyId, user.companyId), // CRITICAL: Filter by company
+        sql`${appointments.scheduledDate} >= CURRENT_DATE` // Only show today and future appointments
       ];
       
       if (user.dataScope === "own") {
