@@ -1503,7 +1503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let appointmentWhereConditions = [
         sql`${appointments.status} != 'cancelado'`, // Filter out cancelled appointments
         eq(appointments.companyId, user.companyId), // CRITICAL: Filter by company
-        sql`${appointments.scheduledDate} >= CURRENT_DATE` // Only show today and future appointments
+        sql`DATE(${appointments.scheduledDate}) >= CURRENT_DATE` // Only show today and future appointments
       ];
       
       if (user.dataScope === "own") {
@@ -1552,6 +1552,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`[DEBUG] Found ${allAppointments.length} total appointments (excluding past dates and cancelled)`);
       
+      // DEBUG: Log appointment dates to understand what's being returned
+      allAppointments.forEach(apt => {
+        console.log(`[DEBUG] Appointment ${apt.id}: ${apt.scheduledDate} (${new Date(apt.scheduledDate).toLocaleString('pt-BR')})`);
+      });
+      
       // Buscar todos os IDs de agendamentos que JÁ TÊM consulta
       const appointmentIdsWithConsultation = await db.select({
         appointmentId: consultations.appointmentId
@@ -1565,10 +1570,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`[DEBUG] Found ${appointmentIdsWithConsultationSet.size} appointments with consultation: ${Array.from(appointmentIdsWithConsultationSet).join(', ')}`);
       
-      // Filtrar agendamentos que NÃO têm consulta
-      const appointmentsWithoutConsultation = allAppointments.filter(apt => 
-        !appointmentIdsWithConsultationSet.has(apt.id)
-      );
+      // Filtrar agendamentos que NÃO têm consulta E que não são de datas passadas
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
+      
+      const appointmentsWithoutConsultation = allAppointments.filter(apt => {
+        const hasNoConsultation = !appointmentIdsWithConsultationSet.has(apt.id);
+        
+        // Additional date check in JavaScript to ensure no past appointments
+        const appointmentDate = new Date(apt.scheduledDate);
+        const appointmentDay = new Date(appointmentDate.getFullYear(), appointmentDate.getMonth(), appointmentDate.getDate());
+        const isNotPast = appointmentDay >= today;
+        
+        console.log(`[DEBUG] Appointment ${apt.id}: hasNoConsultation=${hasNoConsultation}, date=${apt.scheduledDate}, isNotPast=${isNotPast}`);
+        
+        return hasNoConsultation && isNotPast;
+      });
       
       console.log(`[DEBUG] Appointments WITHOUT consultation: ${appointmentsWithoutConsultation.map(a => a.id).join(', ')}`);
       console.log(`[DEBUG] Final result: ${appointmentsWithoutConsultation.length} appointments without consultation`);
@@ -1579,6 +1596,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get appointments without consultation error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // UTIL: Endpoint para limpar agendamentos passados (temporário para resolver o problema atual)
+  app.post("/api/appointments/cleanup-past", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      
+      // Buscar agendamentos passados sem consulta
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const pastAppointments = await db.select({
+        id: appointments.id,
+        scheduledDate: appointments.scheduledDate
+      })
+      .from(appointments)
+      .where(and(
+        eq(appointments.companyId, user.companyId),
+        sql`DATE(${appointments.scheduledDate}) < CURRENT_DATE`
+      ));
+      
+      // Verificar quais não têm consulta associada
+      const appointmentIdsWithConsultation = await db.select({
+        appointmentId: consultations.appointmentId
+      })
+      .from(consultations)
+      .where(eq(consultations.companyId, user.companyId));
+      
+      const appointmentIdsWithConsultationSet = new Set(
+        appointmentIdsWithConsultation.map(c => c.appointmentId).filter(Boolean)
+      );
+      
+      const pastAppointmentsWithoutConsultation = pastAppointments.filter(apt => 
+        !appointmentIdsWithConsultationSet.has(apt.id)
+      );
+      
+      // Excluir agendamentos passados sem consulta
+      let deletedCount = 0;
+      for (const apt of pastAppointmentsWithoutConsultation) {
+        await db.delete(appointments).where(eq(appointments.id, apt.id));
+        deletedCount++;
+        console.log(`[CLEANUP] Deleted past appointment ${apt.id} (${apt.scheduledDate})`);
+      }
+      
+      res.json({ 
+        success: true, 
+        message: `${deletedCount} agendamentos passados foram removidos`,
+        deletedCount 
+      });
+    } catch (error) {
+      console.error("Cleanup past appointments error:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 

@@ -904,10 +904,14 @@ export class DatabaseStorage implements IStorage {
         const appointmentDate = new Date(appointment[0].scheduledDate);
         const currentDate = new Date();
         
-        // If the appointment date is in the past (more than 1 day ago), delete it
-        const oneDayAgo = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
-        if (appointmentDate < oneDayAgo) {
-          console.log(`[INFO] Deleting past appointment ${appointment[0].id} to prevent reappearing in pending list`);
+        // If the appointment date is in the past, delete it to prevent reappearing
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+        const appointmentDay = new Date(appointmentDate);
+        appointmentDay.setHours(0, 0, 0, 0); // Start of appointment day
+        
+        if (appointmentDay < today) {
+          console.log(`[INFO] Deleting past appointment ${appointment[0].id} (${appointment[0].scheduledDate}) to prevent reappearing in pending list`);
           await db.delete(appointments).where(eq(appointments.id, consultationData.appointmentId));
         }
       }
