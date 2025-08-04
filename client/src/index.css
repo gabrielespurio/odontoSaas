@@ -364,11 +364,10 @@ html, body {
     padding: 0;
     display: flex;
     align-items: flex-start;
-    justify-content: stretch;
+    justify-content: flex-start;
     box-sizing: border-box;
     position: relative;
     background: white;
-    overflow: hidden;
   }
   
   .schedule-day-cell::after {

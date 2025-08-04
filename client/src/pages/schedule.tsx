@@ -460,19 +460,15 @@ export default function Schedule() {
                               <div className={`rounded p-2 text-xs relative group ${getStatusColor(appointment.status)} text-white`}
                                    style={{ 
                                      height: `${slotSpan * 60}px`, // Full slot height
-                                     width: 'calc(100% - 4px)',
+                                     width: '100%',
                                      position: 'absolute',
-                                     top: '2px',
-                                     left: '2px',
+                                     top: '0',
+                                     left: '0',
                                      zIndex: 10,
-                                     border: '1px solid rgba(255,255,255,0.2)',
-                                     display: 'flex',
-                                     flexDirection: 'column',
-                                     overflow: 'hidden'
+                                     border: '1px solid rgba(255,255,255,0.2)'
                                    }}>
-                                <div className="relative h-full">
-                                  {/* Appointment Content */}
-                                  <div className="cursor-pointer p-1 h-full" onClick={() => {
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1 cursor-pointer" onClick={() => {
                                     setEditingAppointment(appointment);
                                     setShowForm(true);
                                   }}>
@@ -487,12 +483,10 @@ export default function Schedule() {
                                         : `${duration}min`}
                                     </div>
                                   </div>
-                                  
-                                  {/* Actions Button - Positioned absolutely within the card */}
-                                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-1">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-white/20 rounded-full">
+                                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-white/20">
                                           <MoreHorizontal className="h-3 w-3" />
                                         </Button>
                                       </DropdownMenuTrigger>
@@ -521,7 +515,7 @@ export default function Schedule() {
                                     </DropdownMenu>
                                   </div>
                                 </div>
-                                <div className="mt-auto pt-1">
+                                <div className="mt-1">
                                   <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
                                     {getStatusLabel(appointment.status)}
                                   </Badge>
@@ -767,8 +761,8 @@ export default function Schedule() {
                                   }
                                 }}
                               >
-                                <div className="relative h-full">
-                                  <div className="flex-1 pr-8">
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1">
                                     <div className="font-medium">{appointment?.patient?.name}</div>
                                     <div className="text-sm opacity-90">{appointment?.procedure?.name}</div>
                                     <div className="text-xs opacity-75 mt-1">
@@ -777,18 +771,14 @@ export default function Schedule() {
                                     <div className="text-xs opacity-75">
                                       {appointment?.procedure?.duration || 30} min
                                     </div>
-                                    <div className="mt-2">
-                                      <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
-                                        {getStatusLabel(appointment?.status || 'agendado')}
-                                      </Badge>
-                                    </div>
                                   </div>
-                                  
-                                  {/* Actions Button - Positioned absolutely within the mobile card */}
-                                  <div className="absolute top-2 right-2">
+                                  <div className="flex items-center space-x-2">
+                                    <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
+                                      {getStatusLabel(appointment?.status || 'agendado')}
+                                    </Badge>
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-white/20 rounded-full">
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-white/20">
                                           <MoreHorizontal className="h-4 w-4" />
                                         </Button>
                                       </DropdownMenuTrigger>
