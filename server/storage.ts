@@ -871,11 +871,47 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteConsultation(id: number): Promise<void> {
+    // Get consultation details before deletion to check if we need to handle the appointment
+    const consultation = await db.select({
+      id: consultations.id,
+      appointmentId: consultations.appointmentId
+    })
+    .from(consultations)
+    .where(eq(consultations.id, id))
+    .limit(1);
+
+    const consultationData = consultation[0];
+    
     // First, delete related receivables
     await db.delete(receivables).where(eq(receivables.consultationId, id));
     
     // Then delete the consultation
     await db.delete(consultations).where(eq(consultations.id, id));
+    
+    // IMPORTANT: If the consultation was linked to an appointment with a past date,
+    // we should also delete that appointment to prevent it from reappearing
+    // in the "appointments without consultation" list
+    if (consultationData?.appointmentId) {
+      const appointment = await db.select({
+        id: appointments.id,
+        scheduledDate: appointments.scheduledDate
+      })
+      .from(appointments)
+      .where(eq(appointments.id, consultationData.appointmentId))
+      .limit(1);
+      
+      if (appointment.length > 0) {
+        const appointmentDate = new Date(appointment[0].scheduledDate);
+        const currentDate = new Date();
+        
+        // If the appointment date is in the past (more than 1 day ago), delete it
+        const oneDayAgo = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
+        if (appointmentDate < oneDayAgo) {
+          console.log(`[INFO] Deleting past appointment ${appointment[0].id} to prevent reappearing in pending list`);
+          await db.delete(appointments).where(eq(appointments.id, consultationData.appointmentId));
+        }
+      }
+    }
   }
 
   // Dental Chart

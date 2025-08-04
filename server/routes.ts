@@ -1550,7 +1550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       .where(and(...appointmentWhereConditions))
       .orderBy(desc(appointments.scheduledDate));
       
-      console.log(`[DEBUG] Found ${allAppointments.length} total appointments`);
+      console.log(`[DEBUG] Found ${allAppointments.length} total appointments (excluding past dates and cancelled)`);
       
       // Buscar todos os IDs de agendamentos que JÁ TÊM consulta
       const appointmentIdsWithConsultation = await db.select({
