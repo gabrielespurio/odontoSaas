@@ -888,9 +888,8 @@ export class DatabaseStorage implements IStorage {
     // Then delete the consultation
     await db.delete(consultations).where(eq(consultations.id, id));
     
-    // IMPORTANT: If the consultation was linked to an appointment with a past date,
-    // we should also delete that appointment to prevent it from reappearing
-    // in the "appointments without consultation" list
+    // IMPORTANT: If the consultation was linked to an appointment,
+    // delete that appointment to prevent it from reappearing in the "appointments without consultation" list
     if (consultationData?.appointmentId) {
       const appointment = await db.select({
         id: appointments.id,
@@ -901,19 +900,8 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
       
       if (appointment.length > 0) {
-        const appointmentDate = new Date(appointment[0].scheduledDate);
-        const currentDate = new Date();
-        
-        // If the appointment date is in the past, delete it to prevent reappearing
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Start of today
-        const appointmentDay = new Date(appointmentDate);
-        appointmentDay.setHours(0, 0, 0, 0); // Start of appointment day
-        
-        if (appointmentDay < today) {
-          console.log(`[INFO] Deleting past appointment ${appointment[0].id} (${appointment[0].scheduledDate}) to prevent reappearing in pending list`);
-          await db.delete(appointments).where(eq(appointments.id, consultationData.appointmentId));
-        }
+        console.log(`[INFO] Deleting linked appointment ${appointment[0].id} (${appointment[0].scheduledDate}) to prevent reappearing in pending list`);
+        await db.delete(appointments).where(eq(appointments.id, consultationData.appointmentId));
       }
     }
   }
