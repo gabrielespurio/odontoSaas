@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useCompanyFilter } from "@/contexts/company-context";
 import ReceivableForm from "@/components/financial/receivable-form";
 import PaymentForm from "@/components/financial/payment-form";
 import { TablePagination } from "@/components/ui/table-pagination";
@@ -83,20 +84,99 @@ export default function FinancialReceivables() {
   const [payingReceivable, setPayingReceivable] = useState<Receivable | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const companyFilter = useCompanyFilter();
 
   const { data: receivables, isLoading: receivablesLoading } = useQuery<Receivable[]>({
     queryKey: ["/api/receivables", {
       status: selectedStatus !== "all" ? selectedStatus : undefined,
-      dentistId: selectedDentist !== "all" ? parseInt(selectedDentist) : undefined
+      dentistId: selectedDentist !== "all" ? parseInt(selectedDentist) : undefined,
+      companyId: companyFilter
     }],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const params = new URLSearchParams();
+      
+      if (selectedStatus !== "all") {
+        params.append('status', selectedStatus);
+      }
+      
+      if (selectedDentist !== "all") {
+        params.append('dentistId', selectedDentist);
+      }
+      
+      if (companyFilter) {
+        params.append('companyId', companyFilter.toString());
+      }
+      
+      const url = `/api/receivables${params.toString() ? '?' + params.toString() : ''}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
   });
 
   const { data: patients } = useQuery<Patient[]>({
-    queryKey: ["/api/patients"],
+    queryKey: ["/api/patients", { companyId: companyFilter }],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const params = new URLSearchParams();
+      
+      if (companyFilter) {
+        params.append('companyId', companyFilter.toString());
+      }
+      
+      const url = `/api/patients${params.toString() ? '?' + params.toString() : ''}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
   });
 
   const { data: dentists } = useQuery<any[]>({
-    queryKey: ["/api/users/dentists"],
+    queryKey: ["/api/users/dentists", { companyId: companyFilter }],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const params = new URLSearchParams();
+      
+      if (companyFilter) {
+        params.append('companyId', companyFilter.toString());
+      }
+      
+      const url = `/api/users/dentists${params.toString() ? '?' + params.toString() : ''}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
   });
 
   const markAsPaidMutation = useMutation({

@@ -1213,9 +1213,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const offset = parseInt(req.query.offset as string) || 0;
       const search = req.query.search as string;
       const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
       
-      // CRITICAL: Filter procedures by company
-      const procedures = await storage.getProcedures(limit, offset, search, categoryId, user.companyId);
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
+      
+      const procedures = await storage.getProcedures(limit, offset, search, categoryId, companyId);
       res.json(procedures);
     } catch (error) {
       console.error("Get procedures error:", error);
@@ -2227,12 +2235,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const status = req.query.status as string;
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
+      
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
       
       // Apply data scope filtering
       let receivablesResult;
       if (user.role === "admin" || user.dataScope === "all") {
-        // CRITICAL: Always filter by company, even for admins and "all" scope users
-        receivablesResult = await storage.getReceivables(patientId, status, startDate, endDate, dentistId, user.companyId);
+        receivablesResult = await storage.getReceivables(patientId, status, startDate, endDate, dentistId, companyId);
       } else {
         // For users with "own" scope, filter by their appointments/consultations
         const userConsultations = await db.select({

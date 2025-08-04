@@ -23,6 +23,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useCompanyFilter } from "@/contexts/company-context";
 import type { Procedure, ProcedureCategory } from "@/lib/types";
 
 const procedureSchema = z.object({
@@ -42,9 +43,33 @@ export default function Procedures() {
   const [editingProcedure, setEditingProcedure] = useState<Procedure | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const companyFilter = useCompanyFilter();
 
   const { data: procedures, isLoading } = useQuery<Procedure[]>({
-    queryKey: ["/api/procedures"],
+    queryKey: ["/api/procedures", { companyId: companyFilter }],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const params = new URLSearchParams();
+      
+      if (companyFilter) {
+        params.append('companyId', companyFilter.toString());
+      }
+      
+      const url = `/api/procedures${params.toString() ? '?' + params.toString() : ''}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
   });
 
   const { data: categories } = useQuery<ProcedureCategory[]>({
