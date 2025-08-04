@@ -467,27 +467,29 @@ export default function Schedule() {
                                      zIndex: 10,
                                      border: '1px solid rgba(255,255,255,0.2)'
                                    }}>
-                                <div className="flex justify-between items-start">
-                                  <div className="flex-1 cursor-pointer" onClick={() => {
-                                    setEditingAppointment(appointment);
-                                    setShowForm(true);
-                                  }}>
-                                    <div className="font-medium truncate">{appointment.patient?.name}</div>
-                                    <div className="opacity-90 truncate">{appointment.procedure?.name}</div>
-                                    <div className="opacity-75 text-xs mt-1">
-                                      {new Date(appointment.scheduledDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                    </div>
-                                    <div className="opacity-75 text-xs">
-                                      {duration >= 60 
-                                        ? `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ''}`
-                                        : `${duration}min`}
-                                    </div>
+                                {/* Conteúdo principal do agendamento */}
+                                <div className="cursor-pointer h-full relative" onClick={() => {
+                                  setEditingAppointment(appointment);
+                                  setShowForm(true);
+                                }}>
+                                  <div className="font-medium truncate pr-6">{appointment.patient?.name}</div>
+                                  <div className="opacity-90 truncate">{appointment.procedure?.name}</div>
+                                  <div className="opacity-75 text-xs mt-1">
+                                    {new Date(appointment.scheduledDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                   </div>
-                                  <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity self-start"
-                                       onClick={(e) => e.stopPropagation()}>
+                                  <div className="opacity-75 text-xs">
+                                    {duration >= 60 
+                                      ? `${Math.floor(duration / 60)}h${duration % 60 > 0 ? ` ${duration % 60}min` : ''}`
+                                      : `${duration}min`}
+                                  </div>
+                                  
+                                  {/* Botão de ações - posicionado absolutamente no canto superior direito DENTRO do card */}
+                                  <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                       onClick={(e) => e.stopPropagation()}
+                                       style={{ zIndex: 20 }}>
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-white/20">
+                                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-white/20 rounded">
                                           <MoreHorizontal className="h-3 w-3" />
                                         </Button>
                                       </DropdownMenuTrigger>
