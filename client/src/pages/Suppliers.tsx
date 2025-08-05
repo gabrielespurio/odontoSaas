@@ -66,7 +66,7 @@ export default function Suppliers() {
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertSupplier) => {
-      return await apiRequest('/api/suppliers', 'POST', data);
+      return await apiRequest('POST', '/api/suppliers', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/suppliers'] });
@@ -88,7 +88,7 @@ export default function Suppliers() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<InsertSupplier> }) => {
-      return await apiRequest(`/api/suppliers/${id}`, 'PUT', data);
+      return await apiRequest('PUT', `/api/suppliers/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/suppliers'] });
@@ -111,7 +111,7 @@ export default function Suppliers() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest(`/api/suppliers/${id}`, 'DELETE');
+      return await apiRequest('DELETE', `/api/suppliers/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/suppliers'] });
