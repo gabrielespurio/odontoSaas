@@ -40,6 +40,7 @@ import { insertPurchaseOrderSchema, insertPurchaseOrderItemSchema, type Purchase
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
+import { useCompanyFilter } from "@/contexts/company-context";
 
 type PurchaseOrderWithDetails = PurchaseOrder & {
   supplier: Supplier;
@@ -66,6 +67,7 @@ export default function PurchaseOrders() {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const companyId = useCompanyFilter();
 
   const form = useForm<PurchaseOrderFormData>({
     resolver: zodResolver(purchaseOrderFormSchema),
@@ -94,16 +96,37 @@ export default function PurchaseOrders() {
   });
 
   const { data: orders = [], isLoading } = useQuery<PurchaseOrderWithDetails[]>({
-    queryKey: ['/api/purchase-orders'],
+    queryKey: ['/api/purchase-orders', companyId],
+    queryFn: async () => {
+      const url = companyId ? `/api/purchase-orders?companyId=${companyId}` : '/api/purchase-orders';
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch purchase orders');
+      return response.json();
+    },
   });
 
   const { data: suppliers = [] } = useQuery<Supplier[]>({
-    queryKey: ['/api/suppliers'],
+    queryKey: ['/api/suppliers', companyId],
+    queryFn: async () => {
+      const url = companyId ? `/api/suppliers?companyId=${companyId}` : '/api/suppliers';
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch suppliers');
+      return response.json();
+    },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: PurchaseOrderFormData) => {
-      return await apiRequest('/api/purchase-orders', 'POST', data);
+      const dataWithCompany = companyId ? { ...data, companyId } : data;
+      return await apiRequest('POST', '/api/purchase-orders', dataWithCompany);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/purchase-orders'] });
@@ -126,7 +149,7 @@ export default function PurchaseOrders() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<PurchaseOrderFormData> }) => {
-      return await apiRequest(`/api/purchase-orders/${id}`, 'PUT', data);
+      return await apiRequest('PUT', `/api/purchase-orders/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/purchase-orders'] });
@@ -150,7 +173,7 @@ export default function PurchaseOrders() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest(`/api/purchase-orders/${id}`, 'DELETE');
+      return await apiRequest('DELETE', `/api/purchase-orders/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/purchase-orders'] });

@@ -3150,8 +3150,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/purchase-orders", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
+      const requestedCompanyId = req.body.companyId || (req.query.companyId ? parseInt(req.query.companyId as string) : undefined);
       
-      if (!user.companyId) {
+      // Determine which company to use
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId), require a company to be specified
+      if (user.companyId === null) {
+        if (!requestedCompanyId) {
+          return res.status(400).json({ message: "System admin must specify a company" });
+        }
+        companyId = requestedCompanyId;
+      }
+      
+      if (!companyId) {
         return res.status(400).json({ message: "User must belong to a company" });
       }
       
@@ -3160,7 +3172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const orderWithCompany = {
         ...purchaseOrderData,
-        companyId: user.companyId,
+        companyId: companyId,
         createdBy: user.id
       };
       

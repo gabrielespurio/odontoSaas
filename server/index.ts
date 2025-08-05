@@ -63,6 +63,82 @@ app.use((req, res, next) => {
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
 
+    // Create purchase module tables
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "purchase_orders" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "company_id" integer NOT NULL,
+        "supplier_id" integer NOT NULL,
+        "order_number" text NOT NULL,
+        "order_date" date NOT NULL,
+        "expected_delivery_date" date,
+        "status" text DEFAULT 'draft' NOT NULL,
+        "total_amount" numeric(10,2) NOT NULL,
+        "notes" text,
+        "created_by" integer,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        "updated_at" timestamp DEFAULT now() NOT NULL
+      )
+    `);
+    
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "purchase_order_items" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "purchase_order_id" integer NOT NULL,
+        "description" text NOT NULL,
+        "quantity" numeric(10,2) NOT NULL,
+        "unit_price" numeric(10,2) NOT NULL,
+        "total_price" numeric(10,2) NOT NULL,
+        "notes" text
+      )
+    `);
+    
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "receivings" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "company_id" integer NOT NULL,
+        "purchase_order_id" integer NOT NULL,
+        "supplier_id" integer NOT NULL,
+        "receiving_number" text NOT NULL,
+        "receiving_date" date,
+        "total_amount" numeric(10,2) NOT NULL,
+        "notes" text,
+        "created_by" integer,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        "updated_at" timestamp DEFAULT now() NOT NULL
+      )
+    `);
+    
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "receiving_items" (
+        "id" serial PRIMARY KEY NOT NULL,
+        "receiving_id" integer NOT NULL,
+        "purchase_order_item_id" integer NOT NULL,
+        "description" text NOT NULL,
+        "quantity_ordered" numeric(10,2) NOT NULL,
+        "quantity_received" numeric(10,2) NOT NULL,
+        "unit_price" numeric(10,2) NOT NULL,
+        "total_price" numeric(10,2) NOT NULL,
+        "notes" text
+      )
+    `);
+    
+    // Add unique constraints
+    try {
+      await db.execute(sql`
+        ALTER TABLE "purchase_orders" 
+        ADD CONSTRAINT IF NOT EXISTS "purchase_orders_order_number_company_id_unique" 
+        UNIQUE("order_number","company_id")
+      `);
+    } catch {}
+    
+    try {
+      await db.execute(sql`
+        ALTER TABLE "receivings" 
+        ADD CONSTRAINT IF NOT EXISTS "receivings_receiving_number_company_id_unique" 
+        UNIQUE("receiving_number","company_id")
+      `);
+    } catch {}
     
     // Remove limit fields from companies table
     await db.execute(sql`ALTER TABLE companies DROP COLUMN IF EXISTS plan_type`);
