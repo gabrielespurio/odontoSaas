@@ -49,13 +49,19 @@ app.use((req, res, next) => {
     await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS dentist_id INTEGER`);
     await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS created_by INTEGER`);
     
-    // Add missing address columns to suppliers table
+    // Add missing columns to suppliers table
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS cep TEXT`);
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS street TEXT`);
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS number TEXT`);
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS neighborhood TEXT`);
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS city TEXT`);
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS state TEXT`);
+    await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS notes TEXT`);
+    await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS contact_person TEXT`);
+    await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true`);
+    await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS created_by INTEGER`);
+    await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
+    await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
 
     
     // Remove limit fields from companies table

@@ -347,10 +347,7 @@ export default function Suppliers() {
                       name="cep"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            CEP
-                          </FormLabel>
+                          <FormLabel>CEP</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="00000-000" 
