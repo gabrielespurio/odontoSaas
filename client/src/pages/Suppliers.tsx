@@ -130,22 +130,31 @@ export default function Suppliers() {
   });
 
   const onSubmit = (data: InsertSupplier) => {
+    // Remove masks from data before sending to API
+    const cleanedData = {
+      ...data,
+      phone: removeMask(data.phone || ""),
+      cnpj: data.cnpj ? removeMask(data.cnpj) : "",
+      cep: data.cep ? removeMask(data.cep) : "",
+    };
+    
     if (editingSupplier) {
-      updateMutation.mutate({ id: editingSupplier.id, data });
+      updateMutation.mutate({ id: editingSupplier.id, data: cleanedData });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(cleanedData);
     }
   };
 
   const handleEdit = (supplier: Supplier) => {
     setEditingSupplier(supplier);
-    // Convert null values to empty strings for the form
+    // Convert null values to empty strings for the form and apply masks
     const formData = {
-      ...supplier,
-      cnpj: supplier.cnpj || "",
+      name: supplier.name,
+      cnpj: supplier.cnpj ? applyCnpjMask(supplier.cnpj) : "",
       email: supplier.email || "",
+      phone: supplier.phone ? applyPhoneMask(supplier.phone) : "",
       contactPerson: supplier.contactPerson || "",
-      cep: supplier.cep || "",
+      cep: supplier.cep ? applyCepMask(supplier.cep) : "",
       street: supplier.street || "",
       number: supplier.number || "",
       neighborhood: supplier.neighborhood || "",
