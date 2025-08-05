@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, Building2 } from "lucide-react";
+import { Plus, Edit, Trash2, Building2, MapPin } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -32,10 +32,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertSupplierSchema, type Supplier, type InsertSupplier } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { applyCnpjMask, applyPhoneMask, applyCepMask, removeMask, validateEmail, validateCnpj, validateCep } from "@/utils/masks";
+import { fetchAddressByCep } from "@/utils/viaCep";
 
 export default function Suppliers() {
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [loadingCep, setLoadingCep] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -136,7 +139,21 @@ export default function Suppliers() {
 
   const handleEdit = (supplier: Supplier) => {
     setEditingSupplier(supplier);
-    form.reset(supplier);
+    // Convert null values to empty strings for the form
+    const formData = {
+      ...supplier,
+      cnpj: supplier.cnpj || "",
+      email: supplier.email || "",
+      contactPerson: supplier.contactPerson || "",
+      cep: supplier.cep || "",
+      street: supplier.street || "",
+      number: supplier.number || "",
+      neighborhood: supplier.neighborhood || "",
+      city: supplier.city || "",
+      state: supplier.state || "",
+      notes: supplier.notes || "",
+    };
+    form.reset(formData);
     setDialogOpen(true);
   };
 
@@ -150,6 +167,49 @@ export default function Suppliers() {
     setEditingSupplier(null);
     form.reset();
     setDialogOpen(true);
+  };
+
+  const handleCepBlur = async (cep: string) => {
+    if (!validateCep(cep)) return;
+
+    setLoadingCep(true);
+    try {
+      const address = await fetchAddressByCep(cep);
+      if (address) {
+        form.setValue('street', address.logradouro);
+        form.setValue('neighborhood', address.bairro);
+        form.setValue('city', address.localidade);
+        form.setValue('state', address.uf);
+        
+        toast({
+          title: "Endereço encontrado",
+          description: "Endereço preenchido automaticamente",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar endereço pelo CEP",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingCep(false);
+    }
+  };
+
+  const handleCnpjChange = (value: string, onChange: (value: string) => void) => {
+    const maskedValue = applyCnpjMask(value);
+    onChange(maskedValue);
+  };
+
+  const handlePhoneChange = (value: string, onChange: (value: string) => void) => {
+    const maskedValue = applyPhoneMask(value);
+    onChange(maskedValue);
+  };
+
+  const handleCepChange = (value: string, onChange: (value: string) => void) => {
+    const maskedValue = applyCepMask(value);
+    onChange(maskedValue);
   };
 
   if (isLoading) {
@@ -206,7 +266,13 @@ export default function Suppliers() {
                       <FormItem>
                         <FormLabel>CNPJ</FormLabel>
                         <FormControl>
-                          <Input placeholder="00.000.000/0000-00" {...field} data-testid="input-supplier-cnpj" />
+                          <Input 
+                            placeholder="00.000.000/0000-00" 
+                            {...field}
+                            value={field.value || ""}
+                            onChange={(e) => handleCnpjChange(e.target.value, field.onChange)}
+                            data-testid="input-supplier-cnpj" 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -222,7 +288,13 @@ export default function Suppliers() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="email@fornecedor.com" {...field} data-testid="input-supplier-email" />
+                          <Input 
+                            type="email" 
+                            placeholder="email@fornecedor.com" 
+                            {...field}
+                            value={field.value || ""}
+                            data-testid="input-supplier-email" 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -235,7 +307,12 @@ export default function Suppliers() {
                       <FormItem>
                         <FormLabel>Telefone</FormLabel>
                         <FormControl>
-                          <Input placeholder="(11) 99999-9999" {...field} data-testid="input-supplier-phone" />
+                          <Input 
+                            placeholder="(11) 99999-9999" 
+                            {...field}
+                            onChange={(e) => handlePhoneChange(e.target.value, field.onChange)}
+                            data-testid="input-supplier-phone" 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -250,95 +327,148 @@ export default function Suppliers() {
                     <FormItem>
                       <FormLabel>Pessoa de Contato</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nome do responsável" {...field} data-testid="input-supplier-contact" />
+                        <Input 
+                          placeholder="Nome do responsável" 
+                          {...field}
+                          value={field.value || ""}
+                          data-testid="input-supplier-contact" 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="cep"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CEP</FormLabel>
-                        <FormControl>
-                          <Input placeholder="00000-000" {...field} data-testid="input-supplier-cep" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="street"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Rua</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nome da rua" {...field} data-testid="input-supplier-street" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Número</FormLabel>
-                        <FormControl>
-                          <Input placeholder="123" {...field} data-testid="input-supplier-number" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  <div className="md:col-span-3">
+                    <FormField
+                      control={form.control}
+                      name="cep"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-1">
+                            <MapPin className="w-4 h-4" />
+                            CEP
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="00000-000" 
+                              {...field}
+                              value={field.value || ""}
+                              onChange={(e) => handleCepChange(e.target.value, field.onChange)}
+                              onBlur={(e) => handleCepBlur(e.target.value)}
+                              disabled={loadingCep}
+                              data-testid="input-supplier-cep" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="md:col-span-7">
+                    <FormField
+                      control={form.control}
+                      name="street"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Rua</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Nome da rua" 
+                              {...field}
+                              value={field.value || ""}
+                              data-testid="input-supplier-street" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="number"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Número</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="123" 
+                              {...field}
+                              value={field.value || ""}
+                              data-testid="input-supplier-number" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="neighborhood"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Bairro</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nome do bairro" {...field} data-testid="input-supplier-neighborhood" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cidade</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nome da cidade" {...field} data-testid="input-supplier-city" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="state"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estado</FormLabel>
-                        <FormControl>
-                          <Input placeholder="SP" {...field} data-testid="input-supplier-state" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  <div className="md:col-span-5">
+                    <FormField
+                      control={form.control}
+                      name="neighborhood"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bairro</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Nome do bairro" 
+                              {...field}
+                              value={field.value || ""}
+                              data-testid="input-supplier-neighborhood" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="md:col-span-5">
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cidade</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Nome da cidade" 
+                              {...field}
+                              value={field.value || ""}
+                              data-testid="input-supplier-city" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estado</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="SP" 
+                              {...field}
+                              value={field.value || ""}
+                              data-testid="input-supplier-state" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
                 <FormField
@@ -350,7 +480,8 @@ export default function Suppliers() {
                       <FormControl>
                         <Textarea 
                           placeholder="Observações sobre o fornecedor" 
-                          {...field} 
+                          {...field}
+                          value={field.value || ""}
                           data-testid="input-supplier-notes"
                         />
                       </FormControl>
