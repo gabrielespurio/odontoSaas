@@ -753,7 +753,10 @@ export const insertSupplierSchema = createInsertSchema(suppliers).omit({
   companyId: true, // Excluir companyId pois será adicionado no backend
 }).extend({
   name: z.string().min(1, "Nome é obrigatório"),
-  phone: z.string().min(10, "Telefone deve ter pelo menos 10 caracteres").max(11, "Telefone deve ter no máximo 11 caracteres"),
+  phone: z.string().min(1, "Telefone é obrigatório").refine((val) => {
+    const cleanPhone = val.replace(/\D/g, ''); // Remove all non-digits
+    return cleanPhone.length >= 10 && cleanPhone.length <= 11;
+  }, "Telefone deve ter entre 10 e 11 dígitos"),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
   cnpj: z.string().optional(),
   contactPerson: z.string().optional(),
