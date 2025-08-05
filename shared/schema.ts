@@ -23,8 +23,8 @@ export const paymentStatusEnum = pgEnum("payment_status", ["pending", "paid", "o
 export const accountTypeEnum = pgEnum("account_type", ["receivable", "payable"]);
 export const paymentMethodEnum = pgEnum("payment_method", ["cash", "credit_card", "debit_card", "pix", "bank_transfer", "check"]);
 export const expenseCategoryEnum = pgEnum("expense_category", ["rent", "salaries", "materials", "equipment", "utilities", "marketing", "other"]);
-export const purchaseOrderStatusEnum = pgEnum("purchase_order_status", ["draft", "sent", "confirmed", "cancelled"]);
-export const receivingStatusEnum = pgEnum("receiving_status", ["pending", "partial", "received", "cancelled"]);
+export const purchaseOrderStatusEnum = pgEnum("purchase_order_status", ["draft", "sent", "confirmed", "partial", "received", "cancelled"]);
+export const receivingStatusEnum = pgEnum("receiving_status", ["pending", "partial", "completed", "cancelled"]);
 export const toothConditionEnum = pgEnum("tooth_condition", ["healthy", "carie", "restoration", "extraction", "planned_treatment", "completed_treatment"]);
 
 // Companies table for SaaS multi-tenancy

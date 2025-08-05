@@ -72,7 +72,7 @@ app.use((req, res, next) => {
         "order_number" text NOT NULL,
         "order_date" date NOT NULL,
         "expected_delivery_date" date,
-        "status" text DEFAULT 'draft' NOT NULL,
+        "status" purchase_order_status DEFAULT 'draft' NOT NULL,
         "total_amount" numeric(10,2) NOT NULL,
         "notes" text,
         "created_by" integer,
@@ -93,6 +93,23 @@ app.use((req, res, next) => {
       )
     `);
     
+    // Create enums first
+    await db.execute(sql`
+      DO $$ BEGIN
+        CREATE TYPE purchase_order_status AS ENUM ('draft', 'sent', 'confirmed', 'partial', 'received', 'cancelled');
+      EXCEPTION
+        WHEN duplicate_object THEN null;
+      END $$;
+    `);
+    
+    await db.execute(sql`
+      DO $$ BEGIN
+        CREATE TYPE receiving_status AS ENUM ('pending', 'partial', 'completed', 'cancelled');
+      EXCEPTION
+        WHEN duplicate_object THEN null;
+      END $$;
+    `);
+    
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS "receivings" (
         "id" serial PRIMARY KEY NOT NULL,
@@ -101,6 +118,7 @@ app.use((req, res, next) => {
         "supplier_id" integer NOT NULL,
         "receiving_number" text NOT NULL,
         "receiving_date" date,
+        "status" receiving_status DEFAULT 'pending' NOT NULL,
         "total_amount" numeric(10,2) NOT NULL,
         "notes" text,
         "created_by" integer,
