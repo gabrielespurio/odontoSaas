@@ -21,6 +21,9 @@ import Financial from "@/pages/financial";
 import FinancialReceivables from "@/pages/financial-receivables";
 import FinancialPayables from "@/pages/financial-payables";
 import FinancialCashFlow from "@/pages/financial-cashflow";
+import Suppliers from "@/pages/Suppliers";
+import PurchaseOrders from "@/pages/PurchaseOrders";
+import Receivings from "@/pages/Receivings";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import Companies from "@/pages/companies";
@@ -82,6 +85,9 @@ function Router() {
         <Route path="/financial/receivables" component={() => <ProtectedRoute module="financial"><FinancialReceivables /></ProtectedRoute>} />
         <Route path="/financial/payables" component={() => <ProtectedRoute module="financial"><FinancialPayables /></ProtectedRoute>} />
         <Route path="/financial/cashflow" component={() => <ProtectedRoute module="financial"><FinancialCashFlow /></ProtectedRoute>} />
+        <Route path="/suppliers" component={() => <ProtectedRoute module="purchases"><Suppliers /></ProtectedRoute>} />
+        <Route path="/purchase-orders" component={() => <ProtectedRoute module="purchases"><PurchaseOrders /></ProtectedRoute>} />
+        <Route path="/receivings" component={() => <ProtectedRoute module="purchases"><Receivings /></ProtectedRoute>} />
         <Route path="/reports" component={() => <ProtectedRoute module="reports"><Reports /></ProtectedRoute>} />
         <Route path="/settings" component={() => <ProtectedRoute module="settings"><Settings /></ProtectedRoute>} />
         <Route path="/companies" component={() => <ProtectedRoute module="companies"><Companies /></ProtectedRoute>} />

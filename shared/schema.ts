@@ -23,6 +23,8 @@ export const paymentStatusEnum = pgEnum("payment_status", ["pending", "paid", "o
 export const accountTypeEnum = pgEnum("account_type", ["receivable", "payable"]);
 export const paymentMethodEnum = pgEnum("payment_method", ["cash", "credit_card", "debit_card", "pix", "bank_transfer", "check"]);
 export const expenseCategoryEnum = pgEnum("expense_category", ["rent", "salaries", "materials", "equipment", "utilities", "marketing", "other"]);
+export const purchaseOrderStatusEnum = pgEnum("purchase_order_status", ["draft", "sent", "confirmed", "cancelled"]);
+export const receivingStatusEnum = pgEnum("receiving_status", ["pending", "partial", "received", "cancelled"]);
 export const toothConditionEnum = pgEnum("tooth_condition", ["healthy", "carie", "restoration", "extraction", "planned_treatment", "completed_treatment"]);
 
 // Companies table for SaaS multi-tenancy
@@ -249,6 +251,96 @@ export const cashFlow = pgTable("cash_flow", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Purchase module tables
+// Suppliers table
+export const suppliers = pgTable("suppliers", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(), // FK to companies table
+  name: text("name").notNull(),
+  cnpj: text("cnpj"),
+  email: text("email"),
+  phone: text("phone").notNull(),
+  contactPerson: text("contact_person"),
+  // Address fields
+  cep: text("cep"),
+  street: text("street"),
+  number: text("number"),
+  neighborhood: text("neighborhood"),
+  city: text("city"),
+  state: text("state"),
+  // Status and notes
+  isActive: boolean("is_active").notNull().default(true),
+  notes: text("notes"),
+  createdBy: integer("created_by"), // ID do usuário que criou
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  // Unique constraint per company (same CNPJ can exist in different companies if provided)
+  uniqueCnpjPerCompany: unique().on(table.cnpj, table.companyId),
+}));
+
+// Purchase Orders table
+export const purchaseOrders = pgTable("purchase_orders", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(), // FK to companies table
+  supplierId: integer("supplier_id").notNull(), // FK to suppliers table
+  orderNumber: text("order_number").notNull(), // Auto-generated unique order number
+  orderDate: date("order_date").notNull(),
+  expectedDeliveryDate: date("expected_delivery_date"),
+  status: purchaseOrderStatusEnum("status").notNull().default("draft"),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"),
+  createdBy: integer("created_by"), // ID do usuário que criou
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  // Unique order number per company
+  uniqueOrderNumberPerCompany: unique().on(table.orderNumber, table.companyId),
+}));
+
+// Purchase Order Items table
+export const purchaseOrderItems = pgTable("purchase_order_items", {
+  id: serial("id").primaryKey(),
+  purchaseOrderId: integer("purchase_order_id").notNull(), // FK to purchase_orders table
+  description: text("description").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"),
+});
+
+// Receivings table (recebimentos)
+export const receivings = pgTable("receivings", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(), // FK to companies table
+  purchaseOrderId: integer("purchase_order_id").notNull(), // FK to purchase_orders table
+  supplierId: integer("supplier_id").notNull(), // FK to suppliers table
+  receivingNumber: text("receiving_number").notNull(), // Auto-generated unique receiving number
+  receivingDate: date("receiving_date"),
+  status: receivingStatusEnum("status").notNull().default("pending"),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"),
+  createdBy: integer("created_by"), // ID do usuário que criou
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  // Unique receiving number per company
+  uniqueReceivingNumberPerCompany: unique().on(table.receivingNumber, table.companyId),
+}));
+
+// Receiving Items table
+export const receivingItems = pgTable("receiving_items", {
+  id: serial("id").primaryKey(),
+  receivingId: integer("receiving_id").notNull(), // FK to receivings table
+  purchaseOrderItemId: integer("purchase_order_item_id").notNull(), // FK to purchase_order_items table
+  description: text("description").notNull(),
+  quantityOrdered: decimal("quantity_ordered", { precision: 10, scale: 2 }).notNull(),
+  quantityReceived: decimal("quantity_received", { precision: 10, scale: 2 }).notNull().default("0"),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"),
+});
+
 // Manter tabela financial para compatibilidade (deprecated)
 export const financial = pgTable("financial", {
   id: serial("id").primaryKey(),
@@ -427,6 +519,64 @@ export const payablesRelations = relations(payables, ({ one, many }) => ({
   cashFlowEntries: many(cashFlow),
 }));
 
+// Purchase module relations
+export const suppliersRelations = relations(suppliers, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [suppliers.companyId],
+    references: [companies.id],
+  }),
+  purchaseOrders: many(purchaseOrders),
+  receivings: many(receivings),
+}));
+
+export const purchaseOrdersRelations = relations(purchaseOrders, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [purchaseOrders.companyId],
+    references: [companies.id],
+  }),
+  supplier: one(suppliers, {
+    fields: [purchaseOrders.supplierId],
+    references: [suppliers.id],
+  }),
+  items: many(purchaseOrderItems),
+  receivings: many(receivings),
+}));
+
+export const purchaseOrderItemsRelations = relations(purchaseOrderItems, ({ one, many }) => ({
+  purchaseOrder: one(purchaseOrders, {
+    fields: [purchaseOrderItems.purchaseOrderId],
+    references: [purchaseOrders.id],
+  }),
+  receivingItems: many(receivingItems),
+}));
+
+export const receivingsRelations = relations(receivings, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [receivings.companyId],
+    references: [companies.id],
+  }),
+  supplier: one(suppliers, {
+    fields: [receivings.supplierId],
+    references: [suppliers.id],
+  }),
+  purchaseOrder: one(purchaseOrders, {
+    fields: [receivings.purchaseOrderId],
+    references: [purchaseOrders.id],
+  }),
+  items: many(receivingItems),
+}));
+
+export const receivingItemsRelations = relations(receivingItems, ({ one }) => ({
+  receiving: one(receivings, {
+    fields: [receivingItems.receivingId],
+    references: [receivings.id],
+  }),
+  purchaseOrderItem: one(purchaseOrderItems, {
+    fields: [receivingItems.purchaseOrderItemId],
+    references: [purchaseOrderItems.id],
+  }),
+}));
+
 export const cashFlowRelations = relations(cashFlow, ({ one }) => ({
   company: one(companies, {
     fields: [cashFlow.companyId],
@@ -594,5 +744,78 @@ export type Receivable = typeof receivables.$inferSelect;
 export type InsertReceivable = z.infer<typeof insertReceivableSchema>;
 export type Payable = typeof payables.$inferSelect;
 export type InsertPayable = z.infer<typeof insertPayableSchema>;
+
+// Purchase module insert schemas
+export const insertSupplierSchema = createInsertSchema(suppliers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  companyId: true, // Excluir companyId pois será adicionado no backend
+}).extend({
+  phone: z.string().min(10, "Telefone deve ter pelo menos 10 caracteres"),
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  cnpj: z.string().optional(),
+});
+
+export const insertPurchaseOrderSchema = createInsertSchema(purchaseOrders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  companyId: true, // Excluir companyId pois será adicionado no backend
+  orderNumber: true, // Auto-generated
+}).extend({
+  supplierId: z.number().min(1, "Fornecedor é obrigatório"),
+  totalAmount: z.number().positive("Valor total deve ser positivo"),
+  orderDate: z.string().min(1, "Data do pedido é obrigatória"),
+  expectedDeliveryDate: z.string().optional().nullable(),
+});
+
+export const insertPurchaseOrderItemSchema = createInsertSchema(purchaseOrderItems).omit({
+  id: true,
+}).extend({
+  purchaseOrderId: z.number().min(1, "ID do pedido é obrigatório"),
+  description: z.string().min(1, "Descrição é obrigatória"),
+  quantity: z.number().positive("Quantidade deve ser positiva"),
+  unitPrice: z.number().positive("Preço unitário deve ser positivo"),
+  totalPrice: z.number().positive("Preço total deve ser positivo"),
+});
+
+export const insertReceivingSchema = createInsertSchema(receivings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  companyId: true, // Excluir companyId pois será adicionado no backend
+  receivingNumber: true, // Auto-generated
+}).extend({
+  purchaseOrderId: z.number().min(1, "Pedido de compra é obrigatório"),
+  supplierId: z.number().min(1, "Fornecedor é obrigatório"),
+  totalAmount: z.number().positive("Valor total deve ser positivo"),
+  receivingDate: z.string().optional().nullable(),
+});
+
+export const insertReceivingItemSchema = createInsertSchema(receivingItems).omit({
+  id: true,
+}).extend({
+  receivingId: z.number().min(1, "ID do recebimento é obrigatório"),
+  purchaseOrderItemId: z.number().min(1, "ID do item do pedido é obrigatório"),
+  description: z.string().min(1, "Descrição é obrigatória"),
+  quantityOrdered: z.number().positive("Quantidade pedida deve ser positiva"),
+  quantityReceived: z.number().min(0, "Quantidade recebida deve ser maior ou igual a zero"),
+  unitPrice: z.number().positive("Preço unitário deve ser positivo"),
+  totalPrice: z.number().positive("Preço total deve ser positivo"),
+});
+
+// Purchase module types
+export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
+export type InsertPurchaseOrder = z.infer<typeof insertPurchaseOrderSchema>;
+export type InsertPurchaseOrderItem = z.infer<typeof insertPurchaseOrderItemSchema>;
+export type InsertReceiving = z.infer<typeof insertReceivingSchema>;
+export type InsertReceivingItem = z.infer<typeof insertReceivingItemSchema>;
+
+export type Supplier = typeof suppliers.$inferSelect;
+export type PurchaseOrder = typeof purchaseOrders.$inferSelect;
+export type PurchaseOrderItem = typeof purchaseOrderItems.$inferSelect;
+export type Receiving = typeof receivings.$inferSelect;
+export type ReceivingItem = typeof receivingItems.$inferSelect;
 export type CashFlow = typeof cashFlow.$inferSelect;
 export type InsertCashFlow = z.infer<typeof insertCashFlowSchema>;

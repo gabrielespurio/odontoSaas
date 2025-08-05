@@ -42,7 +42,7 @@ export function usePermissions() {
     
     // Admin has access to everything
     if (user.role === "admin" || user.role === "Administrador") {
-      return ["dashboard", "patients", "schedule", "consultations", "procedures", "financial", "reports", "settings", "companies"];
+      return ["dashboard", "patients", "schedule", "consultations", "procedures", "financial", "purchases", "reports", "settings", "companies"];
     }
     
     // If no profile found, use default permissions
@@ -58,7 +58,7 @@ export function usePermissions() {
     switch (role) {
       case "admin":
       case "Administrador":
-        return ["dashboard", "patients", "schedule", "consultations", "procedures", "financial", "reports", "settings", "companies"];
+        return ["dashboard", "patients", "schedule", "consultations", "procedures", "financial", "purchases", "reports", "settings", "companies"];
       case "dentist":
         return ["dashboard", "patients", "schedule", "consultations", "procedures", "reports"];
       case "reception":

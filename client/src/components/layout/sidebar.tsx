@@ -15,7 +15,8 @@ import {
   ChevronDown,
   ChevronRight,
   X,
-  Building2
+  Building2,
+  ShoppingCart
 } from "lucide-react";
 import odontoSyncLogo from "@assets/ChatGPT_Image_10_de_jul._de_2025__12_09_27-removebg-preview_1752160369330.png";
 
@@ -36,6 +37,17 @@ const navigation = [
       { name: "Fluxo de Caixa", href: "/financial/cashflow" },
     ]
   },
+  { 
+    name: "Compras", 
+    href: "/suppliers", 
+    icon: ShoppingCart,
+    module: "purchases",
+    submenus: [
+      { name: "Fornecedores", href: "/suppliers" },
+      { name: "Pedidos de Compra", href: "/purchase-orders" },
+      { name: "Recebimentos", href: "/receivings" },
+    ]
+  },
   { name: "Relatórios", href: "/reports", icon: FileText, module: "reports" },
   { name: "Configurações", href: "/settings", icon: Settings, module: "settings" },
   { name: "Empresas", href: "/companies", icon: Building2, module: "companies" },
@@ -51,6 +63,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const { hasAccess } = usePermissions();
   const [isFinanceOpen, setIsFinanceOpen] = useState(false);
+  const [isPurchasesOpen, setIsPurchasesOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -58,6 +71,9 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
 
   // Check if any financial submenu is active
   const isFinanceActive = location === "/financial" || location.startsWith("/financial/");
+  
+  // Check if any purchases submenu is active
+  const isPurchasesActive = location === "/suppliers" || location === "/purchase-orders" || location === "/receivings";
 
   return (
     <>
@@ -116,14 +132,20 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             
             // Se o item tem submenus, renderizar de forma diferente
             if (item.submenus) {
-              const ChevronIcon = isFinanceOpen ? ChevronDown : ChevronRight;
+              const isItemActive = item.module === "financial" ? isFinanceActive : isPurchasesActive;
+              const isItemOpen = item.module === "financial" ? isFinanceOpen : isPurchasesOpen;
+              const toggleItem = item.module === "financial" 
+                ? () => setIsFinanceOpen(!isFinanceOpen)
+                : () => setIsPurchasesOpen(!isPurchasesOpen);
+              
+              const ChevronIcon = isItemOpen ? ChevronDown : ChevronRight;
               
               return (
                 <div key={item.name} className="space-y-1">
                   <button
-                    onClick={() => setIsFinanceOpen(!isFinanceOpen)}
+                    onClick={toggleItem}
                     className={`flex items-center justify-between w-full px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      isFinanceActive
+                      isItemActive
                         ? "text-white bg-primary"
                         : "text-neutral-600 hover:bg-neutral-100"
                     }`}
@@ -135,7 +157,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                     <ChevronIcon className="w-4 h-4" />
                   </button>
                   
-                  {isFinanceOpen && (
+                  {isItemOpen && (
                     <div className="ml-6 space-y-1">
                       {item.submenus.map((submenu) => {
                         const isSubmenuActive = location === submenu.href;

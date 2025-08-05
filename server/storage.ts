@@ -13,6 +13,11 @@ import {
   receivables,
   payables,
   cashFlow,
+  suppliers,
+  purchaseOrders,
+  purchaseOrderItems,
+  receivings,
+  receivingItems,
   type Company,
   type InsertCompany,
   type User,
@@ -41,6 +46,16 @@ import {
   type InsertPayable,
   type CashFlow,
   type InsertCashFlow,
+  type Supplier,
+  type InsertSupplier,
+  type PurchaseOrder,
+  type InsertPurchaseOrder,
+  type PurchaseOrderItem,
+  type InsertPurchaseOrderItem,
+  type Receiving,
+  type InsertReceiving,
+  type ReceivingItem,
+  type InsertReceivingItem,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, sql, ne, not, gte, lte, like, lt, gt, isNull, asc } from "drizzle-orm";
@@ -151,6 +166,25 @@ export interface IStorage {
     monthlyRevenue: number;
     pendingPayments: number;
   }>;
+  
+  // Purchase Module - Suppliers
+  getSuppliers(companyId?: number): Promise<Supplier[]>;
+  getSupplier(id: number, companyId?: number): Promise<Supplier | undefined>;
+  createSupplier(supplier: InsertSupplier & { companyId: number; createdBy?: number }): Promise<Supplier>;
+  updateSupplier(id: number, supplier: Partial<InsertSupplier>): Promise<Supplier>;
+  deleteSupplier(id: number): Promise<void>;
+  
+  // Purchase Module - Purchase Orders
+  getPurchaseOrders(companyId?: number): Promise<(PurchaseOrder & { supplier: Supplier; items: PurchaseOrderItem[] })[]>;
+  getPurchaseOrder(id: number, companyId?: number): Promise<(PurchaseOrder & { supplier: Supplier; items: PurchaseOrderItem[] }) | undefined>;
+  createPurchaseOrder(order: InsertPurchaseOrder & { companyId: number; createdBy?: number }, items: InsertPurchaseOrderItem[]): Promise<PurchaseOrder & { supplier: Supplier; items: PurchaseOrderItem[] }>;
+  updatePurchaseOrder(id: number, order: Partial<InsertPurchaseOrder>, items?: InsertPurchaseOrderItem[]): Promise<PurchaseOrder & { supplier: Supplier; items: PurchaseOrderItem[] }>;
+  deletePurchaseOrder(id: number): Promise<void>;
+  
+  // Purchase Module - Receivings
+  getReceivings(companyId?: number): Promise<(Receiving & { supplier: Supplier; purchaseOrder: PurchaseOrder; items: ReceivingItem[] })[]>;
+  getReceiving(id: number, companyId?: number): Promise<(Receiving & { supplier: Supplier; purchaseOrder: PurchaseOrder; items: ReceivingItem[] }) | undefined>;
+  updateReceivingStatus(id: number, status: string, receivingDate?: string | null, items?: Partial<ReceivingItem>[]): Promise<Receiving & { supplier: Supplier; purchaseOrder: PurchaseOrder; items: ReceivingItem[] }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1972,6 +2006,378 @@ export class DatabaseStorage implements IStorage {
       dentistProcedures,
       procedureCount
     };
+  }
+  // ============= PURCHASE MODULE METHODS =============
+  
+  // Suppliers
+  async getSuppliers(companyId?: number): Promise<Supplier[]> {
+    const whereConditions = [];
+    if (companyId) {
+      whereConditions.push(eq(suppliers.companyId, companyId));
+    }
+    
+    return await db
+      .select()
+      .from(suppliers)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+      .orderBy(desc(suppliers.createdAt));
+  }
+
+  async getSupplier(id: number, companyId?: number): Promise<Supplier | undefined> {
+    const whereConditions = [eq(suppliers.id, id)];
+    if (companyId) {
+      whereConditions.push(eq(suppliers.companyId, companyId));
+    }
+    
+    const [supplier] = await db
+      .select()
+      .from(suppliers)
+      .where(and(...whereConditions));
+    return supplier || undefined;
+  }
+
+  async createSupplier(supplier: InsertSupplier & { companyId: number; createdBy?: number }): Promise<Supplier> {
+    const [newSupplier] = await db.insert(suppliers).values(supplier).returning();
+    return newSupplier;
+  }
+
+  async updateSupplier(id: number, supplierData: Partial<InsertSupplier>): Promise<Supplier> {
+    const [updatedSupplier] = await db
+      .update(suppliers)
+      .set({ ...supplierData, updatedAt: new Date() })
+      .where(eq(suppliers.id, id))
+      .returning();
+    return updatedSupplier;
+  }
+
+  async deleteSupplier(id: number): Promise<void> {
+    await db.delete(suppliers).where(eq(suppliers.id, id));
+  }
+
+  // Purchase Orders
+  async getPurchaseOrders(companyId?: number): Promise<(PurchaseOrder & { supplier: Supplier; items: PurchaseOrderItem[] })[]> {
+    const whereConditions = [];
+    if (companyId) {
+      whereConditions.push(eq(purchaseOrders.companyId, companyId));
+    }
+    
+    const ordersResult = await db
+      .select({
+        order: purchaseOrders,
+        supplier: suppliers,
+      })
+      .from(purchaseOrders)
+      .leftJoin(suppliers, eq(purchaseOrders.supplierId, suppliers.id))
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+      .orderBy(desc(purchaseOrders.createdAt));
+
+    // Get items for each order
+    const ordersWithItems = await Promise.all(
+      ordersResult.map(async (row) => {
+        const items = await db
+          .select()
+          .from(purchaseOrderItems)
+          .where(eq(purchaseOrderItems.purchaseOrderId, row.order.id));
+        
+        return {
+          ...row.order,
+          supplier: row.supplier!,
+          items,
+        };
+      })
+    );
+
+    return ordersWithItems;
+  }
+
+  async getPurchaseOrder(id: number, companyId?: number): Promise<(PurchaseOrder & { supplier: Supplier; items: PurchaseOrderItem[] }) | undefined> {
+    const whereConditions = [eq(purchaseOrders.id, id)];
+    if (companyId) {
+      whereConditions.push(eq(purchaseOrders.companyId, companyId));
+    }
+    
+    const [orderResult] = await db
+      .select({
+        order: purchaseOrders,
+        supplier: suppliers,
+      })
+      .from(purchaseOrders)
+      .leftJoin(suppliers, eq(purchaseOrders.supplierId, suppliers.id))
+      .where(and(...whereConditions));
+
+    if (!orderResult) return undefined;
+
+    const items = await db
+      .select()
+      .from(purchaseOrderItems)
+      .where(eq(purchaseOrderItems.purchaseOrderId, id));
+
+    return {
+      ...orderResult.order,
+      supplier: orderResult.supplier!,
+      items,
+    };
+  }
+
+  async createPurchaseOrder(
+    order: InsertPurchaseOrder & { companyId: number; createdBy?: number }, 
+    items: InsertPurchaseOrderItem[]
+  ): Promise<PurchaseOrder & { supplier: Supplier; items: PurchaseOrderItem[] }> {
+    return await db.transaction(async (tx) => {
+      // Generate unique order number
+      const currentYear = new Date().getFullYear();
+      const orderCount = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(purchaseOrders)
+        .where(and(
+          eq(purchaseOrders.companyId, order.companyId),
+          sql`EXTRACT(YEAR FROM ${purchaseOrders.createdAt}) = ${currentYear}`
+        ));
+
+      const orderNumber = `PO-${currentYear}-${String(orderCount[0].count + 1).padStart(4, '0')}`;
+
+      const [newOrder] = await tx
+        .insert(purchaseOrders)
+        .values({ ...order, orderNumber })
+        .returning();
+
+      // Insert items
+      const orderItems = await tx
+        .insert(purchaseOrderItems)
+        .values(items.map(item => ({ ...item, purchaseOrderId: newOrder.id })))
+        .returning();
+
+      // Create pending receiving automatically
+      const [newReceiving] = await tx
+        .insert(receivings)
+        .values({
+          companyId: order.companyId,
+          purchaseOrderId: newOrder.id,
+          supplierId: order.supplierId,
+          receivingNumber: `REC-${currentYear}-${String(orderCount[0].count + 1).padStart(4, '0')}`,
+          status: 'pending',
+          totalAmount: order.totalAmount,
+          createdBy: order.createdBy,
+        })
+        .returning();
+
+      // Create receiving items from purchase order items
+      await tx
+        .insert(receivingItems)
+        .values(orderItems.map(item => ({
+          receivingId: newReceiving.id,
+          purchaseOrderItemId: item.id,
+          description: item.description,
+          quantityOrdered: item.quantity,
+          quantityReceived: 0,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+        })));
+
+      // Get supplier data
+      const [supplier] = await tx
+        .select()
+        .from(suppliers)
+        .where(eq(suppliers.id, order.supplierId));
+
+      return {
+        ...newOrder,
+        supplier: supplier!,
+        items: orderItems,
+      };
+    });
+  }
+
+  async updatePurchaseOrder(
+    id: number, 
+    orderData: Partial<InsertPurchaseOrder>, 
+    items?: InsertPurchaseOrderItem[]
+  ): Promise<PurchaseOrder & { supplier: Supplier; items: PurchaseOrderItem[] }> {
+    return await db.transaction(async (tx) => {
+      const [updatedOrder] = await tx
+        .update(purchaseOrders)
+        .set({ ...orderData, updatedAt: new Date() })
+        .where(eq(purchaseOrders.id, id))
+        .returning();
+
+      if (items) {
+        // Delete existing items
+        await tx.delete(purchaseOrderItems).where(eq(purchaseOrderItems.purchaseOrderId, id));
+        
+        // Insert new items
+        await tx
+          .insert(purchaseOrderItems)
+          .values(items.map(item => ({ ...item, purchaseOrderId: id })));
+      }
+
+      // Get current items and supplier
+      const currentItems = await tx
+        .select()
+        .from(purchaseOrderItems)
+        .where(eq(purchaseOrderItems.purchaseOrderId, id));
+
+      const [supplier] = await tx
+        .select()
+        .from(suppliers)
+        .where(eq(suppliers.id, updatedOrder.supplierId));
+
+      return {
+        ...updatedOrder,
+        supplier: supplier!,
+        items: currentItems,
+      };
+    });
+  }
+
+  async deletePurchaseOrder(id: number): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Delete items first
+      await tx.delete(purchaseOrderItems).where(eq(purchaseOrderItems.purchaseOrderId, id));
+      
+      // Delete related receivings and their items
+      const relatedReceivings = await tx
+        .select({ id: receivings.id })
+        .from(receivings)
+        .where(eq(receivings.purchaseOrderId, id));
+
+      for (const receiving of relatedReceivings) {
+        await tx.delete(receivingItems).where(eq(receivingItems.receivingId, receiving.id));
+      }
+      
+      await tx.delete(receivings).where(eq(receivings.purchaseOrderId, id));
+      
+      // Finally delete the purchase order
+      await tx.delete(purchaseOrders).where(eq(purchaseOrders.id, id));
+    });
+  }
+
+  // Receivings
+  async getReceivings(companyId?: number): Promise<(Receiving & { supplier: Supplier; purchaseOrder: PurchaseOrder; items: ReceivingItem[] })[]> {
+    const whereConditions = [];
+    if (companyId) {
+      whereConditions.push(eq(receivings.companyId, companyId));
+    }
+    
+    const receivingsResult = await db
+      .select({
+        receiving: receivings,
+        supplier: suppliers,
+        purchaseOrder: purchaseOrders,
+      })
+      .from(receivings)
+      .leftJoin(suppliers, eq(receivings.supplierId, suppliers.id))
+      .leftJoin(purchaseOrders, eq(receivings.purchaseOrderId, purchaseOrders.id))
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+      .orderBy(desc(receivings.createdAt));
+
+    // Get items for each receiving
+    const receivingsWithItems = await Promise.all(
+      receivingsResult.map(async (row) => {
+        const items = await db
+          .select()
+          .from(receivingItems)
+          .where(eq(receivingItems.receivingId, row.receiving.id));
+        
+        return {
+          ...row.receiving,
+          supplier: row.supplier!,
+          purchaseOrder: row.purchaseOrder!,
+          items,
+        };
+      })
+    );
+
+    return receivingsWithItems;
+  }
+
+  async getReceiving(id: number, companyId?: number): Promise<(Receiving & { supplier: Supplier; purchaseOrder: PurchaseOrder; items: ReceivingItem[] }) | undefined> {
+    const whereConditions = [eq(receivings.id, id)];
+    if (companyId) {
+      whereConditions.push(eq(receivings.companyId, companyId));
+    }
+    
+    const [receivingResult] = await db
+      .select({
+        receiving: receivings,
+        supplier: suppliers,
+        purchaseOrder: purchaseOrders,
+      })
+      .from(receivings)
+      .leftJoin(suppliers, eq(receivings.supplierId, suppliers.id))
+      .leftJoin(purchaseOrders, eq(receivings.purchaseOrderId, purchaseOrders.id))
+      .where(and(...whereConditions));
+
+    if (!receivingResult) return undefined;
+
+    const items = await db
+      .select()
+      .from(receivingItems)
+      .where(eq(receivingItems.receivingId, id));
+
+    return {
+      ...receivingResult.receiving,
+      supplier: receivingResult.supplier!,
+      purchaseOrder: receivingResult.purchaseOrder!,
+      items,
+    };
+  }
+
+  async updateReceivingStatus(
+    id: number, 
+    status: string, 
+    receivingDate?: string | null, 
+    items?: Partial<ReceivingItem>[]
+  ): Promise<Receiving & { supplier: Supplier; purchaseOrder: PurchaseOrder; items: ReceivingItem[] }> {
+    return await db.transaction(async (tx) => {
+      const [updatedReceiving] = await tx
+        .update(receivings)
+        .set({ 
+          status: status as any, 
+          receivingDate: receivingDate || null, 
+          updatedAt: new Date() 
+        })
+        .where(eq(receivings.id, id))
+        .returning();
+
+      if (items) {
+        // Update receiving items with received quantities
+        for (const item of items) {
+          if (item.id) {
+            await tx
+              .update(receivingItems)
+              .set({ 
+                quantityReceived: item.quantityReceived,
+                totalPrice: item.totalPrice 
+              })
+              .where(eq(receivingItems.id, item.id));
+          }
+        }
+      }
+
+      // Get current items, supplier, and purchase order
+      const currentItems = await tx
+        .select()
+        .from(receivingItems)
+        .where(eq(receivingItems.receivingId, id));
+
+      const [receivingWithRelations] = await tx
+        .select({
+          receiving: receivings,
+          supplier: suppliers,
+          purchaseOrder: purchaseOrders,
+        })
+        .from(receivings)
+        .leftJoin(suppliers, eq(receivings.supplierId, suppliers.id))
+        .leftJoin(purchaseOrders, eq(receivings.purchaseOrderId, purchaseOrders.id))
+        .where(eq(receivings.id, id));
+
+      return {
+        ...updatedReceiving,
+        supplier: receivingWithRelations.supplier!,
+        purchaseOrder: receivingWithRelations.purchaseOrder!,
+        items: currentItems,
+      };
+    });
   }
 }
 

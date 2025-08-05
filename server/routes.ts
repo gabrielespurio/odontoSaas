@@ -24,6 +24,9 @@ import {
   insertPayableSchema,
   insertCashFlowSchema,
   insertCompanySchema,
+  insertSupplierSchema,
+  insertPurchaseOrderSchema,
+  insertReceivingSchema,
   users,
   patients,
   appointments,
@@ -3013,6 +3016,257 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(company);
     } catch (error) {
       console.error("Update company error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // ============= PURCHASE MODULE ROUTES =============
+  
+  // Suppliers routes
+  app.get("/api/suppliers", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
+      
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
+      
+      const suppliers = await storage.getSuppliers(companyId);
+      res.json(suppliers);
+    } catch (error) {
+      console.error("Get suppliers error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/suppliers", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      
+      if (!user.companyId) {
+        return res.status(400).json({ message: "User must belong to a company" });
+      }
+      
+      const supplierData = insertSupplierSchema.parse(req.body);
+      
+      const supplierWithCompany = {
+        ...supplierData,
+        companyId: user.companyId,
+        createdBy: user.id
+      };
+      
+      const supplier = await storage.createSupplier(supplierWithCompany);
+      res.json(supplier);
+    } catch (error) {
+      console.error("Create supplier error:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          details: error.issues 
+        });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/suppliers/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = req.user;
+      const supplierData = insertSupplierSchema.partial().parse(req.body);
+      
+      // Verify supplier belongs to user's company
+      const currentSupplier = await storage.getSupplier(id, user.companyId);
+      if (!currentSupplier) {
+        return res.status(404).json({ message: "Fornecedor não encontrado" });
+      }
+      
+      const supplier = await storage.updateSupplier(id, supplierData);
+      res.json(supplier);
+    } catch (error) {
+      console.error("Update supplier error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/suppliers/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = req.user;
+      
+      // Verify supplier belongs to user's company
+      const currentSupplier = await storage.getSupplier(id, user.companyId);
+      if (!currentSupplier) {
+        return res.status(404).json({ message: "Fornecedor não encontrado" });
+      }
+      
+      await storage.deleteSupplier(id);
+      res.json({ message: "Fornecedor excluído com sucesso" });
+    } catch (error) {
+      console.error("Delete supplier error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Purchase Orders routes
+  app.get("/api/purchase-orders", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
+      
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
+      
+      const purchaseOrders = await storage.getPurchaseOrders(companyId);
+      res.json(purchaseOrders);
+    } catch (error) {
+      console.error("Get purchase orders error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/purchase-orders", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      
+      if (!user.companyId) {
+        return res.status(400).json({ message: "User must belong to a company" });
+      }
+      
+      const { items, ...orderData } = req.body;
+      const purchaseOrderData = insertPurchaseOrderSchema.parse(orderData);
+      
+      const orderWithCompany = {
+        ...purchaseOrderData,
+        companyId: user.companyId,
+        createdBy: user.id
+      };
+      
+      const purchaseOrder = await storage.createPurchaseOrder(orderWithCompany, items);
+      res.json(purchaseOrder);
+    } catch (error) {
+      console.error("Create purchase order error:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          details: error.issues 
+        });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/purchase-orders/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = req.user;
+      const { items, ...orderData } = req.body;
+      const purchaseOrderData = insertPurchaseOrderSchema.partial().parse(orderData);
+      
+      // Verify purchase order belongs to user's company
+      const currentOrder = await storage.getPurchaseOrder(id, user.companyId);
+      if (!currentOrder) {
+        return res.status(404).json({ message: "Pedido de compra não encontrado" });
+      }
+      
+      const purchaseOrder = await storage.updatePurchaseOrder(id, purchaseOrderData, items);
+      res.json(purchaseOrder);
+    } catch (error) {
+      console.error("Update purchase order error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/purchase-orders/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = req.user;
+      
+      // Verify purchase order belongs to user's company and can be deleted
+      const currentOrder = await storage.getPurchaseOrder(id, user.companyId);
+      if (!currentOrder) {
+        return res.status(404).json({ message: "Pedido de compra não encontrado" });
+      }
+      
+      // Only allow deletion if status is draft
+      if (currentOrder.status !== 'draft') {
+        return res.status(400).json({ message: "Apenas pedidos em rascunho podem ser excluídos" });
+      }
+      
+      await storage.deletePurchaseOrder(id);
+      res.json({ message: "Pedido de compra excluído com sucesso" });
+    } catch (error) {
+      console.error("Delete purchase order error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Receivings routes
+  app.get("/api/receivings", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
+      
+      // Apply company-based data isolation
+      let companyId = user.companyId;
+      
+      // If user is system admin (no companyId) and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
+      
+      const receivings = await storage.getReceivings(companyId);
+      res.json(receivings);
+    } catch (error) {
+      console.error("Get receivings error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/receivings/:id/status", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = req.user;
+      const { status, receivingDate, items } = req.body;
+      
+      // Verify receiving belongs to user's company
+      const currentReceiving = await storage.getReceiving(id, user.companyId);
+      if (!currentReceiving) {
+        return res.status(404).json({ message: "Recebimento não encontrado" });
+      }
+      
+      const receiving = await storage.updateReceivingStatus(id, status, receivingDate, items);
+      
+      // If status changed to 'received', automatically create payable
+      if (status === 'received' && currentReceiving.status !== 'received') {
+        const payableData = {
+          companyId: user.companyId,
+          amount: receiving.totalAmount,
+          dueDate: receivingDate || new Date().toISOString().split('T')[0],
+          status: 'pending' as const,
+          category: 'materials' as const,
+          description: `Compra - Pedido ${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
+          supplier: receiving.supplier?.name,
+          notes: `Recebimento automaticamente criado do pedido ${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
+          createdBy: user.id
+        };
+        
+        await storage.createPayable(payableData);
+      }
+      
+      res.json(receiving);
+    } catch (error) {
+      console.error("Update receiving status error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
