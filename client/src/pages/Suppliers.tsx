@@ -34,6 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { applyCnpjMask, applyPhoneMask, applyCepMask, removeMask, validateEmail, validateCnpj, validateCep } from "@/utils/masks";
 import { fetchAddressByCep } from "@/utils/viaCep";
+import { useCompanyFilter } from "@/contexts/company-context";
 
 export default function Suppliers() {
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
@@ -41,6 +42,7 @@ export default function Suppliers() {
   const [loadingCep, setLoadingCep] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const companyId = useCompanyFilter();
 
   const form = useForm<InsertSupplier>({
     resolver: zodResolver(insertSupplierSchema),
@@ -61,12 +63,23 @@ export default function Suppliers() {
   });
 
   const { data: suppliers = [], isLoading } = useQuery<Supplier[]>({
-    queryKey: ['/api/suppliers'],
+    queryKey: ['/api/suppliers', companyId],
+    queryFn: async () => {
+      const url = companyId ? `/api/suppliers?companyId=${companyId}` : '/api/suppliers';
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch suppliers');
+      return response.json();
+    },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertSupplier) => {
-      return await apiRequest('POST', '/api/suppliers', data);
+      const dataWithCompany = companyId ? { ...data, companyId } : data;
+      return await apiRequest('POST', '/api/suppliers', dataWithCompany);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/suppliers'] });
