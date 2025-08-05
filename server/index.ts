@@ -48,6 +48,9 @@ app.use((req, res, next) => {
     await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS account_type VARCHAR(20) NOT NULL DEFAULT 'clinic'`);
     await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS dentist_id INTEGER`);
     await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS created_by INTEGER`);
+    
+    // Add missing cep column to suppliers table
+    await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS cep TEXT`);
 
     
     // Remove limit fields from companies table

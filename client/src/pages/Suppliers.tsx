@@ -339,6 +339,7 @@ export default function Suppliers() {
                   )}
                 />
 
+                {/* Primeira linha: CEP, Rua e Número alinhados */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                   <div className="md:col-span-3">
                     <FormField
@@ -408,8 +409,9 @@ export default function Suppliers() {
                   </div>
                 </div>
 
+                {/* Segunda linha: Bairro maior, Cidade e Estado */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                  <div className="md:col-span-5">
+                  <div className="md:col-span-7">
                     <FormField
                       control={form.control}
                       name="neighborhood"
@@ -429,7 +431,7 @@ export default function Suppliers() {
                       )}
                     />
                   </div>
-                  <div className="md:col-span-5">
+                  <div className="md:col-span-3">
                     <FormField
                       control={form.control}
                       name="city"
