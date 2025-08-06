@@ -3318,8 +3318,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (const item of items) {
           console.log('Processing item:', item.id, 'quantityReceived:', item.quantityReceived);
           
+          // Get the receiving item first, then find the corresponding purchase order item
+          const receivingItem = receiving.items.find(rItem => rItem.id === item.id);
+          console.log('Found receiving item:', receivingItem?.id, 'purchaseOrderItemId:', receivingItem?.purchaseOrderItemId);
+          
           // Get the purchase order item to check if it has a productId
-          const purchaseOrderItem = receiving.items.find(poItem => poItem.id === item.id);
+          let purchaseOrderItem = null;
+          if (receivingItem?.purchaseOrderItemId) {
+            purchaseOrderItem = await storage.getPurchaseOrderItem(receivingItem.purchaseOrderItemId);
+          }
           console.log('Found purchase order item:', purchaseOrderItem?.id, 'productId:', purchaseOrderItem?.productId);
           
           if (purchaseOrderItem && purchaseOrderItem.productId) {

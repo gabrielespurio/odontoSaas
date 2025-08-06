@@ -2141,6 +2141,15 @@ export class DatabaseStorage implements IStorage {
     return ordersWithItems;
   }
 
+  async getPurchaseOrderItem(id: number): Promise<PurchaseOrderItem | undefined> {
+    const [item] = await db
+      .select()
+      .from(purchaseOrderItems)
+      .where(eq(purchaseOrderItems.id, id));
+    
+    return item;
+  }
+
   async getPurchaseOrder(id: number, companyId?: number): Promise<(PurchaseOrder & { supplier: Supplier; items: PurchaseOrderItem[] }) | undefined> {
     const whereConditions = [eq(purchaseOrders.id, id)];
     if (companyId) {
