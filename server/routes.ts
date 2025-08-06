@@ -2665,7 +2665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dentistId: payableData.accountType === "dentist" ? payableData.dentistId : undefined,
       };
       
-      const payable = await storage.updatePayable(id, cleanedData);
+      const payable = await storage.updatePayable(id, cleanedData, user.companyId);
       res.json(payable);
     } catch (error) {
       console.error("Update payable error:", error);
@@ -2684,7 +2684,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Conta a pagar não encontrada" });
       }
       
-      await storage.deletePayable(id);
+      await storage.deletePayable(id, user.companyId);
       res.json({ message: "Payable deleted successfully" });
     } catch (error) {
       console.error("Delete payable error:", error);

@@ -140,10 +140,11 @@ export interface IStorage {
   createReceivableFromConsultation(consultationId: number, procedures: number[], installments?: number): Promise<Receivable[]>;
   
   // Payables (Contas a Pagar)
-  getPayables(status?: string, category?: string, startDate?: Date, endDate?: Date): Promise<Payable[]>;
-  getPayable(id: number): Promise<Payable | undefined>;
+  getPayables(status?: string, category?: string, startDate?: Date, endDate?: Date, companyId?: number): Promise<Payable[]>;
+  getPayable(id: number, companyId?: number): Promise<Payable | undefined>;
   createPayable(payable: InsertPayable): Promise<Payable>;
-  updatePayable(id: number, payable: Partial<InsertPayable>): Promise<Payable>;
+  updatePayable(id: number, payable: Partial<InsertPayable>, companyId?: number): Promise<Payable>;
+  deletePayable(id: number, companyId?: number): Promise<void>;
   
   // Cash Flow (Fluxo de Caixa)
   getCashFlow(startDate?: Date, endDate?: Date): Promise<CashFlow[]>;
@@ -1253,10 +1254,11 @@ export class DatabaseStorage implements IStorage {
   async getPayables(status?: string, category?: string, startDate?: Date, endDate?: Date, companyId?: number): Promise<Payable[]> {
     const whereConditions = [];
     
-    // CRITICAL: Always filter by company when provided
-    if (companyId) {
-      whereConditions.push(eq(payables.companyId, companyId));
+    // CRITICAL: ALWAYS filter by company - this is mandatory for security
+    if (!companyId) {
+      throw new Error("Company ID is required for payables query - security violation prevented");
     }
+    whereConditions.push(eq(payables.companyId, companyId));
     
     if (status) {
       whereConditions.push(eq(payables.status, status as any));
@@ -1271,22 +1273,19 @@ export class DatabaseStorage implements IStorage {
       whereConditions.push(sql`${payables.dueDate} <= ${endDate}`);
     }
 
-    if (whereConditions.length > 0) {
-      return await db.select().from(payables)
-        .where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions)!)
-        .orderBy(desc(payables.dueDate));
-    } else {
-      return await db.select().from(payables).orderBy(desc(payables.dueDate));
-    }
+    return await db.select().from(payables)
+      .where(whereConditions.length === 1 ? whereConditions[0] : and(...whereConditions)!)
+      .orderBy(desc(payables.dueDate));
   }
 
   async getPayable(id: number, companyId?: number): Promise<Payable | undefined> {
     const whereConditions = [eq(payables.id, id)];
     
-    // CRITICAL: Filter by company when provided
-    if (companyId) {
-      whereConditions.push(eq(payables.companyId, companyId));
+    // CRITICAL: ALWAYS filter by company for security
+    if (!companyId) {
+      throw new Error("Company ID is required for payable query - security violation prevented");
     }
+    whereConditions.push(eq(payables.companyId, companyId));
     
     const [record] = await db.select().from(payables).where(and(...whereConditions));
     return record || undefined;
@@ -1316,9 +1315,21 @@ export class DatabaseStorage implements IStorage {
     return record;
   }
 
-  async updatePayable(id: number, insertPayable: Partial<InsertPayable>): Promise<Payable> {
-    const currentRecord = await this.getPayable(id);
-    const [record] = await db.update(payables).set(insertPayable).where(eq(payables.id, id)).returning();
+  async updatePayable(id: number, insertPayable: Partial<InsertPayable>, companyId?: number): Promise<Payable> {
+    // CRITICAL: Verify company ownership before updating
+    if (!companyId) {
+      throw new Error("Company ID is required for payable update - security violation prevented");
+    }
+    
+    const currentRecord = await this.getPayable(id, companyId);
+    if (!currentRecord) {
+      throw new Error("Payable not found or access denied");
+    }
+    
+    const [record] = await db.update(payables)
+      .set(insertPayable)
+      .where(and(eq(payables.id, id), eq(payables.companyId, companyId)))
+      .returning();
     
     // Se o status mudou para "pago", criar entrada no fluxo de caixa
     if (currentRecord?.status !== 'paid' && insertPayable.status === 'paid' && insertPayable.paymentDate) {
@@ -1341,12 +1352,23 @@ export class DatabaseStorage implements IStorage {
     return record;
   }
 
-  async deletePayable(id: number): Promise<void> {
+  async deletePayable(id: number, companyId?: number): Promise<void> {
+    // CRITICAL: Verify company ownership before deleting
+    if (!companyId) {
+      throw new Error("Company ID is required for payable deletion - security violation prevented");
+    }
+    
+    // Verificar se o payable pertence à empresa
+    const payableRecord = await this.getPayable(id, companyId);
+    if (!payableRecord) {
+      throw new Error("Payable not found or access denied");
+    }
+    
     // Primeiro, remover todas as entradas relacionadas no fluxo de caixa
-    await db.delete(cashFlow).where(eq(cashFlow.payableId, id));
+    await db.delete(cashFlow).where(and(eq(cashFlow.payableId, id), eq(cashFlow.companyId, companyId)));
     
     // Depois, remover a conta a pagar
-    await db.delete(payables).where(eq(payables.id, id));
+    await db.delete(payables).where(and(eq(payables.id, id), eq(payables.companyId, companyId)));
   }
 
   // Cash Flow (Fluxo de Caixa)
