@@ -3347,12 +3347,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const stockMovementData = {
                 companyId: payableCompanyId,
                 productId: purchaseOrderItem.productId,
-                type: 'purchase' as const,
+                movementType: 'in' as const,
                 quantity: quantityReceived,
                 unitPrice: parseFloat(purchaseOrderItem.unitPrice.toString()),
-                totalPrice: quantityReceived * parseFloat(purchaseOrderItem.unitPrice.toString()),
-                description: `Recebimento do pedido ${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
-                reference: `PO-${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
+                totalValue: quantityReceived * parseFloat(purchaseOrderItem.unitPrice.toString()),
+                reason: 'Purchase',
+                referenceDocument: receiving.purchaseOrder?.orderNumber || `PO-${receiving.purchaseOrderId}`,
+                notes: `Recebimento do pedido ${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
                 createdBy: user.id
               };
               
