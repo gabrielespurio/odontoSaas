@@ -3273,8 +3273,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // If status changed to 'received', automatically create payable and update purchase order status
       if (status === 'received' && currentReceiving.status !== 'received') {
+        // Use the receiving's companyId if user has no companyId (admin case)
+        const payableCompanyId = user.companyId || currentReceiving.companyId;
+        
         const payableData = {
-          companyId: user.companyId,
+          companyId: payableCompanyId,
           amount: parseFloat(receiving.totalAmount),
           dueDate: receivingDate || new Date().toISOString().split('T')[0],
           status: 'pending' as const,
@@ -3285,9 +3288,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           notes: `Recebimento automaticamente criado do pedido ${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
           createdBy: user.id
         };
-        
-        console.log('Creating payable with data:', payableData);
-        console.log('User object:', { id: user.id, companyId: user.companyId });
         
         await storage.createPayable(payableData);
         
