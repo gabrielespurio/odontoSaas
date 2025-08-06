@@ -6,6 +6,11 @@ OdontoSync is a comprehensive dental clinic management SaaS system. It functions
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (January 2025)
+- **Migration completed**: Successfully migrated OdontoSync from Replit Agent to standard Replit environment
+- **Database**: Maintained existing Neon PostgreSQL connection as requested by user
+- **UX Improvement**: Enhanced receiving form - status now defaults to "Recebido" and quantity received auto-fills with ordered quantity
+
 ## System Architecture
 
 ### Frontend

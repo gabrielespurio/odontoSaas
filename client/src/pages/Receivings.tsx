@@ -143,14 +143,19 @@ export default function Receivings() {
   const handleUpdateStatus = (receiving: ReceivingWithDetails) => {
     setUpdatingReceiving(receiving);
     form.reset({
-      status: receiving.status,
+      status: "received", // Sempre inicia com status "Recebido"
       receivingDate: receiving.receivingDate || new Date().toISOString().split('T')[0],
       notes: receiving.notes || "",
-      items: receiving.items.map(item => ({
-        id: item.id,
-        quantityReceived: parseFloat(item.quantityReceived),
-        totalPrice: parseFloat(item.totalPrice),
-      })),
+      items: receiving.items.map(item => {
+        // Se a quantidade recebida for 0, preenche com a quantidade pedida
+        const quantityReceived = parseFloat(item.quantityReceived) || parseFloat(item.quantityOrdered);
+        const unitPrice = parseFloat(item.unitPrice);
+        return {
+          id: item.id,
+          quantityReceived: quantityReceived,
+          totalPrice: quantityReceived * unitPrice,
+        };
+      }),
     });
     setDialogOpen(true);
   };
