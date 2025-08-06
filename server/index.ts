@@ -49,6 +49,12 @@ app.use((req, res, next) => {
     await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS dentist_id INTEGER`);
     await db.execute(sql`ALTER TABLE payables ADD COLUMN IF NOT EXISTS created_by INTEGER`);
     
+    // Remove campos de produto que não são mais necessários
+    await db.execute(sql`ALTER TABLE products DROP COLUMN IF EXISTS unit_price`);
+    await db.execute(sql`ALTER TABLE products DROP COLUMN IF EXISTS cost_price`);
+    await db.execute(sql`ALTER TABLE products DROP COLUMN IF EXISTS supplier`);
+    await db.execute(sql`ALTER TABLE products DROP COLUMN IF EXISTS location`);
+    
     // Add missing columns to suppliers table
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS cep TEXT`);
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS street TEXT`);
