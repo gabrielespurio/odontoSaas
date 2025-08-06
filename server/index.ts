@@ -54,6 +54,15 @@ app.use((req, res, next) => {
     await db.execute(sql`ALTER TABLE products DROP COLUMN IF EXISTS unit_price`);
     await db.execute(sql`ALTER TABLE products DROP COLUMN IF EXISTS cost_price`);
     await db.execute(sql`ALTER TABLE products DROP COLUMN IF EXISTS supplier`);
+    
+    // Add missing columns to stock_movements table
+    await db.execute(sql`ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS movement_type TEXT NOT NULL DEFAULT 'in'`);
+    await db.execute(sql`ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS reason TEXT`);
+    await db.execute(sql`ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS reference_document TEXT`);
+    await db.execute(sql`ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS notes TEXT`);
+    await db.execute(sql`ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS unit_price DECIMAL(10,2)`);
+    await db.execute(sql`ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS total_value DECIMAL(10,2)`);
+    console.log("Stock movements table updated.");
     await db.execute(sql`ALTER TABLE products DROP COLUMN IF EXISTS location`);
     
     // Adiciona campo product_id na tabela purchase_order_items para integração com estoque
