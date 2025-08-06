@@ -282,8 +282,8 @@ export default function Receivings() {
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <label className="text-sm font-medium text-gray-700">Quantidade Pedida</label>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-900">Quantidade Pedida</label>
                             <Input 
                               value={item.quantityOrdered} 
                               readOnly 

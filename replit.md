@@ -10,6 +10,7 @@ Preferred communication style: Simple, everyday language.
 - **Migration completed**: Successfully migrated OdontoSync from Replit Agent to standard Replit environment
 - **Database**: Maintained existing Neon PostgreSQL connection as requested by user
 - **UX Improvement**: Enhanced receiving form - status now defaults to "Recebido" and quantity received auto-fills with ordered quantity
+- **UI Fix**: Improved field alignment in receiving form items section for better visual consistency
 
 ## System Architecture
 
