@@ -248,13 +248,9 @@ export default function PurchaseOrders() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "draft":
-        return "bg-gray-100 text-gray-800";
-      case "sent":
-        return "bg-blue-100 text-blue-800";
-      case "confirmed":
+        return "bg-yellow-100 text-yellow-800";
+      case "received":
         return "bg-green-100 text-green-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -263,13 +259,9 @@ export default function PurchaseOrders() {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "draft":
-        return "Rascunho";
-      case "sent":
-        return "Enviado";
-      case "confirmed":
-        return "Confirmado";
-      case "cancelled":
-        return "Cancelado";
+        return "Pendente";
+      case "received":
+        return "Recebido";
       default:
         return status;
     }
@@ -378,10 +370,8 @@ export default function PurchaseOrders() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="draft">Rascunho</SelectItem>
-                            <SelectItem value="sent">Enviado</SelectItem>
-                            <SelectItem value="confirmed">Confirmado</SelectItem>
-                            <SelectItem value="cancelled">Cancelado</SelectItem>
+                            <SelectItem value="draft">Pendente</SelectItem>
+                            <SelectItem value="received">Recebido</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
