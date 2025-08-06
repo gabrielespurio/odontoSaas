@@ -26,6 +26,7 @@ export const expenseCategoryEnum = pgEnum("expense_category", ["rent", "salaries
 export const purchaseOrderStatusEnum = pgEnum("purchase_order_status", ["draft", "sent", "confirmed", "partial", "received", "cancelled"]);
 export const receivingStatusEnum = pgEnum("receiving_status", ["pending", "partial", "received", "cancelled"]);
 export const toothConditionEnum = pgEnum("tooth_condition", ["healthy", "carie", "restoration", "extraction", "planned_treatment", "completed_treatment"]);
+export const productUnitEnum = pgEnum("product_unit", ["unit", "kg", "g", "l", "ml", "box", "package", "meter", "cm"]);
 
 // Companies table for SaaS multi-tenancy
 export const companies = pgTable("companies", {
@@ -833,3 +834,148 @@ export type Receiving = typeof receivings.$inferSelect;
 export type ReceivingItem = typeof receivingItems.$inferSelect;
 export type CashFlow = typeof cashFlow.$inferSelect;
 export type InsertCashFlow = z.infer<typeof insertCashFlowSchema>;
+
+// Stock Management Module - Product Categories
+export const productCategories = pgTable("product_categories", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdBy: integer("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Stock Management Module - Products
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(),
+  categoryId: integer("category_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  sku: text("sku"), // Stock Keeping Unit
+  barcode: text("barcode"),
+  unit: productUnitEnum("unit").notNull().default("unit"),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  costPrice: decimal("cost_price", { precision: 10, scale: 2 }),
+  currentStock: decimal("current_stock", { precision: 10, scale: 2 }).notNull().default("0"),
+  minimumStock: decimal("minimum_stock", { precision: 10, scale: 2 }).notNull().default("0"),
+  maximumStock: decimal("maximum_stock", { precision: 10, scale: 2 }),
+  supplier: text("supplier"), // Main supplier name
+  location: text("location"), // Storage location
+  notes: text("notes"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdBy: integer("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Stock Management Module - Stock Movements (for future use)
+export const stockMovements = pgTable("stock_movements", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(),
+  productId: integer("product_id").notNull(),
+  movementType: text("movement_type").notNull(), // "in", "out", "adjustment"
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }),
+  totalValue: decimal("total_value", { precision: 10, scale: 2 }),
+  reason: text("reason"), // Purchase, Sale, Loss, Adjustment, etc.
+  referenceDocument: text("reference_document"), // Invoice, PO number, etc.
+  notes: text("notes"),
+  createdBy: integer("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Stock Management Relations
+export const productCategoriesRelations = relations(productCategories, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [productCategories.companyId],
+    references: [companies.id],
+  }),
+  products: many(products),
+}));
+
+export const productsRelations = relations(products, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [products.companyId],
+    references: [companies.id],
+  }),
+  category: one(productCategories, {
+    fields: [products.categoryId],
+    references: [productCategories.id],
+  }),
+  stockMovements: many(stockMovements),
+}));
+
+export const stockMovementsRelations = relations(stockMovements, ({ one }) => ({
+  company: one(companies, {
+    fields: [stockMovements.companyId],
+    references: [companies.id],
+  }),
+  product: one(products, {
+    fields: [stockMovements.productId],
+    references: [products.id],
+  }),
+}));
+
+// Stock Management Insert Schemas
+export const insertProductCategorySchema = createInsertSchema(productCategories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  companyId: true,
+  createdBy: true,
+}).extend({
+  name: z.string().min(1, "Nome é obrigatório"),
+  description: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const insertProductSchema = createInsertSchema(products).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  companyId: true,
+  createdBy: true,
+}).extend({
+  name: z.string().min(1, "Nome é obrigatório"),
+  categoryId: z.number().min(1, "Categoria é obrigatória"),
+  description: z.string().optional(),
+  sku: z.string().optional(),
+  barcode: z.string().optional(),
+  unit: z.enum(["unit", "kg", "g", "l", "ml", "box", "package", "meter", "cm"]).default("unit"),
+  unitPrice: z.number().positive("Preço unitário deve ser positivo"),
+  costPrice: z.number().optional(),
+  currentStock: z.number().min(0, "Estoque atual deve ser maior ou igual a zero").default(0),
+  minimumStock: z.number().min(0, "Estoque mínimo deve ser maior ou igual a zero").default(0),
+  maximumStock: z.number().optional(),
+  supplier: z.string().optional(),
+  location: z.string().optional(),
+  notes: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const insertStockMovementSchema = createInsertSchema(stockMovements).omit({
+  id: true,
+  createdAt: true,
+  companyId: true,
+  createdBy: true,
+}).extend({
+  productId: z.number().min(1, "Produto é obrigatório"),
+  movementType: z.enum(["in", "out", "adjustment"]),
+  quantity: z.number().positive("Quantidade deve ser positiva"),
+  unitPrice: z.number().optional(),
+  totalValue: z.number().optional(),
+  reason: z.string().optional(),
+  referenceDocument: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+// Stock Management Types
+export type ProductCategory = typeof productCategories.$inferSelect;
+export type InsertProductCategory = z.infer<typeof insertProductCategorySchema>;
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type StockMovement = typeof stockMovements.$inferSelect;
+export type InsertStockMovement = z.infer<typeof insertStockMovementSchema>;

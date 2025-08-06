@@ -24,6 +24,8 @@ import FinancialCashFlow from "@/pages/financial-cashflow";
 import Suppliers from "@/pages/Suppliers";
 import PurchaseOrders from "@/pages/PurchaseOrders";
 import Receivings from "@/pages/Receivings";
+import StockCategories from "@/pages/stock-categories";
+import StockProducts from "@/pages/stock-products";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import Companies from "@/pages/companies";
@@ -88,6 +90,8 @@ function Router() {
         <Route path="/suppliers" component={() => <ProtectedRoute module="purchases"><Suppliers /></ProtectedRoute>} />
         <Route path="/purchase-orders" component={() => <ProtectedRoute module="purchases"><PurchaseOrders /></ProtectedRoute>} />
         <Route path="/receivings" component={() => <ProtectedRoute module="purchases"><Receivings /></ProtectedRoute>} />
+        <Route path="/stock/categories" component={() => <ProtectedRoute module="stock"><StockCategories /></ProtectedRoute>} />
+        <Route path="/stock/products" component={() => <ProtectedRoute module="stock"><StockProducts /></ProtectedRoute>} />
         <Route path="/reports" component={() => <ProtectedRoute module="reports"><Reports /></ProtectedRoute>} />
         <Route path="/settings" component={() => <ProtectedRoute module="settings"><Settings /></ProtectedRoute>} />
         <Route path="/companies" component={() => <ProtectedRoute module="companies"><Companies /></ProtectedRoute>} />

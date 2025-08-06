@@ -18,6 +18,9 @@ import {
   purchaseOrderItems,
   receivings,
   receivingItems,
+  productCategories,
+  products,
+  stockMovements,
   type Company,
   type InsertCompany,
   type User,
@@ -56,6 +59,12 @@ import {
   type InsertReceiving,
   type ReceivingItem,
   type InsertReceivingItem,
+  type ProductCategory,
+  type InsertProductCategory,
+  type Product,
+  type InsertProduct,
+  type StockMovement,
+  type InsertStockMovement,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, sql, ne, not, gte, lte, like, lt, gt, isNull, asc } from "drizzle-orm";
@@ -186,6 +195,24 @@ export interface IStorage {
   getReceivings(companyId?: number): Promise<(Receiving & { supplier: Supplier; purchaseOrder: PurchaseOrder; items: ReceivingItem[] })[]>;
   getReceiving(id: number, companyId?: number): Promise<(Receiving & { supplier: Supplier; purchaseOrder: PurchaseOrder; items: ReceivingItem[] }) | undefined>;
   updateReceivingStatus(id: number, status: string, receivingDate?: string | null, items?: Partial<ReceivingItem>[]): Promise<Receiving & { supplier: Supplier; purchaseOrder: PurchaseOrder; items: ReceivingItem[] }>;
+  
+  // Stock Management Module - Product Categories
+  getProductCategories(companyId?: number): Promise<ProductCategory[]>;
+  getProductCategory(id: number, companyId?: number): Promise<ProductCategory | undefined>;
+  createProductCategory(category: InsertProductCategory & { companyId: number; createdBy: number }): Promise<ProductCategory>;
+  updateProductCategory(id: number, category: Partial<InsertProductCategory>, companyId?: number): Promise<ProductCategory>;
+  deleteProductCategory(id: number, companyId?: number): Promise<void>;
+  
+  // Stock Management Module - Products
+  getProducts(companyId?: number, categoryId?: number): Promise<(Product & { category: ProductCategory })[]>;
+  getProduct(id: number, companyId?: number): Promise<(Product & { category: ProductCategory }) | undefined>;
+  createProduct(product: InsertProduct & { companyId: number; createdBy: number }): Promise<Product & { category: ProductCategory }>;
+  updateProduct(id: number, product: Partial<InsertProduct>, companyId?: number): Promise<Product & { category: ProductCategory }>;
+  deleteProduct(id: number, companyId?: number): Promise<void>;
+  
+  // Stock Management Module - Stock Movements
+  getStockMovements(companyId?: number, productId?: number): Promise<(StockMovement & { product: Product })[]>;
+  createStockMovement(movement: InsertStockMovement & { companyId: number; createdBy: number }): Promise<StockMovement>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2408,6 +2435,225 @@ export class DatabaseStorage implements IStorage {
         items: currentItems,
       };
     });
+  }
+
+  // Stock Management Module - Product Categories
+  async getProductCategories(companyId?: number): Promise<ProductCategory[]> {
+    let whereConditions = [];
+    
+    if (companyId) {
+      whereConditions.push(eq(productCategories.companyId, companyId));
+    }
+    
+    return await db
+      .select()
+      .from(productCategories)
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+      .orderBy(asc(productCategories.name));
+  }
+
+  async getProductCategory(id: number, companyId?: number): Promise<ProductCategory | undefined> {
+    let whereConditions = [eq(productCategories.id, id)];
+    
+    if (companyId) {
+      whereConditions.push(eq(productCategories.companyId, companyId));
+    }
+    
+    const [category] = await db
+      .select()
+      .from(productCategories)
+      .where(and(...whereConditions));
+    
+    return category || undefined;
+  }
+
+  async createProductCategory(category: InsertProductCategory & { companyId: number; createdBy: number }): Promise<ProductCategory> {
+    const [newCategory] = await db
+      .insert(productCategories)
+      .values({
+        ...category,
+        updatedAt: new Date(),
+      })
+      .returning();
+    
+    return newCategory;
+  }
+
+  async updateProductCategory(id: number, category: Partial<InsertProductCategory>, companyId?: number): Promise<ProductCategory> {
+    let whereConditions = [eq(productCategories.id, id)];
+    
+    if (companyId) {
+      whereConditions.push(eq(productCategories.companyId, companyId));
+    }
+    
+    const [updatedCategory] = await db
+      .update(productCategories)
+      .set({
+        ...category,
+        updatedAt: new Date(),
+      })
+      .where(and(...whereConditions))
+      .returning();
+    
+    return updatedCategory;
+  }
+
+  async deleteProductCategory(id: number, companyId?: number): Promise<void> {
+    let whereConditions = [eq(productCategories.id, id)];
+    
+    if (companyId) {
+      whereConditions.push(eq(productCategories.companyId, companyId));
+    }
+    
+    await db
+      .delete(productCategories)
+      .where(and(...whereConditions));
+  }
+
+  // Stock Management Module - Products
+  async getProducts(companyId?: number, categoryId?: number): Promise<(Product & { category: ProductCategory })[]> {
+    let whereConditions = [];
+    
+    if (companyId) {
+      whereConditions.push(eq(products.companyId, companyId));
+    }
+    
+    if (categoryId) {
+      whereConditions.push(eq(products.categoryId, categoryId));
+    }
+    
+    const results = await db
+      .select({
+        product: products,
+        category: productCategories,
+      })
+      .from(products)
+      .innerJoin(productCategories, eq(products.categoryId, productCategories.id))
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+      .orderBy(asc(products.name));
+
+    return results.map(result => ({
+      ...result.product,
+      category: result.category,
+    }));
+  }
+
+  async getProduct(id: number, companyId?: number): Promise<(Product & { category: ProductCategory }) | undefined> {
+    let whereConditions = [eq(products.id, id)];
+    
+    if (companyId) {
+      whereConditions.push(eq(products.companyId, companyId));
+    }
+    
+    const [result] = await db
+      .select({
+        product: products,
+        category: productCategories,
+      })
+      .from(products)
+      .innerJoin(productCategories, eq(products.categoryId, productCategories.id))
+      .where(and(...whereConditions));
+    
+    if (!result) return undefined;
+
+    return {
+      ...result.product,
+      category: result.category,
+    };
+  }
+
+  async createProduct(product: InsertProduct & { companyId: number; createdBy: number }): Promise<Product & { category: ProductCategory }> {
+    const [newProduct] = await db
+      .insert(products)
+      .values({
+        ...product,
+        updatedAt: new Date(),
+      })
+      .returning();
+    
+    // Get the product with category
+    const productWithCategory = await this.getProduct(newProduct.id, product.companyId);
+    
+    if (!productWithCategory) {
+      throw new Error("Failed to retrieve created product");
+    }
+    
+    return productWithCategory;
+  }
+
+  async updateProduct(id: number, product: Partial<InsertProduct>, companyId?: number): Promise<Product & { category: ProductCategory }> {
+    let whereConditions = [eq(products.id, id)];
+    
+    if (companyId) {
+      whereConditions.push(eq(products.companyId, companyId));
+    }
+    
+    const [updatedProduct] = await db
+      .update(products)
+      .set({
+        ...product,
+        updatedAt: new Date(),
+      })
+      .where(and(...whereConditions))
+      .returning();
+    
+    // Get the updated product with category
+    const productWithCategory = await this.getProduct(updatedProduct.id, companyId);
+    
+    if (!productWithCategory) {
+      throw new Error("Failed to retrieve updated product");
+    }
+    
+    return productWithCategory;
+  }
+
+  async deleteProduct(id: number, companyId?: number): Promise<void> {
+    let whereConditions = [eq(products.id, id)];
+    
+    if (companyId) {
+      whereConditions.push(eq(products.companyId, companyId));
+    }
+    
+    await db
+      .delete(products)
+      .where(and(...whereConditions));
+  }
+
+  // Stock Management Module - Stock Movements
+  async getStockMovements(companyId?: number, productId?: number): Promise<(StockMovement & { product: Product })[]> {
+    let whereConditions = [];
+    
+    if (companyId) {
+      whereConditions.push(eq(stockMovements.companyId, companyId));
+    }
+    
+    if (productId) {
+      whereConditions.push(eq(stockMovements.productId, productId));
+    }
+    
+    const results = await db
+      .select({
+        movement: stockMovements,
+        product: products,
+      })
+      .from(stockMovements)
+      .innerJoin(products, eq(stockMovements.productId, products.id))
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+      .orderBy(desc(stockMovements.createdAt));
+
+    return results.map(result => ({
+      ...result.movement,
+      product: result.product,
+    }));
+  }
+
+  async createStockMovement(movement: InsertStockMovement & { companyId: number; createdBy: number }): Promise<StockMovement> {
+    const [newMovement] = await db
+      .insert(stockMovements)
+      .values(movement)
+      .returning();
+    
+    return newMovement;
   }
 }
 

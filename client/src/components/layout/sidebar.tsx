@@ -16,7 +16,8 @@ import {
   ChevronRight,
   X,
   Building2,
-  ShoppingCart
+  ShoppingCart,
+  Package
 } from "lucide-react";
 import odontoSyncLogo from "@assets/ChatGPT_Image_10_de_jul._de_2025__12_09_27-removebg-preview_1752160369330.png";
 
@@ -48,6 +49,16 @@ const navigation = [
       { name: "Recebimentos", href: "/receivings" },
     ]
   },
+  { 
+    name: "Estoque", 
+    href: "/stock", 
+    icon: Package,
+    module: "stock",
+    submenus: [
+      { name: "Categorias", href: "/stock/categories" },
+      { name: "Produtos", href: "/stock/products" },
+    ]
+  },
   { name: "Relatórios", href: "/reports", icon: FileText, module: "reports" },
   { name: "Configurações", href: "/settings", icon: Settings, module: "settings" },
   { name: "Empresas", href: "/companies", icon: Building2, module: "companies" },
@@ -64,6 +75,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const { hasAccess } = usePermissions();
   const [isFinanceOpen, setIsFinanceOpen] = useState(false);
   const [isPurchasesOpen, setIsPurchasesOpen] = useState(false);
+  const [isStockOpen, setIsStockOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -74,6 +86,9 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   
   // Check if any purchases submenu is active
   const isPurchasesActive = location === "/suppliers" || location === "/purchase-orders" || location === "/receivings";
+  
+  // Check if any stock submenu is active
+  const isStockActive = location === "/stock" || location.startsWith("/stock/");
 
   return (
     <>
@@ -132,11 +147,17 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             
             // Se o item tem submenus, renderizar de forma diferente
             if (item.submenus) {
-              const isItemActive = item.module === "financial" ? isFinanceActive : isPurchasesActive;
-              const isItemOpen = item.module === "financial" ? isFinanceOpen : isPurchasesOpen;
+              const isItemActive = item.module === "financial" ? isFinanceActive 
+                : item.module === "purchases" ? isPurchasesActive 
+                : isStockActive;
+              const isItemOpen = item.module === "financial" ? isFinanceOpen 
+                : item.module === "purchases" ? isPurchasesOpen 
+                : isStockOpen;
               const toggleItem = item.module === "financial" 
                 ? () => setIsFinanceOpen(!isFinanceOpen)
-                : () => setIsPurchasesOpen(!isPurchasesOpen);
+                : item.module === "purchases"
+                ? () => setIsPurchasesOpen(!isPurchasesOpen)
+                : () => setIsStockOpen(!isStockOpen);
               
               const ChevronIcon = isItemOpen ? ChevronDown : ChevronRight;
               

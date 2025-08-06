@@ -27,6 +27,9 @@ import {
   insertSupplierSchema,
   insertPurchaseOrderSchema,
   insertReceivingSchema,
+  insertProductCategorySchema,
+  insertProductSchema,
+  insertStockMovementSchema,
   users,
   patients,
   appointments,
@@ -40,7 +43,10 @@ import {
   receivables,
   payables,
   cashFlow,
-  companies
+  companies,
+  productCategories,
+  products,
+  stockMovements
 } from "@shared/schema";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
@@ -3309,6 +3315,239 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(receiving);
     } catch (error) {
       console.error("Update receiving status error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Stock Management - Product Categories
+  app.get("/api/product-categories", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      
+      // CRITICAL: For superadmins, allow company filtering via query parameter
+      // For regular users, always use their company
+      let companyIdToUse = user.companyId;
+      
+      // Only superadmins (users without companyId) can specify a different company
+      if (!user.companyId && req.query.companyId) {
+        companyIdToUse = parseInt(req.query.companyId as string);
+      }
+      
+      const categories = await storage.getProductCategories(companyIdToUse);
+      res.json(categories);
+    } catch (error) {
+      console.error("Get product categories error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/product-categories/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = (req as any).user;
+      
+      const category = await storage.getProductCategory(id, user.companyId);
+      
+      if (!category) {
+        return res.status(404).json({ message: "Categoria não encontrada" });
+      }
+      
+      res.json(category);
+    } catch (error) {
+      console.error("Get product category error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/product-categories", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const categoryData = insertProductCategorySchema.parse(req.body);
+      
+      // Use the company from user or companyId from body for superadmins
+      const companyId = user.companyId || req.body.companyId;
+      
+      if (!companyId) {
+        return res.status(400).json({ message: "Company ID is required" });
+      }
+      
+      const category = await storage.createProductCategory({
+        ...categoryData,
+        companyId,
+        createdBy: user.id,
+      });
+      
+      res.status(201).json(category);
+    } catch (error) {
+      console.error("Create product category error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/product-categories/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = (req as any).user;
+      const categoryData = insertProductCategorySchema.partial().parse(req.body);
+      
+      const category = await storage.updateProductCategory(id, categoryData, user.companyId);
+      res.json(category);
+    } catch (error) {
+      console.error("Update product category error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/product-categories/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = (req as any).user;
+      
+      await storage.deleteProductCategory(id, user.companyId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete product category error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Stock Management - Products
+  app.get("/api/products", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
+      
+      // CRITICAL: For superadmins, allow company filtering via query parameter
+      // For regular users, always use their company
+      let companyIdToUse = user.companyId;
+      
+      // Only superadmins (users without companyId) can specify a different company
+      if (!user.companyId && req.query.companyId) {
+        companyIdToUse = parseInt(req.query.companyId as string);
+      }
+      
+      const products = await storage.getProducts(companyIdToUse, categoryId);
+      res.json(products);
+    } catch (error) {
+      console.error("Get products error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/products/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = (req as any).user;
+      
+      const product = await storage.getProduct(id, user.companyId);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Produto não encontrado" });
+      }
+      
+      res.json(product);
+    } catch (error) {
+      console.error("Get product error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/products", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const productData = insertProductSchema.parse(req.body);
+      
+      // Use the company from user or companyId from body for superadmins
+      const companyId = user.companyId || req.body.companyId;
+      
+      if (!companyId) {
+        return res.status(400).json({ message: "Company ID is required" });
+      }
+      
+      const product = await storage.createProduct({
+        ...productData,
+        companyId,
+        createdBy: user.id,
+      });
+      
+      res.status(201).json(product);
+    } catch (error) {
+      console.error("Create product error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/products/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = (req as any).user;
+      const productData = insertProductSchema.partial().parse(req.body);
+      
+      const product = await storage.updateProduct(id, productData, user.companyId);
+      res.json(product);
+    } catch (error) {
+      console.error("Update product error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/products/:id", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = (req as any).user;
+      
+      await storage.deleteProduct(id, user.companyId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete product error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Stock Management - Stock Movements
+  app.get("/api/stock-movements", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const productId = req.query.productId ? parseInt(req.query.productId as string) : undefined;
+      
+      // CRITICAL: For superadmins, allow company filtering via query parameter
+      // For regular users, always use their company
+      let companyIdToUse = user.companyId;
+      
+      // Only superadmins (users without companyId) can specify a different company
+      if (!user.companyId && req.query.companyId) {
+        companyIdToUse = parseInt(req.query.companyId as string);
+      }
+      
+      const movements = await storage.getStockMovements(companyIdToUse, productId);
+      res.json(movements);
+    } catch (error) {
+      console.error("Get stock movements error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/stock-movements", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const movementData = insertStockMovementSchema.parse(req.body);
+      
+      // Use the company from user or companyId from body for superadmins
+      const companyId = user.companyId || req.body.companyId;
+      
+      if (!companyId) {
+        return res.status(400).json({ message: "Company ID is required" });
+      }
+      
+      const movement = await storage.createStockMovement({
+        ...movementData,
+        companyId,
+        createdBy: user.id,
+      });
+      
+      res.status(201).json(movement);
+    } catch (error) {
+      console.error("Create stock movement error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

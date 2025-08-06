@@ -16,8 +16,15 @@ const pageNames: Record<string, string> = {
   "/financial/receivables": "Contas a Receber",
   "/financial/payables": "Contas a Pagar", 
   "/financial/cashflow": "Fluxo de Caixa",
+  "/suppliers": "Fornecedores",
+  "/purchase-orders": "Pedidos de Compra",
+  "/receivings": "Recebimentos",
+  "/stock": "Estoque",
+  "/stock/categories": "Categorias de Produtos",
+  "/stock/products": "Produtos",
   "/reports": "Relatórios",
   "/settings": "Configurações",
+  "/companies": "Empresas",
 };
 
 interface HeaderProps {
