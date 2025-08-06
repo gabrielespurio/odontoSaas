@@ -1309,6 +1309,7 @@ export class DatabaseStorage implements IStorage {
         date: paymentDate,
         description: `Pagamento: ${insertPayable.description}`,
         category: 'payable',
+        companyId: insertPayable.companyId, // Add companyId from the payable record
       });
     }
     

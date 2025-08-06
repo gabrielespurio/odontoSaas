@@ -3286,6 +3286,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           createdBy: user.id
         };
         
+        console.log('Creating payable with data:', payableData);
+        console.log('User object:', { id: user.id, companyId: user.companyId });
+        
         await storage.createPayable(payableData);
       }
       
