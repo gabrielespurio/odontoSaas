@@ -104,10 +104,24 @@ app.use((req, res, next) => {
     
     await db.execute(sql`
       DO $$ BEGIN
-        CREATE TYPE receiving_status AS ENUM ('pending', 'partial', 'completed', 'cancelled');
+        CREATE TYPE receiving_status AS ENUM ('pending', 'partial', 'received', 'cancelled');
       EXCEPTION
         WHEN duplicate_object THEN null;
       END $$;
+    `);
+    
+    // Fix existing receiving_status enum if needed
+    await db.execute(sql`
+      DO $$ BEGIN
+        ALTER TYPE receiving_status ADD VALUE IF NOT EXISTS 'received';
+      EXCEPTION
+        WHEN duplicate_object THEN null;
+      END $$;
+    `);
+    
+    // Update completed status to received
+    await db.execute(sql`
+      UPDATE receivings SET status = 'received' WHERE status = 'completed';
     `);
     
     await db.execute(sql`

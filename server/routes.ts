@@ -3275,10 +3275,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (status === 'received' && currentReceiving.status !== 'received') {
         const payableData = {
           companyId: user.companyId,
-          amount: receiving.totalAmount,
+          amount: parseFloat(receiving.totalAmount),
           dueDate: receivingDate || new Date().toISOString().split('T')[0],
           status: 'pending' as const,
           category: 'materials' as const,
+          accountType: 'clinic' as const,
           description: `Compra - Pedido ${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
           supplier: receiving.supplier?.name,
           notes: `Recebimento automaticamente criado do pedido ${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
