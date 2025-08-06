@@ -453,17 +453,20 @@ export default function PurchaseOrders() {
                             <FormItem>
                               <FormLabel>Produto</FormLabel>
                               <Select 
-                                value={field.value ? field.value.toString() : ""} 
+                                value={field.value ? field.value.toString() : "custom"} 
                                 onValueChange={(value) => {
-                                  const productId = parseInt(value) || undefined;
-                                  const selectedProduct = products.find(p => p.id === productId);
-                                  field.onChange(productId);
-                                  
-                                  // Atualiza a descrição automaticamente
-                                  if (selectedProduct) {
-                                    form.setValue(`items.${index}.description`, selectedProduct.name);
-                                  } else {
+                                  if (value === "custom") {
+                                    field.onChange(undefined);
                                     form.setValue(`items.${index}.description`, "");
+                                  } else {
+                                    const productId = parseInt(value);
+                                    const selectedProduct = products.find(p => p.id === productId);
+                                    field.onChange(productId);
+                                    
+                                    // Atualiza a descrição automaticamente
+                                    if (selectedProduct) {
+                                      form.setValue(`items.${index}.description`, selectedProduct.name);
+                                    }
                                   }
                                 }}
                               >
@@ -473,7 +476,7 @@ export default function PurchaseOrders() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="">Item personalizado (sem produto do estoque)</SelectItem>
+                                  <SelectItem value="custom">Item personalizado (sem produto do estoque)</SelectItem>
                                   {products?.filter(p => p.isActive).map((product) => (
                                     <SelectItem key={product.id} value={product.id.toString()}>
                                       {product.name} - {product.unit}
