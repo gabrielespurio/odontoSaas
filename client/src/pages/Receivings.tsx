@@ -112,7 +112,7 @@ export default function Receivings() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: ReceivingStatusForm }) => {
-      return await apiRequest(`/api/receivings/${id}/status`, 'PUT', data);
+      return await apiRequest('PUT', `/api/receivings/${id}/status`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/receivings'] });
