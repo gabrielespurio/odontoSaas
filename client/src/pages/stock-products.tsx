@@ -93,30 +93,43 @@ const productSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   categoryId: z.number().min(1, "Categoria é obrigatória"),
   description: z.string().optional(),
-  sku: z.string().optional(),
-  barcode: z.string().optional(),
-  unit: z.enum(["unit", "kg", "g", "l", "ml", "box", "package", "meter", "cm"]).default("unit"),
-  unitPrice: z.number().positive("Preço unitário deve ser positivo"),
+  unit: z.enum(["unit", "box", "tube", "bottle", "pack", "roll", "kg", "g", "ml", "l"]).default("unit"),
+  unitPrice: z.number().positive("Preço de venda deve ser positivo"),
   costPrice: z.number().optional(),
   currentStock: z.number().min(0, "Estoque atual deve ser maior ou igual a zero").default(0),
-  minimumStock: z.number().min(0, "Estoque mínimo deve ser maior ou igual a zero").default(0),
-  maximumStock: z.number().optional(),
+  minimumStock: z.number().min(0, "Estoque mínimo deve ser maior ou igual a zero").default(5),
   supplier: z.string().optional(),
   location: z.string().optional(),
   notes: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 
+// Unidades mais comuns em clínicas odontológicas
 const unitOptions = [
   { value: "unit", label: "Unidade" },
+  { value: "box", label: "Caixa" },
+  { value: "tube", label: "Tubo" },
+  { value: "bottle", label: "Frasco" },
+  { value: "pack", label: "Pacote" },
+  { value: "roll", label: "Rolo" },
   { value: "kg", label: "Quilograma" },
   { value: "g", label: "Grama" },
-  { value: "l", label: "Litro" },
   { value: "ml", label: "Mililitro" },
-  { value: "box", label: "Caixa" },
-  { value: "package", label: "Pacote" },
-  { value: "meter", label: "Metro" },
-  { value: "cm", label: "Centímetro" },
+  { value: "l", label: "Litro" },
+];
+
+// Localizações comuns em clínicas odontológicas
+const locationOptions = [
+  "Consultório 1",
+  "Consultório 2", 
+  "Consultório 3",
+  "Estoque Principal",
+  "Área de Esterilização",
+  "Recepção",
+  "Laboratório",
+  "Sala de Cirurgia",
+  "Almoxarifado",
+  "Geladeira",
 ];
 
 export default function StockProducts() {
@@ -134,14 +147,11 @@ export default function StockProducts() {
       name: "",
       categoryId: 0,
       description: "",
-      sku: "",
-      barcode: "",
       unit: "unit",
       unitPrice: 0,
       costPrice: 0,
       currentStock: 0,
-      minimumStock: 0,
-      maximumStock: 0,
+      minimumStock: 5,
       supplier: "",
       location: "",
       notes: "",
@@ -224,14 +234,11 @@ export default function StockProducts() {
       name: product.name,
       categoryId: product.categoryId,
       description: product.description || "",
-      sku: product.sku || "",
-      barcode: product.barcode || "",
       unit: product.unit as any,
       unitPrice: parseFloat(product.unitPrice),
       costPrice: product.costPrice ? parseFloat(product.costPrice) : undefined,
       currentStock: parseFloat(product.currentStock),
       minimumStock: parseFloat(product.minimumStock),
-      maximumStock: product.maximumStock ? parseFloat(product.maximumStock) : undefined,
       supplier: product.supplier || "",
       location: product.location || "",
       notes: product.notes || "",
@@ -334,262 +341,255 @@ export default function StockProducts() {
               Novo Produto
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-primary" />
                 {editingProduct ? "Editar Produto" : "Novo Produto"}
               </DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                {/* Informações Básicas */}
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-muted-foreground">Informações Básicas</div>
+                  
                   <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nome *</FormLabel>
+                        <FormLabel>Nome do Produto *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nome do produto" {...field} />
+                          <Input 
+                            placeholder="Ex: Resina Composta A2" 
+                            {...field} 
+                            className="focus:ring-2 focus:ring-primary/20"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="categoryId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Categoria *</FormLabel>
+                          <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecionar" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {categories?.filter(c => c.isActive).map((category) => (
+                                <SelectItem key={category.id} value={category.id.toString()}>
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="unit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unidade</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {unitOptions.map((unit) => (
+                                <SelectItem key={unit.value} value={unit.value}>
+                                  {unit.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
-                    name="categoryId"
+                    name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Categoria *</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                        <FormLabel>Descrição</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Descrição detalhada do produto"
+                            rows={2}
+                            {...field}
+                            className="resize-none"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Preços */}
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-muted-foreground">Preços</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="costPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preço de Custo</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione uma categoria" />
-                            </SelectTrigger>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">R$</span>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                placeholder="0,00"
+                                className="pl-8"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
+                              />
+                            </div>
                           </FormControl>
-                          <SelectContent>
-                            {categories?.filter(c => c.isActive).map((category) => (
-                              <SelectItem key={category.id} value={category.id.toString()}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descrição</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Descrição do produto"
-                          rows={3}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="sku"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>SKU</FormLabel>
-                        <FormControl>
-                          <Input placeholder="SKU do produto" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="barcode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Código de Barras</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Código de barras" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="unit"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Unidade</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                    <FormField
+                      control={form.control}
+                      name="unitPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preço de Venda *</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">R$</span>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                placeholder="0,00"
+                                className="pl-8"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
+                            </div>
                           </FormControl>
-                          <SelectContent>
-                            {unitOptions.map((unit) => (
-                              <SelectItem key={unit.value} value={unit.value}>
-                                {unit.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="unitPrice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Preço de Venda *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            step="0.01" 
-                            placeholder="0.00"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                {/* Estoque */}
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-muted-foreground">Controle de Estoque</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="currentStock"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estoque Atual *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              placeholder="0"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="costPrice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Preço de Custo</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            step="0.01" 
-                            placeholder="0.00"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="minimumStock"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estoque Mínimo *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              placeholder="5"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="currentStock"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estoque Atual *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            step="0.01" 
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                {/* Localização e Fornecedor */}
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-muted-foreground">Localização e Fornecimento</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Localização</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecionar local" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {locationOptions.map((location) => (
+                                <SelectItem key={location} value={location}>
+                                  {location}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="minimumStock"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estoque Mínimo *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            step="0.01" 
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="maximumStock"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estoque Máximo</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            step="0.01" 
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="supplier"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fornecedor</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nome do fornecedor" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="supplier"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Fornecedor Principal</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nome do fornecedor" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Localização</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Local de armazenamento" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
+                {/* Observações */}
                 <FormField
                   control={form.control}
                   name="notes"
@@ -598,9 +598,10 @@ export default function StockProducts() {
                       <FormLabel>Observações</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="Observações sobre o produto"
-                          rows={3}
+                          placeholder="Observações especiais, instruções de uso, etc."
+                          rows={2}
                           {...field}
+                          className="resize-none"
                         />
                       </FormControl>
                       <FormMessage />
@@ -608,7 +609,7 @@ export default function StockProducts() {
                   )}
                 />
 
-                <div className="flex justify-end space-x-2">
+                <div className="flex justify-end space-x-2 pt-4 border-t">
                   <Button
                     type="button"
                     variant="outline"
@@ -626,7 +627,7 @@ export default function StockProducts() {
                   >
                     {createProductMutation.isPending || updateProductMutation.isPending 
                       ? "Salvando..." 
-                      : editingProduct ? "Atualizar" : "Criar"
+                      : editingProduct ? "Atualizar" : "Criar Produto"
                     }
                   </Button>
                 </div>
@@ -719,7 +720,7 @@ export default function StockProducts() {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Categoria</TableHead>
-              <TableHead>SKU</TableHead>
+              <TableHead>Unidade</TableHead>
               <TableHead>Estoque</TableHead>
               <TableHead>Preço</TableHead>
               <TableHead>Status</TableHead>
@@ -753,11 +754,18 @@ export default function StockProducts() {
                       </div>
                     </TableCell>
                     <TableCell>{product.category.name}</TableCell>
-                    <TableCell>{product.sku || "-"}</TableCell>
+                    <TableCell className="text-center">
+                      {unitOptions.find(u => u.value === product.unit)?.label || product.unit}
+                    </TableCell>
                     <TableCell>
-                      <div className={`flex items-center gap-2 ${isLowStock ? 'text-yellow-600' : ''}`}>
-                        {isLowStock && <AlertTriangle className="h-4 w-4" />}
-                        {parseFloat(product.currentStock).toLocaleString('pt-BR')} {unitOptions.find(u => u.value === product.unit)?.label}
+                      <div className={`${isLowStock ? 'text-yellow-600' : ''}`}>
+                        <div className="flex items-center gap-1">
+                          {isLowStock && <AlertTriangle className="h-4 w-4" />}
+                          <span className="font-medium">{parseFloat(product.currentStock).toLocaleString('pt-BR')}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Mín: {parseFloat(product.minimumStock).toLocaleString('pt-BR')}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>

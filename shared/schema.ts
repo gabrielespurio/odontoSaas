@@ -944,7 +944,7 @@ export const insertProductSchema = createInsertSchema(products).omit({
   description: z.string().optional(),
   sku: z.string().optional(),
   barcode: z.string().optional(),
-  unit: z.enum(["unit", "kg", "g", "l", "ml", "box", "package", "meter", "cm"]).default("unit"),
+  unit: z.enum(["unit", "box", "tube", "bottle", "pack", "roll", "kg", "g", "ml", "l"]).default("unit"),
   unitPrice: z.number().positive("Preço unitário deve ser positivo"),
   costPrice: z.number().optional(),
   currentStock: z.number().min(0, "Estoque atual deve ser maior ou igual a zero").default(0),
