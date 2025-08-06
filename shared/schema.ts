@@ -290,6 +290,9 @@ export const purchaseOrders = pgTable("purchase_orders", {
   expectedDeliveryDate: date("expected_delivery_date"),
   status: purchaseOrderStatusEnum("status").notNull().default("draft"),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  paymentDate: date("payment_date"), // Data do pagamento
+  installments: integer("installments").notNull().default(1), // Número de parcelas (1 a 12)
+  installmentAmount: decimal("installment_amount", { precision: 10, scale: 2 }), // Valor de cada parcela
   notes: text("notes"),
   createdBy: integer("created_by"), // ID do usuário que criou
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -783,11 +786,14 @@ export const insertPurchaseOrderSchema = createInsertSchema(purchaseOrders).omit
   updatedAt: true,
   companyId: true, // Excluir companyId pois será adicionado no backend
   orderNumber: true, // Auto-generated
+  installmentAmount: true, // Calculated automatically
 }).extend({
   supplierId: z.number().min(1, "Fornecedor é obrigatório"),
   totalAmount: z.number().positive("Valor total deve ser positivo"),
   orderDate: z.string().min(1, "Data do pedido é obrigatória"),
   expectedDeliveryDate: z.string().optional().nullable(),
+  paymentDate: z.string().optional().nullable(),
+  installments: z.number().min(1, "Número de parcelas deve ser entre 1 e 12").max(12, "Número de parcelas deve ser entre 1 e 12").default(1),
 });
 
 export const insertPurchaseOrderItemSchema = createInsertSchema(purchaseOrderItems).omit({

@@ -72,6 +72,11 @@ app.use((req, res, next) => {
     // Adiciona campo product_id na tabela purchase_order_items para integração com estoque
     await db.execute(sql`ALTER TABLE purchase_order_items ADD COLUMN IF NOT EXISTS product_id INTEGER REFERENCES products(id)`);
     
+    // Add payment and installment fields to purchase_orders table
+    await db.execute(sql`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS payment_date DATE`);
+    await db.execute(sql`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS installments INTEGER DEFAULT 1`);
+    await db.execute(sql`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS installment_amount DECIMAL(10,2)`);
+    
     // Add missing columns to suppliers table
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS cep TEXT`);
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS street TEXT`);

@@ -2231,9 +2231,18 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
+      // Calculate installment amount if installments are specified
+      const installmentAmount = (order.installments && order.installments > 1) 
+        ? order.totalAmount / order.installments 
+        : null;
+
       const [newOrder] = await tx
         .insert(purchaseOrders)
-        .values({ ...order, orderNumber })
+        .values({ 
+          ...order, 
+          orderNumber,
+          installmentAmount: installmentAmount
+        })
         .returning();
 
       // Insert items
@@ -2318,9 +2327,17 @@ export class DatabaseStorage implements IStorage {
     items?: InsertPurchaseOrderItem[]
   ): Promise<PurchaseOrder & { supplier: Supplier; items: PurchaseOrderItem[] }> {
     return await db.transaction(async (tx) => {
+      // Calculate installment amount if installments are specified
+      let updateData = { ...orderData, updatedAt: new Date() };
+      if (orderData.installments && orderData.installments > 1 && orderData.totalAmount) {
+        updateData.installmentAmount = orderData.totalAmount / orderData.installments;
+      } else if (orderData.installments === 1) {
+        updateData.installmentAmount = null;
+      }
+
       const [updatedOrder] = await tx
         .update(purchaseOrders)
-        .set({ ...orderData, updatedAt: new Date() })
+        .set(updateData)
         .where(eq(purchaseOrders.id, id))
         .returning();
 

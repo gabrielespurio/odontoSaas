@@ -55,6 +55,8 @@ type PurchaseOrderWithDetails = PurchaseOrder & {
 };
 
 const purchaseOrderFormSchema = insertPurchaseOrderSchema.extend({
+  paymentDate: z.string().optional().nullable(),
+  installments: z.number().min(1, "Número de parcelas deve ser entre 1 e 12").max(12, "Número de parcelas deve ser entre 1 e 12").default(1),
   items: z.array(
     insertPurchaseOrderItemSchema
       .omit({ purchaseOrderId: true })
@@ -84,6 +86,8 @@ export default function PurchaseOrders() {
       expectedDeliveryDate: "",
       status: "draft",
       totalAmount: 0,
+      paymentDate: "",
+      installments: 1,
       notes: "",
       items: [
         {
@@ -221,10 +225,19 @@ export default function PurchaseOrders() {
     const total = quantity * unitPrice;
     form.setValue(`items.${index}.totalPrice`, total);
     
-    // Calculate total amount
+    // Calculate total amount and installments
     const items = form.getValues("items");
     const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.totalPrice as any) || 0), 0);
     form.setValue("totalAmount", totalAmount);
+    
+    // Trigger form re-render to update installment display
+    form.trigger(["installments"]);
+  };
+
+  const calculateInstallments = () => {
+    const totalAmount = form.getValues("totalAmount") || 0;
+    const installments = form.getValues("installments") || 1;
+    return totalAmount / installments;
   };
 
   const onSubmit = (data: PurchaseOrderFormData) => {
@@ -242,6 +255,8 @@ export default function PurchaseOrders() {
       totalAmount: parseFloat(order.totalAmount.toString()),
       orderDate: order.orderDate || new Date().toISOString().split('T')[0],
       expectedDeliveryDate: order.expectedDeliveryDate || "",
+      paymentDate: order.paymentDate || "",
+      installments: order.installments || 1,
       items: order.items.map(item => ({
         ...item,
         productId: undefined, // Valor padrão para novos campos
@@ -597,7 +612,7 @@ export default function PurchaseOrders() {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="totalAmount"
@@ -614,6 +629,62 @@ export default function PurchaseOrders() {
                           />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="paymentDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data do Pagamento</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="date" 
+                            {...field} 
+                            value={field.value || ""} 
+                            data-testid="input-payment-date" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="installments"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Parcelas</FormLabel>
+                        <Select 
+                          onValueChange={(value) => {
+                            field.onChange(parseInt(value));
+                          }} 
+                          value={field.value?.toString()}
+                        >
+                          <FormControl>
+                            <SelectTrigger data-testid="select-installments">
+                              <SelectValue placeholder="Selecione as parcelas" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map((num) => {
+                              const totalAmount = form.getValues("totalAmount") || 0;
+                              const installmentValue = totalAmount / num;
+                              return (
+                                <SelectItem key={num} value={num.toString()}>
+                                  {num}x {num > 1 ? `(R$ ${installmentValue.toFixed(2)} por parcela)` : '(à vista)'}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        {field.value > 1 && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            Valor por parcela: R$ {((form.getValues("totalAmount") || 0) / field.value).toFixed(2)}
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
