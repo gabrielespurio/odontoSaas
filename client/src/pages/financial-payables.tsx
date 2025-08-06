@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/use-pagination";
+import { useCompanyFilter } from "@/contexts/company-context";
 
 type Payable = {
   id: number;
@@ -83,6 +84,7 @@ export default function FinancialPayables() {
   const [editingPayable, setEditingPayable] = useState<Payable | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const companyFilter = useCompanyFilter();
 
   const form = useForm<z.infer<typeof payableSchema>>({
     resolver: zodResolver(payableSchema),
@@ -189,7 +191,7 @@ export default function FinancialPayables() {
   };
 
   const { data: payables, isLoading: payablesLoading } = useQuery<Payable[]>({
-    queryKey: ["/api/payables", selectedStatus, selectedCategory],
+    queryKey: ["/api/payables", selectedStatus, selectedCategory, companyFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedStatus !== "all") {
@@ -197,6 +199,9 @@ export default function FinancialPayables() {
       }
       if (selectedCategory !== "all") {
         params.append("category", selectedCategory);
+      }
+      if (companyFilter) {
+        params.append("companyId", companyFilter.toString());
       }
       const url = `/api/payables${params.toString() ? `?${params.toString()}` : ""}`;
       const token = localStorage.getItem("token");

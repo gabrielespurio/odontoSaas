@@ -2584,10 +2584,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
       
+      // CRITICAL: For superadmins, allow company filtering via query parameter
+      // For regular users, always use their company
+      let companyIdToUse = user.companyId;
+      
+      // Only superadmins (users without companyId) can specify a different company
+      if (!user.companyId && req.query.companyId) {
+        companyIdToUse = parseInt(req.query.companyId as string);
+      }
+      
+      console.log(`[PAYABLES] User ID: ${user.id}, User Role: ${user.role}, User CompanyId: ${user.companyId}, Requested CompanyId: ${req.query.companyId}, Using CompanyId: ${companyIdToUse}`);
+      
       // Apply data scope filtering - only admin and "all" scope users can see payables
       if (user.role === "admin" || user.dataScope === "all") {
         // CRITICAL: Always filter by company, even for admins and "all" scope users
-        const payables = await storage.getPayables(status, category, startDate, endDate, user.companyId);
+        const payables = await storage.getPayables(status, category, startDate, endDate, companyIdToUse);
         res.json(payables);
       } else {
         // Users with "own" scope cannot see payables (clinic expenses)
