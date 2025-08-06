@@ -3288,7 +3288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const receiving = await storage.updateReceivingStatus(id, status, receivingDate, items);
       
-      // If status changed to 'received', automatically create payable and update purchase order status
+      // If status changed to 'received', automatically create payable, update purchase order status, and update stock
       if (status === 'received' && currentReceiving.status !== 'received') {
         // Use the receiving's companyId if user has no companyId (admin case)
         const payableCompanyId = user.companyId || currentReceiving.companyId;
@@ -3310,6 +3310,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Update purchase order status to 'received'
         await storage.updatePurchaseOrderStatus(receiving.purchaseOrderId, 'received');
+        
+        // Update stock for products in the received items
+        for (const item of items) {
+          // Get the purchase order item to check if it has a productId
+          const purchaseOrderItem = receiving.items.find(poItem => poItem.id === item.id);
+          if (purchaseOrderItem && purchaseOrderItem.productId) {
+            // Update product stock quantity
+            const currentProduct = await storage.getProduct(purchaseOrderItem.productId, payableCompanyId);
+            if (currentProduct) {
+              const newStockQuantity = parseFloat(currentProduct.currentStock.toString()) + parseFloat(item.quantityReceived.toString());
+              await storage.updateProductStock(purchaseOrderItem.productId, newStockQuantity);
+              
+              // Create stock movement record
+              const stockMovementData = {
+                companyId: payableCompanyId,
+                productId: purchaseOrderItem.productId,
+                type: 'purchase' as const,
+                quantity: parseFloat(item.quantityReceived.toString()),
+                unitPrice: parseFloat(purchaseOrderItem.unitPrice.toString()),
+                totalPrice: parseFloat(item.quantityReceived.toString()) * parseFloat(purchaseOrderItem.unitPrice.toString()),
+                description: `Recebimento do pedido ${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
+                reference: `PO-${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
+                createdBy: user.id
+              };
+              
+              await storage.createStockMovement(stockMovementData);
+            }
+          }
+        }
       }
       
       res.json(receiving);

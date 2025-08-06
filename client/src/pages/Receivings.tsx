@@ -118,9 +118,11 @@ export default function Receivings() {
       queryClient.invalidateQueries({ queryKey: ['/api/receivings'] });
       queryClient.invalidateQueries({ queryKey: ['/api/payables'] });
       queryClient.invalidateQueries({ queryKey: ['/api/purchase-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stock-movements'] });
       toast({
         title: "Sucesso",
-        description: "Status do recebimento atualizado com sucesso",
+        description: "Status do recebimento atualizado com sucesso. O estoque foi atualizado automaticamente.",
       });
       setDialogOpen(false);
       setUpdatingReceiving(null);

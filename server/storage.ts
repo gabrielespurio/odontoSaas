@@ -208,6 +208,7 @@ export interface IStorage {
   getProduct(id: number, companyId?: number): Promise<(Product & { category: ProductCategory }) | undefined>;
   createProduct(product: InsertProduct & { companyId: number; createdBy: number }): Promise<Product & { category: ProductCategory }>;
   updateProduct(id: number, product: Partial<InsertProduct>, companyId?: number): Promise<Product & { category: ProductCategory }>;
+  updateProductStock(id: number, stockQuantity: number, companyId?: number): Promise<Product>;
   deleteProduct(id: number, companyId?: number): Promise<void>;
   
   // Stock Management Module - Stock Movements
@@ -2605,6 +2606,25 @@ export class DatabaseStorage implements IStorage {
     }
     
     return productWithCategory;
+  }
+
+  async updateProductStock(id: number, stockQuantity: number, companyId?: number): Promise<Product> {
+    let whereConditions = [eq(products.id, id)];
+    
+    if (companyId) {
+      whereConditions.push(eq(products.companyId, companyId));
+    }
+    
+    const [updatedProduct] = await db
+      .update(products)
+      .set({
+        currentStock: stockQuantity.toString(),
+        updatedAt: new Date(),
+      })
+      .where(and(...whereConditions))
+      .returning();
+    
+    return updatedProduct;
   }
 
   async deleteProduct(id: number, companyId?: number): Promise<void> {
