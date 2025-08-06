@@ -3312,14 +3312,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updatePurchaseOrderStatus(receiving.purchaseOrderId, 'received');
         
         // Update stock for products in the received items
+        console.log('Starting stock update for receiving ID:', receiving.id);
+        console.log('Items to process:', items.length);
+        
         for (const item of items) {
+          console.log('Processing item:', item.id, 'quantityReceived:', item.quantityReceived);
+          
           // Get the purchase order item to check if it has a productId
           const purchaseOrderItem = receiving.items.find(poItem => poItem.id === item.id);
+          console.log('Found purchase order item:', purchaseOrderItem?.id, 'productId:', purchaseOrderItem?.productId);
+          
           if (purchaseOrderItem && purchaseOrderItem.productId) {
+            console.log('Updating stock for product ID:', purchaseOrderItem.productId);
+            
             // Update product stock quantity
             const currentProduct = await storage.getProduct(purchaseOrderItem.productId, payableCompanyId);
             if (currentProduct) {
-              const newStockQuantity = parseFloat(currentProduct.currentStock.toString()) + parseFloat(item.quantityReceived.toString());
+              const currentStock = parseFloat(currentProduct.currentStock.toString());
+              const quantityReceived = parseFloat(item.quantityReceived.toString());
+              const newStockQuantity = currentStock + quantityReceived;
+              
+              console.log('Current stock:', currentStock, 'Quantity received:', quantityReceived, 'New stock:', newStockQuantity);
+              
               await storage.updateProductStock(purchaseOrderItem.productId, newStockQuantity);
               
               // Create stock movement record
@@ -3327,16 +3341,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 companyId: payableCompanyId,
                 productId: purchaseOrderItem.productId,
                 type: 'purchase' as const,
-                quantity: parseFloat(item.quantityReceived.toString()),
+                quantity: quantityReceived,
                 unitPrice: parseFloat(purchaseOrderItem.unitPrice.toString()),
-                totalPrice: parseFloat(item.quantityReceived.toString()) * parseFloat(purchaseOrderItem.unitPrice.toString()),
+                totalPrice: quantityReceived * parseFloat(purchaseOrderItem.unitPrice.toString()),
                 description: `Recebimento do pedido ${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
                 reference: `PO-${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
                 createdBy: user.id
               };
               
+              console.log('Creating stock movement:', stockMovementData);
               await storage.createStockMovement(stockMovementData);
+              console.log('Stock update completed for product:', purchaseOrderItem.productId);
+            } else {
+              console.log('Product not found for ID:', purchaseOrderItem.productId);
             }
+          } else {
+            console.log('Item has no associated product or productId is null');
           }
         }
       }
