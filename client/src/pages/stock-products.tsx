@@ -52,7 +52,6 @@ import {
   Trash2,
   Package,
   AlertTriangle,
-  TrendingUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -288,9 +287,7 @@ export default function StockProducts() {
     parseFloat(p.currentStock) <= parseFloat(p.minimumStock)
   );
 
-  const totalValue = filteredProducts.reduce((acc, product) => 
-    acc + parseFloat(product.currentStock), 0
-  );
+
 
   return (
     <div className="space-y-6">
@@ -550,17 +547,7 @@ export default function StockProducts() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-            <TrendingUp className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
 
       {/* Filters */}
