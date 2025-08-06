@@ -6,7 +6,8 @@ import { setupVite, serveStatic, log } from "./vite";
 import { initializeScheduler } from "./scheduler";
 import { runSaasMigration } from "./migrations/saas-migration";
 import { db } from "./db";
-import { sql } from "drizzle-orm";
+import { sql, eq, or } from "drizzle-orm";
+import { purchaseOrders, purchaseOrderItems, receivings, receivingItems } from "../shared/schema";
 
 const app = express();
 app.use(express.json());
@@ -202,6 +203,33 @@ app.use((req, res, next) => {
       `);
       
       console.log("Purchase order numbers fixed.");
+
+    // Clean up malformed order numbers and ensure sequential numbering
+    try {
+      const malformedOrders = await db
+        .select({ id: purchaseOrders.id, orderNumber: purchaseOrders.orderNumber, companyId: purchaseOrders.companyId })
+        .from(purchaseOrders)
+        .where(or(
+          sql`${purchaseOrders.orderNumber} LIKE '%NaN%'`,
+          sql`${purchaseOrders.orderNumber} !~ '^PO-[0-9]{4}-[0-9]{4}$'`
+        ));
+
+      if (malformedOrders.length > 0) {
+        console.log(`Found ${malformedOrders.length} orders with malformed numbers, fixing...`);
+        
+        // Delete malformed orders and their related data
+        for (const order of malformedOrders) {
+          await db.delete(purchaseOrderItems).where(eq(purchaseOrderItems.purchaseOrderId, order.id));
+          await db.delete(receivingItems).where(eq(receivingItems.receivingId, 
+            sql`(SELECT id FROM receivings WHERE purchase_order_id = ${order.id})`));
+          await db.delete(receivings).where(eq(receivings.purchaseOrderId, order.id));
+          await db.delete(purchaseOrders).where(eq(purchaseOrders.id, order.id));
+        }
+        console.log("Malformed orders cleaned up.");
+      }
+    } catch (e) {
+      console.log("Order cleanup warning:", e);
+    }
     } catch (e) {
       console.log("Purchase order number fix warning:", e);
     }

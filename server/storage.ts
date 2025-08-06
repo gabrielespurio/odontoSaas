@@ -2183,22 +2183,31 @@ export class DatabaseStorage implements IStorage {
       
       while (attempts < maxAttempts) {
         try {
-          // Get the highest existing order number for this company and year
-          const lastOrder = await tx
+          // Get all order numbers for this company and year, then find the max sequence
+          const existingOrders = await tx
             .select({ orderNumber: purchaseOrders.orderNumber })
             .from(purchaseOrders)
             .where(and(
               eq(purchaseOrders.companyId, order.companyId),
               sql`EXTRACT(YEAR FROM ${purchaseOrders.createdAt}) = ${currentYear}`,
-              sql`${purchaseOrders.orderNumber} LIKE ${`PO-${currentYear}-%`}`
-            ))
-            .orderBy(sql`CAST(RIGHT(${purchaseOrders.orderNumber}, 4) AS INTEGER) DESC`)
-            .limit(1);
+              sql`${purchaseOrders.orderNumber} ~ ${`^PO-${currentYear}-[0-9]{4}$`}`
+            ));
 
           let nextNumber = 1;
-          if (lastOrder.length > 0) {
-            const lastNumberPart = lastOrder[0].orderNumber.split('-')[2];
-            nextNumber = parseInt(lastNumberPart) + 1;
+          if (existingOrders.length > 0) {
+            // Extract numeric parts and find the maximum
+            const sequenceNumbers = existingOrders
+              .map(order => {
+                const parts = order.orderNumber.split('-');
+                const numPart = parts[2];
+                const parsed = parseInt(numPart, 10);
+                return isNaN(parsed) ? 0 : parsed;
+              })
+              .filter(num => num > 0);
+            
+            if (sequenceNumbers.length > 0) {
+              nextNumber = Math.max(...sequenceNumbers) + 1;
+            }
           }
 
           orderNumber = `PO-${currentYear}-${String(nextNumber).padStart(4, '0')}`;
@@ -2225,22 +2234,31 @@ export class DatabaseStorage implements IStorage {
         .returning();
 
       // Create pending receiving automatically
-      // Generate receiving number using the same logic as order number
-      const lastReceiving = await tx
+      // Generate receiving number using the same sequential logic
+      const existingReceivings = await tx
         .select({ receivingNumber: receivings.receivingNumber })
         .from(receivings)
         .where(and(
           eq(receivings.companyId, order.companyId),
           sql`EXTRACT(YEAR FROM ${receivings.createdAt}) = ${currentYear}`,
-          sql`${receivings.receivingNumber} LIKE ${`REC-${currentYear}-%`}`
-        ))
-        .orderBy(sql`CAST(RIGHT(${receivings.receivingNumber}, 4) AS INTEGER) DESC`)
-        .limit(1);
+          sql`${receivings.receivingNumber} ~ ${`^REC-${currentYear}-[0-9]{4}$`}`
+        ));
 
       let nextReceivingNumber = 1;
-      if (lastReceiving.length > 0) {
-        const lastNumberPart = lastReceiving[0].receivingNumber.split('-')[2];
-        nextReceivingNumber = parseInt(lastNumberPart) + 1;
+      if (existingReceivings.length > 0) {
+        // Extract numeric parts and find the maximum
+        const sequenceNumbers = existingReceivings
+          .map(receiving => {
+            const parts = receiving.receivingNumber.split('-');
+            const numPart = parts[2];
+            const parsed = parseInt(numPart, 10);
+            return isNaN(parsed) ? 0 : parsed;
+          })
+          .filter(num => num > 0);
+        
+        if (sequenceNumbers.length > 0) {
+          nextReceivingNumber = Math.max(...sequenceNumbers) + 1;
+        }
       }
 
       const receivingNumber = `REC-${currentYear}-${String(nextReceivingNumber).padStart(4, '0')}`;
