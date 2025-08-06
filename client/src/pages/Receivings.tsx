@@ -117,6 +117,7 @@ export default function Receivings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/receivings'] });
       queryClient.invalidateQueries({ queryKey: ['/api/payables'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/purchase-orders'] });
       toast({
         title: "Sucesso",
         description: "Status do recebimento atualizado com sucesso",

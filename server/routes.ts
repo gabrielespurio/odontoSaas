@@ -3271,7 +3271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const receiving = await storage.updateReceivingStatus(id, status, receivingDate, items);
       
-      // If status changed to 'received', automatically create payable
+      // If status changed to 'received', automatically create payable and update purchase order status
       if (status === 'received' && currentReceiving.status !== 'received') {
         const payableData = {
           companyId: user.companyId,
@@ -3290,6 +3290,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('User object:', { id: user.id, companyId: user.companyId });
         
         await storage.createPayable(payableData);
+        
+        // Update purchase order status to 'received'
+        await storage.updatePurchaseOrderStatus(receiving.purchaseOrderId, 'received');
       }
       
       res.json(receiving);

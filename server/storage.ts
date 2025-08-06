@@ -2230,6 +2230,13 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  async updatePurchaseOrderStatus(id: number, status: string): Promise<void> {
+    await db
+      .update(purchaseOrders)
+      .set({ status: status as any, updatedAt: new Date() })
+      .where(eq(purchaseOrders.id, id));
+  }
+
   async deletePurchaseOrder(id: number): Promise<void> {
     await db.transaction(async (tx) => {
       // Delete items first
