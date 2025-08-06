@@ -281,58 +281,64 @@ export default function Receivings() {
                           </p>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Quantidade Pedida</label>
-                            <Input 
-                              value={item.quantityOrdered} 
-                              readOnly 
-                              className="bg-gray-50"
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <div className="space-y-2">
+                              <div className="text-sm font-medium leading-none">Quantidade Pedida</div>
+                              <Input 
+                                value={item.quantityOrdered} 
+                                readOnly 
+                                className="bg-gray-50"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.quantityReceived`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Quantidade Recebida</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      step="0.01"
+                                      max={parseFloat(item.quantityOrdered)}
+                                      {...field}
+                                      onChange={(e) => {
+                                        field.onChange(parseFloat(e.target.value) || 0);
+                                        calculateItemTotal(index);
+                                      }}
+                                      data-testid={`input-quantity-received-${index}`}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
                             />
                           </div>
-                          <FormField
-                            control={form.control}
-                            name={`items.${index}.quantityReceived`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Quantidade Recebida</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    step="0.01"
-                                    max={parseFloat(item.quantityOrdered)}
-                                    {...field}
-                                    onChange={(e) => {
-                                      field.onChange(parseFloat(e.target.value) || 0);
-                                      calculateItemTotal(index);
-                                    }}
-                                    data-testid={`input-quantity-received-${index}`}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`items.${index}.totalPrice`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Valor Total</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    step="0.01"
-                                    readOnly
-                                    {...field}
-                                    className="bg-gray-50"
-                                    data-testid={`input-item-total-${index}`}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                          <div>
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.totalPrice`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Valor Total</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      step="0.01"
+                                      readOnly
+                                      {...field}
+                                      className="bg-gray-50"
+                                      data-testid={`input-item-total-${index}`}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
                       </div>
                     ))}
