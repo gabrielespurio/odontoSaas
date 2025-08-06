@@ -55,7 +55,11 @@ app.use((req, res, next) => {
     await db.execute(sql`ALTER TABLE products DROP COLUMN IF EXISTS cost_price`);
     await db.execute(sql`ALTER TABLE products DROP COLUMN IF EXISTS supplier`);
     
-    // Add missing columns to stock_movements table
+    // Update stock_movements table structure
+    await db.execute(sql`ALTER TABLE stock_movements DROP COLUMN IF EXISTS type`);
+    await db.execute(sql`ALTER TABLE stock_movements DROP COLUMN IF EXISTS total_price`);
+    await db.execute(sql`ALTER TABLE stock_movements DROP COLUMN IF EXISTS description`);
+    await db.execute(sql`ALTER TABLE stock_movements DROP COLUMN IF EXISTS reference`);
     await db.execute(sql`ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS movement_type TEXT NOT NULL DEFAULT 'in'`);
     await db.execute(sql`ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS reason TEXT`);
     await db.execute(sql`ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS reference_document TEXT`);
