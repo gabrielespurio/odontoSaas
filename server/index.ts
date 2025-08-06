@@ -206,12 +206,15 @@ app.use((req, res, next) => {
       console.log("Purchase order number fix warning:", e);
     }
 
-    // Add unique constraints
+    // Add unique constraints (PostgreSQL compatible syntax)
     try {
       await db.execute(sql`
-        ALTER TABLE "purchase_orders" 
-        ADD CONSTRAINT IF NOT EXISTS "purchase_orders_order_number_company_id_unique" 
-        UNIQUE("order_number","company_id")
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'purchase_orders_order_number_company_id_unique') THEN
+            ALTER TABLE "purchase_orders" ADD CONSTRAINT "purchase_orders_order_number_company_id_unique" UNIQUE("order_number","company_id");
+          END IF;
+        END $$;
       `);
       console.log("Purchase orders unique constraint added.");
     } catch (e) {
@@ -220,9 +223,12 @@ app.use((req, res, next) => {
     
     try {
       await db.execute(sql`
-        ALTER TABLE "receivings" 
-        ADD CONSTRAINT IF NOT EXISTS "receivings_receiving_number_company_id_unique" 
-        UNIQUE("receiving_number","company_id")
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'receivings_receiving_number_company_id_unique') THEN
+            ALTER TABLE "receivings" ADD CONSTRAINT "receivings_receiving_number_company_id_unique" UNIQUE("receiving_number","company_id");
+          END IF;
+        END $$;
       `);
       console.log("Receivings unique constraint added.");
     } catch (e) {
