@@ -36,7 +36,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertPurchaseOrderSchema, insertPurchaseOrderItemSchema, type PurchaseOrder, type Supplier, type InsertPurchaseOrder, type InsertPurchaseOrderItem } from "@shared/schema";
+import { insertPurchaseOrderSchema, insertPurchaseOrderItemSchema, type PurchaseOrder, type Supplier, type Product, type InsertPurchaseOrder, type InsertPurchaseOrderItem } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
@@ -55,7 +55,14 @@ type PurchaseOrderWithDetails = PurchaseOrder & {
 };
 
 const purchaseOrderFormSchema = insertPurchaseOrderSchema.extend({
-  items: z.array(insertPurchaseOrderItemSchema.omit({ purchaseOrderId: true })).min(1, "Adicione pelo menos um item"),
+  items: z.array(
+    insertPurchaseOrderItemSchema
+      .omit({ purchaseOrderId: true })
+      .extend({
+        productId: z.number().optional(),
+        productName: z.string().optional(), // Campo auxiliar para exibição
+      })
+  ).min(1, "Adicione pelo menos um item"),
 });
 
 type PurchaseOrderFormData = z.infer<typeof purchaseOrderFormSchema>;
@@ -80,6 +87,8 @@ export default function PurchaseOrders() {
       notes: "",
       items: [
         {
+          productId: undefined,
+          productName: "",
           description: "",
           quantity: 1,
           unitPrice: 0,
@@ -119,6 +128,20 @@ export default function PurchaseOrders() {
         },
       });
       if (!response.ok) throw new Error('Failed to fetch suppliers');
+      return response.json();
+    },
+  });
+
+  const { data: products = [] } = useQuery<Product[]>({
+    queryKey: ['/api/products', companyId],
+    queryFn: async () => {
+      const url = companyId ? `/api/products?companyId=${companyId}` : '/api/products';
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch products');
       return response.json();
     },
   });
@@ -216,10 +239,12 @@ export default function PurchaseOrders() {
     setEditingOrder(order);
     form.reset({
       ...order,
+      totalAmount: parseFloat(order.totalAmount.toString()),
       orderDate: order.orderDate || new Date().toISOString().split('T')[0],
       expectedDeliveryDate: order.expectedDeliveryDate || "",
       items: order.items.map(item => ({
         ...item,
+        productId: undefined, // Valor padrão para novos campos
         quantity: parseFloat(item.quantity),
         unitPrice: parseFloat(item.unitPrice),
         totalPrice: parseFloat(item.totalPrice),
@@ -351,7 +376,7 @@ export default function PurchaseOrders() {
                       <FormItem>
                         <FormLabel>Data Prevista de Entrega</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} data-testid="input-delivery-date" />
+                          <Input type="date" {...field} value={field.value || ""} data-testid="input-delivery-date" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -388,6 +413,8 @@ export default function PurchaseOrders() {
                       type="button"
                       variant="outline"
                       onClick={() => append({
+                        productId: undefined,
+                        productName: "",
                         description: "",
                         quantity: 1,
                         unitPrice: 0,
@@ -418,68 +445,110 @@ export default function PurchaseOrders() {
                         )}
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="space-y-4">
                         <FormField
                           control={form.control}
-                          name={`items.${index}.description`}
-                          render={({ field }) => (
-                            <FormItem className="md:col-span-2">
-                              <FormLabel>Descrição</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="Descrição do item" 
-                                  {...field} 
-                                  data-testid={`input-item-description-${index}`}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`items.${index}.quantity`}
+                          name={`items.${index}.productId`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Quantidade</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number" 
-                                  step="0.01"
-                                  {...field}
-                                  onChange={(e) => {
-                                    field.onChange(parseFloat(e.target.value) || 0);
-                                    calculateItemTotal(index);
-                                  }}
-                                  data-testid={`input-item-quantity-${index}`}
-                                />
-                              </FormControl>
+                              <FormLabel>Produto</FormLabel>
+                              <Select 
+                                value={field.value ? field.value.toString() : ""} 
+                                onValueChange={(value) => {
+                                  const productId = parseInt(value) || undefined;
+                                  const selectedProduct = products.find(p => p.id === productId);
+                                  field.onChange(productId);
+                                  
+                                  // Atualiza a descrição automaticamente
+                                  if (selectedProduct) {
+                                    form.setValue(`items.${index}.description`, selectedProduct.name);
+                                  } else {
+                                    form.setValue(`items.${index}.description`, "");
+                                  }
+                                }}
+                              >
+                                <FormControl>
+                                  <SelectTrigger data-testid={`select-product-${index}`}>
+                                    <SelectValue placeholder="Selecione um produto do estoque ou deixe em branco para item personalizado" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="">Item personalizado (sem produto do estoque)</SelectItem>
+                                  {products?.filter(p => p.isActive).map((product) => (
+                                    <SelectItem key={product.id} value={product.id.toString()}>
+                                      {product.name} - {product.unit}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        <FormField
-                          control={form.control}
-                          name={`items.${index}.unitPrice`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Preço Unitário</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="number" 
-                                  step="0.01"
-                                  {...field}
-                                  onChange={(e) => {
-                                    field.onChange(parseFloat(e.target.value) || 0);
-                                    calculateItemTotal(index);
-                                  }}
-                                  data-testid={`input-item-price-${index}`}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.description`}
+                            render={({ field }) => (
+                              <FormItem className="md:col-span-2">
+                                <FormLabel>Descrição</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="Descrição do item (preenchida automaticamente ao selecionar produto)" 
+                                    {...field} 
+                                    data-testid={`input-item-description-${index}`}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.quantity`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Quantidade</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    step="0.01"
+                                    {...field}
+                                    onChange={(e) => {
+                                      field.onChange(parseFloat(e.target.value) || 0);
+                                      calculateItemTotal(index);
+                                    }}
+                                    data-testid={`input-item-quantity-${index}`}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.unitPrice`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Preço Unitário</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    step="0.01"
+                                    {...field}
+                                    onChange={(e) => {
+                                      field.onChange(parseFloat(e.target.value) || 0);
+                                      calculateItemTotal(index);
+                                    }}
+                                    data-testid={`input-item-price-${index}`}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -512,6 +581,7 @@ export default function PurchaseOrders() {
                                 <Input 
                                   placeholder="Observações do item" 
                                   {...field} 
+                                  value={field.value || ""}
                                   data-testid={`input-item-notes-${index}`}
                                 />
                               </FormControl>
@@ -556,6 +626,7 @@ export default function PurchaseOrders() {
                         <Textarea 
                           placeholder="Observações sobre o pedido" 
                           {...field} 
+                          value={field.value || ""}
                           data-testid="input-order-notes"
                         />
                       </FormControl>

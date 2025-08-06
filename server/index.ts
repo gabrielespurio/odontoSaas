@@ -55,6 +55,9 @@ app.use((req, res, next) => {
     await db.execute(sql`ALTER TABLE products DROP COLUMN IF EXISTS supplier`);
     await db.execute(sql`ALTER TABLE products DROP COLUMN IF EXISTS location`);
     
+    // Adiciona campo product_id na tabela purchase_order_items para integração com estoque
+    await db.execute(sql`ALTER TABLE purchase_order_items ADD COLUMN IF NOT EXISTS product_id INTEGER REFERENCES products(id)`);
+    
     // Add missing columns to suppliers table
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS cep TEXT`);
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS street TEXT`);

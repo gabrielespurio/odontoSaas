@@ -303,6 +303,7 @@ export const purchaseOrders = pgTable("purchase_orders", {
 export const purchaseOrderItems = pgTable("purchase_order_items", {
   id: serial("id").primaryKey(),
   purchaseOrderId: integer("purchase_order_id").notNull(), // FK to purchase_orders table
+  productId: integer("product_id"), // FK to products table (optional)
   description: text("description").notNull(),
   quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
@@ -547,6 +548,10 @@ export const purchaseOrderItemsRelations = relations(purchaseOrderItems, ({ one,
   purchaseOrder: one(purchaseOrders, {
     fields: [purchaseOrderItems.purchaseOrderId],
     references: [purchaseOrders.id],
+  }),
+  product: one(products, {
+    fields: [purchaseOrderItems.productId],
+    references: [products.id],
   }),
   receivingItems: many(receivingItems),
 }));
