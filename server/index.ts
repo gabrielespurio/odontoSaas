@@ -141,6 +141,16 @@ app.use((req, res, next) => {
       )
     `);
     
+    // Fix receivings table if status column is missing
+    try {
+      await db.execute(sql`
+        ALTER TABLE "receivings" 
+        ADD COLUMN IF NOT EXISTS "status" receiving_status DEFAULT 'pending' NOT NULL
+      `);
+    } catch (e) {
+      console.log("Receivings status column fix warning:", e);
+    }
+    
     // Add unique constraints
     try {
       await db.execute(sql`
