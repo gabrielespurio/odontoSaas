@@ -857,13 +857,9 @@ export const products = pgTable("products", {
   sku: text("sku"), // Stock Keeping Unit
   barcode: text("barcode"),
   unit: productUnitEnum("unit").notNull().default("unit"),
-  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
-  costPrice: decimal("cost_price", { precision: 10, scale: 2 }),
   currentStock: decimal("current_stock", { precision: 10, scale: 2 }).notNull().default("0"),
   minimumStock: decimal("minimum_stock", { precision: 10, scale: 2 }).notNull().default("0"),
   maximumStock: decimal("maximum_stock", { precision: 10, scale: 2 }),
-  supplier: text("supplier"), // Main supplier name
-  location: text("location"), // Storage location
   notes: text("notes"),
   isActive: boolean("is_active").notNull().default(true),
   createdBy: integer("created_by").notNull(),
@@ -945,13 +941,9 @@ export const insertProductSchema = createInsertSchema(products).omit({
   sku: z.string().optional(),
   barcode: z.string().optional(),
   unit: z.enum(["unit", "box", "tube", "bottle", "pack", "roll", "kg", "g", "ml", "l"]).default("unit"),
-  unitPrice: z.number().positive("Preço unitário deve ser positivo"),
-  costPrice: z.number().optional(),
   currentStock: z.number().min(0, "Estoque atual deve ser maior ou igual a zero").default(0),
   minimumStock: z.number().min(0, "Estoque mínimo deve ser maior ou igual a zero").default(0),
   maximumStock: z.number().optional(),
-  supplier: z.string().optional(),
-  location: z.string().optional(),
   notes: z.string().optional(),
   isActive: z.boolean().optional(),
 });

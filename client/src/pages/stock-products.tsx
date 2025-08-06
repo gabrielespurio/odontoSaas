@@ -74,13 +74,9 @@ type Product = {
   sku?: string;
   barcode?: string;
   unit: string;
-  unitPrice: string;
-  costPrice?: string;
   currentStock: string;
   minimumStock: string;
   maximumStock?: string;
-  supplier?: string;
-  location?: string;
   notes?: string;
   isActive: boolean;
   createdBy: number;
@@ -94,12 +90,8 @@ const productSchema = z.object({
   categoryId: z.number().min(1, "Categoria é obrigatória"),
   description: z.string().optional(),
   unit: z.enum(["unit", "box", "tube", "bottle", "pack", "roll", "kg", "g", "ml", "l"]).default("unit"),
-  unitPrice: z.number().positive("Preço de venda deve ser positivo"),
-  costPrice: z.number().optional(),
   currentStock: z.number().min(0, "Estoque atual deve ser maior ou igual a zero").default(0),
   minimumStock: z.number().min(0, "Estoque mínimo deve ser maior ou igual a zero").default(5),
-  supplier: z.string().optional(),
-  location: z.string().optional(),
   notes: z.string().optional(),
   isActive: z.boolean().optional(),
 });
@@ -118,19 +110,7 @@ const unitOptions = [
   { value: "l", label: "Litro" },
 ];
 
-// Localizações comuns em clínicas odontológicas
-const locationOptions = [
-  "Consultório 1",
-  "Consultório 2", 
-  "Consultório 3",
-  "Estoque Principal",
-  "Área de Esterilização",
-  "Recepção",
-  "Laboratório",
-  "Sala de Cirurgia",
-  "Almoxarifado",
-  "Geladeira",
-];
+
 
 export default function StockProducts() {
   const [search, setSearch] = useState("");
@@ -148,12 +128,8 @@ export default function StockProducts() {
       categoryId: 0,
       description: "",
       unit: "unit",
-      unitPrice: 0,
-      costPrice: 0,
       currentStock: 0,
       minimumStock: 5,
-      supplier: "",
-      location: "",
       notes: "",
       isActive: true,
     },
@@ -235,12 +211,8 @@ export default function StockProducts() {
       categoryId: product.categoryId,
       description: product.description || "",
       unit: product.unit as any,
-      unitPrice: parseFloat(product.unitPrice),
-      costPrice: product.costPrice ? parseFloat(product.costPrice) : undefined,
       currentStock: parseFloat(product.currentStock),
       minimumStock: parseFloat(product.minimumStock),
-      supplier: product.supplier || "",
-      location: product.location || "",
       notes: product.notes || "",
       isActive: product.isActive,
     });
@@ -317,7 +289,7 @@ export default function StockProducts() {
   );
 
   const totalValue = filteredProducts.reduce((acc, product) => 
-    acc + (parseFloat(product.currentStock) * parseFloat(product.unitPrice)), 0
+    acc + parseFloat(product.currentStock), 0
   );
 
   return (
@@ -444,59 +416,7 @@ export default function StockProducts() {
                   />
                 </div>
 
-                {/* Preços */}
-                <div className="space-y-3">
-                  <div className="text-sm font-medium text-muted-foreground">Preços</div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField
-                      control={form.control}
-                      name="costPrice"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Preço de Custo</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">R$</span>
-                              <Input 
-                                type="number" 
-                                step="0.01" 
-                                placeholder="0,00"
-                                className="pl-8"
-                                {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
 
-                    <FormField
-                      control={form.control}
-                      name="unitPrice"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Preço de Venda *</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">R$</span>
-                              <Input 
-                                type="number" 
-                                step="0.01" 
-                                placeholder="0,00"
-                                className="pl-8"
-                                {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
 
                 {/* Estoque */}
                 <div className="space-y-3">
@@ -544,50 +464,7 @@ export default function StockProducts() {
                   </div>
                 </div>
 
-                {/* Localização e Fornecedor */}
-                <div className="space-y-3">
-                  <div className="text-sm font-medium text-muted-foreground">Localização e Fornecimento</div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField
-                      control={form.control}
-                      name="location"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Localização</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecionar local" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {locationOptions.map((location) => (
-                                <SelectItem key={location} value={location}>
-                                  {location}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
 
-                    <FormField
-                      control={form.control}
-                      name="supplier"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Fornecedor</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Nome do fornecedor" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
 
                 {/* Observações */}
                 <FormField
@@ -722,7 +599,6 @@ export default function StockProducts() {
               <TableHead>Categoria</TableHead>
               <TableHead>Unidade</TableHead>
               <TableHead>Estoque</TableHead>
-              <TableHead>Preço</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[100px]">Ações</TableHead>
             </TableRow>
@@ -730,13 +606,13 @@ export default function StockProducts() {
           <TableBody>
             {productsLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-4">
+                <TableCell colSpan={6} className="text-center py-4">
                   Carregando produtos...
                 </TableCell>
               </TableRow>
             ) : filteredProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-4">
+                <TableCell colSpan={6} className="text-center py-4">
                   Nenhum produto encontrado
                 </TableCell>
               </TableRow>
@@ -768,9 +644,7 @@ export default function StockProducts() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      R$ {parseFloat(product.unitPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
+
                     <TableCell>
                       <Badge variant={product.isActive ? "default" : "secondary"}>
                         {product.isActive ? "Ativo" : "Inativo"}
