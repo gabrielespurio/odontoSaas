@@ -612,7 +612,7 @@ export default function PurchaseOrders() {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="totalAmount"
@@ -650,6 +650,9 @@ export default function PurchaseOrders() {
                       </FormItem>
                     )}
                   />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
                   <FormField
                     control={form.control}
                     name="installments"
@@ -673,18 +676,20 @@ export default function PurchaseOrders() {
                               const installmentValue = totalAmount / num;
                               return (
                                 <SelectItem key={num} value={num.toString()}>
-                                  {num}x {num > 1 ? `(R$ ${installmentValue.toFixed(2)} por parcela)` : '(à vista)'}
+                                  {num}x {num === 1 ? `(à vista - R$ ${installmentValue.toFixed(2)})` : `(R$ ${installmentValue.toFixed(2)} por parcela)`}
                                 </SelectItem>
                               );
                             })}
                           </SelectContent>
                         </Select>
                         <FormMessage />
-                        {field.value > 1 && (
-                          <p className="text-sm text-gray-600 mt-1">
-                            Valor por parcela: R$ {((form.getValues("totalAmount") || 0) / field.value).toFixed(2)}
-                          </p>
-                        )}
+                        <div className="text-sm text-gray-600 mt-1">
+                          {field.value === 1 ? (
+                            <span>Pagamento à vista: R$ {(form.getValues("totalAmount") || 0).toFixed(2)}</span>
+                          ) : (
+                            <span>Valor por parcela: R$ {((form.getValues("totalAmount") || 0) / (field.value || 1)).toFixed(2)}</span>
+                          )}
+                        </div>
                       </FormItem>
                     )}
                   />
