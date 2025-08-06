@@ -768,11 +768,6 @@ export default function FinancialPayables() {
                                 payable.description
                               }
                             </p>
-                            {payable.notes && (
-                              <p className="text-sm text-gray-500 mt-1">
-                                {payable.notes}
-                              </p>
-                            )}
                           </div>
                         </TableCell>
                         

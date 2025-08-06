@@ -3302,7 +3302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           accountType: 'clinic' as const,
           description: `Compra - Pedido ${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
           supplier: receiving.supplier?.name,
-          notes: `Recebimento automaticamente criado do pedido ${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
+          notes: receiving.purchaseOrder?.orderNumber || `PO-${receiving.purchaseOrderId}`,
           createdBy: user.id
         };
         
