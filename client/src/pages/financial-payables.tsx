@@ -738,7 +738,7 @@ export default function FinancialPayables() {
                 <TableHeader>
                   <TableRow>
 
-                    <TableHead>Descrição</TableHead>
+                    <TableHead>Identificador</TableHead>
                     <TableHead>Responsável</TableHead>
                     <TableHead>Fornecedor</TableHead>
                     <TableHead>Categoria</TableHead>
@@ -758,7 +758,10 @@ export default function FinancialPayables() {
                         <TableCell>
                           <div>
                             <p className="font-medium text-gray-900">
-                              {payable.description}
+                              {payable.description.includes('Compra - Pedido ') ? 
+                                payable.description.replace('Compra - Pedido ', '') : 
+                                payable.description
+                              }
                             </p>
                             {payable.notes && (
                               <p className="text-sm text-gray-500 mt-1">
