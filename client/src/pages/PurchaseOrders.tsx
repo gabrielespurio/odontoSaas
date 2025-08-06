@@ -332,14 +332,15 @@ export default function PurchaseOrders() {
               Novo Pedido
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>
                 {editingOrder ? "Editar Pedido de Compra" : "Novo Pedido de Compra"}
               </DialogTitle>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="overflow-y-auto max-h-[calc(90vh-8rem)] pr-2">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -726,7 +727,8 @@ export default function PurchaseOrders() {
                     {createMutation.isPending || updateMutation.isPending ? "Salvando..." : "Salvar"}
                   </Button>
                 </div>
-              </form>
+                </form>
+              </div>
             </Form>
           </DialogContent>
         </Dialog>
