@@ -174,6 +174,38 @@ app.use((req, res, next) => {
       console.log("Receivings status column fix warning:", e);
     }
     
+    // Fix duplicate purchase order numbers first
+    try {
+      console.log("Fixing duplicate purchase order numbers...");
+      
+      // Find and fix duplicate order numbers
+      await db.execute(sql`
+        WITH duplicates AS (
+          SELECT order_number, company_id, 
+                 ROW_NUMBER() OVER (PARTITION BY order_number, company_id ORDER BY id) as rn,
+                 id
+          FROM purchase_orders
+        ),
+        new_numbers AS (
+          SELECT id, 
+                 CASE 
+                   WHEN rn = 1 THEN order_number
+                   ELSE LEFT(order_number, 8) || '-' || LPAD((RIGHT(order_number, 4)::integer + rn - 1)::text, 4, '0')
+                 END as new_order_number
+          FROM duplicates
+          WHERE rn > 1
+        )
+        UPDATE purchase_orders 
+        SET order_number = new_numbers.new_order_number
+        FROM new_numbers
+        WHERE purchase_orders.id = new_numbers.id
+      `);
+      
+      console.log("Purchase order numbers fixed.");
+    } catch (e) {
+      console.log("Purchase order number fix warning:", e);
+    }
+
     // Add unique constraints
     try {
       await db.execute(sql`
@@ -181,7 +213,10 @@ app.use((req, res, next) => {
         ADD CONSTRAINT IF NOT EXISTS "purchase_orders_order_number_company_id_unique" 
         UNIQUE("order_number","company_id")
       `);
-    } catch {}
+      console.log("Purchase orders unique constraint added.");
+    } catch (e) {
+      console.log("Purchase orders constraint warning:", e);
+    }
     
     try {
       await db.execute(sql`
@@ -189,7 +224,10 @@ app.use((req, res, next) => {
         ADD CONSTRAINT IF NOT EXISTS "receivings_receiving_number_company_id_unique" 
         UNIQUE("receiving_number","company_id")
       `);
-    } catch {}
+      console.log("Receivings unique constraint added.");
+    } catch (e) {
+      console.log("Receivings constraint warning:", e);
+    }
     
     // Remove limit fields from companies table
     await db.execute(sql`ALTER TABLE companies DROP COLUMN IF EXISTS plan_type`);

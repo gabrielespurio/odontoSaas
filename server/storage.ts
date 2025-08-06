@@ -2175,17 +2175,43 @@ export class DatabaseStorage implements IStorage {
     items: InsertPurchaseOrderItem[]
   ): Promise<PurchaseOrder & { supplier: Supplier; items: PurchaseOrderItem[] }> {
     return await db.transaction(async (tx) => {
-      // Generate unique order number
+      // Generate unique order number with retry logic for race conditions
       const currentYear = new Date().getFullYear();
-      const orderCount = await tx
-        .select({ count: sql<number>`count(*)` })
-        .from(purchaseOrders)
-        .where(and(
-          eq(purchaseOrders.companyId, order.companyId),
-          sql`EXTRACT(YEAR FROM ${purchaseOrders.createdAt}) = ${currentYear}`
-        ));
+      let orderNumber = '';
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      while (attempts < maxAttempts) {
+        try {
+          // Get the highest existing order number for this company and year
+          const lastOrder = await tx
+            .select({ orderNumber: purchaseOrders.orderNumber })
+            .from(purchaseOrders)
+            .where(and(
+              eq(purchaseOrders.companyId, order.companyId),
+              sql`EXTRACT(YEAR FROM ${purchaseOrders.createdAt}) = ${currentYear}`,
+              sql`${purchaseOrders.orderNumber} LIKE ${`PO-${currentYear}-%`}`
+            ))
+            .orderBy(sql`CAST(RIGHT(${purchaseOrders.orderNumber}, 4) AS INTEGER) DESC`)
+            .limit(1);
 
-      const orderNumber = `PO-${currentYear}-${String(orderCount[0].count + 1).padStart(4, '0')}`;
+          let nextNumber = 1;
+          if (lastOrder.length > 0) {
+            const lastNumberPart = lastOrder[0].orderNumber.split('-')[2];
+            nextNumber = parseInt(lastNumberPart) + 1;
+          }
+
+          orderNumber = `PO-${currentYear}-${String(nextNumber).padStart(4, '0')}`;
+          break;
+        } catch (error) {
+          attempts++;
+          if (attempts >= maxAttempts) {
+            throw new Error('Failed to generate unique order number after multiple attempts');
+          }
+          // Wait a small random time to avoid collision
+          await new Promise(resolve => setTimeout(resolve, Math.random() * 100));
+        }
+      }
 
       const [newOrder] = await tx
         .insert(purchaseOrders)
