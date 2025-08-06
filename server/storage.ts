@@ -2225,13 +2225,33 @@ export class DatabaseStorage implements IStorage {
         .returning();
 
       // Create pending receiving automatically
+      // Generate receiving number using the same logic as order number
+      const lastReceiving = await tx
+        .select({ receivingNumber: receivings.receivingNumber })
+        .from(receivings)
+        .where(and(
+          eq(receivings.companyId, order.companyId),
+          sql`EXTRACT(YEAR FROM ${receivings.createdAt}) = ${currentYear}`,
+          sql`${receivings.receivingNumber} LIKE ${`REC-${currentYear}-%`}`
+        ))
+        .orderBy(sql`CAST(RIGHT(${receivings.receivingNumber}, 4) AS INTEGER) DESC`)
+        .limit(1);
+
+      let nextReceivingNumber = 1;
+      if (lastReceiving.length > 0) {
+        const lastNumberPart = lastReceiving[0].receivingNumber.split('-')[2];
+        nextReceivingNumber = parseInt(lastNumberPart) + 1;
+      }
+
+      const receivingNumber = `REC-${currentYear}-${String(nextReceivingNumber).padStart(4, '0')}`;
+
       const [newReceiving] = await tx
         .insert(receivings)
         .values({
           companyId: order.companyId,
           purchaseOrderId: newOrder.id,
           supplierId: order.supplierId,
-          receivingNumber: `REC-${currentYear}-${String(orderCount[0].count + 1).padStart(4, '0')}`,
+          receivingNumber: receivingNumber,
           status: 'pending',
           totalAmount: order.totalAmount,
           createdBy: order.createdBy,

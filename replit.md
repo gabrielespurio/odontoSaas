@@ -10,6 +10,11 @@ Preferred communication style: Simple, everyday language.
 - **Migration completed**: Successfully migrated OdontoSync from Replit Agent to standard Replit environment
 - **Database**: Maintained existing Neon PostgreSQL connection as requested by user (ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech)
 - **Environment Setup**: Fixed tsx dependency issue and confirmed all workflows functioning correctly
+- **Purchase Order Bug Fix**: Resolved critical issue with duplicate purchase order numbers (PO-2025-0021 appearing multiple times)
+  - Added database migration to fix existing duplicates automatically
+  - Improved order number generation algorithm to prevent race conditions
+  - Added proper unique constraints for purchase_orders and receivings tables
+  - Enhanced receiving number generation with consistent logic
 - **UX Improvement**: Enhanced receiving form - status now defaults to "Recebido" and quantity received auto-fills with ordered quantity
 - **UI Fix**: Improved field alignment in receiving form items section for better visual consistency
 
