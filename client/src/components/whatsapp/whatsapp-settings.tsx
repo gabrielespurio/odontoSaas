@@ -410,35 +410,43 @@ export default function WhatsAppSettings() {
                   Abra o WhatsApp no seu celular e escaneie o código abaixo para conectar:
                 </p>
                 
-                {whatsappStatus.qrCode ? (
-                  <div className="flex justify-center mb-4">
-                    <img 
-                      src={whatsappStatus.qrCode}
-                      alt="WhatsApp QR Code"
-                      className="w-48 h-48 border rounded-lg shadow-lg"
-                      onError={(e) => {
-                        console.error('QR Code image failed to load:', e);
-                        console.log('QR Code data length:', whatsappStatus.qrCode?.length);
-                        console.log('QR Code preview:', whatsappStatus.qrCode?.substring(0, 50) + '...');
-                        // Try with base64 prefix if it fails
-                        const img = e.target as HTMLImageElement;
-                        if (!whatsappStatus.qrCode.startsWith('data:')) {
-                          img.src = `data:image/png;base64,${whatsappStatus.qrCode}`;
-                        }
-                      }}
-                    />
+                <div className="mb-4">
+                  {/* Debug QR code info */}
+                  <div className="text-xs bg-gray-100 p-2 rounded mb-2">
+                    <strong>QR Debug:</strong><br/>
+                    Has QR: {whatsappStatus.qrCode ? 'Yes' : 'No'}<br/>
+                    QR Length: {whatsappStatus.qrCode?.length || 0}<br/>
+                    QR Preview: {whatsappStatus.qrCode?.substring(0, 100)}...
                   </div>
-                ) : (
-                  <div className="flex justify-center mb-4">
-                    <div className="w-48 h-48 border rounded-lg flex items-center justify-center bg-gray-100">
-                      <div className="text-center">
-                        <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin text-gray-400" />
-                        <p className="text-sm text-gray-500">Gerando QR Code...</p>
+                  
+                  {whatsappStatus.qrCode && whatsappStatus.qrCode.length > 50 ? (
+                    <div className="flex justify-center">
+                      <div className="bg-white p-4 rounded-lg shadow-lg">
+                        <img 
+                          src={whatsappStatus.qrCode.startsWith('data:') ? whatsappStatus.qrCode : `data:image/png;base64,${whatsappStatus.qrCode}`}
+                          alt="WhatsApp QR Code"
+                          className="w-64 h-64 border border-gray-200"
+                          onLoad={() => console.log('QR Code loaded successfully!')}
+                          onError={(e) => {
+                            console.error('QR Code image failed to load:', e);
+                            console.log('QR Code data:', whatsappStatus.qrCode);
+                          }}
+                        />
                       </div>
                     </div>
-                  </div>
-                )}
-                <div className="flex space-x-2">
+                  ) : (
+                    <div className="flex justify-center">
+                      <div className="w-48 h-48 border rounded-lg flex items-center justify-center bg-gray-100">
+                        <div className="text-center">
+                          <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin text-gray-400" />
+                          <p className="text-sm text-gray-500">Gerando QR Code...</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-center space-x-2">
                   <Button 
                     variant="outline" 
                     size="sm" 
