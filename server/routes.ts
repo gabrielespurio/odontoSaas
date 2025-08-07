@@ -3008,11 +3008,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   function requireSystemAdmin(req: any, res: any, next: any) {
     const user = req.user;
     
+    console.log("requireSystemAdmin middleware check:", {
+      userId: user?.id,
+      userRole: user?.role,
+      userCompanyId: user?.companyId,
+      companyIdType: typeof user?.companyId,
+      isNull: user?.companyId === null,
+      isUndefined: user?.companyId === undefined,
+      isNullish: user?.companyId == null,
+      environment: process.env.NODE_ENV
+    });
+    
     // Only users with no companyId and admin role can access companies
-    if (!user || user.companyId !== null || (user.role !== 'admin' && user.role !== 'Administrador')) {
+    const isAdmin = user?.role === 'admin' || user?.role === 'Administrador';
+    const hasNoCompany = user?.companyId === null || user?.companyId === undefined;
+    
+    if (!user || !hasNoCompany || !isAdmin) {
+      console.log("Access denied - requireSystemAdmin failed:", {
+        hasUser: !!user,
+        hasNoCompany,
+        isAdmin,
+        finalCheck: !user || !hasNoCompany || !isAdmin
+      });
       return res.status(403).json({ message: 'Access denied. System admin required.' });
     }
     
+    console.log("SystemAdmin access granted");
     next();
   }
 

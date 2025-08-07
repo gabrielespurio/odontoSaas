@@ -134,16 +134,22 @@ export async function runSaasMigration() {
     `);
     
     if (hasUsersCompanyId.length > 0) {
-      // Update existing users
+      // Ensure admin user always has NULL company_id (system admin)
       await db.execute(sql`
         UPDATE "users" SET "company_id" = NULL 
-        WHERE "username" = 'admin' AND "email" = 'admin@odontosync.com'
+        WHERE ("username" = 'admin' AND "email" = 'admin@odontosync.com') 
+           OR ("role" = 'admin' AND "email" = 'admin@odontosync.com')
       `);
       
+      // Update other users to belong to default company if they don't have one
       await db.execute(sql`
         UPDATE "users" SET "company_id" = 1 
-        WHERE "company_id" IS NULL AND NOT ("username" = 'admin' AND "email" = 'admin@odontosync.com')
+        WHERE "company_id" IS NULL 
+          AND NOT (("username" = 'admin' AND "email" = 'admin@odontosync.com') 
+                OR ("role" = 'admin' AND "email" = 'admin@odontosync.com'))
       `);
+      
+      console.log("Fixed admin user company_id to NULL for system admin access");
     }
 
     // Check if patients have company_id and update them
