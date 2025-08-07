@@ -378,6 +378,7 @@ app.use((req, res, next) => {
   const { addProductionDebugRoutes, addProductionErrorHandling } = await import('./production-fix');
   addProductionDebugRoutes(app);
   
+  // Register API routes BEFORE static serving
   const server = await registerRoutes(app);
   
   // Add production error handling
@@ -400,7 +401,9 @@ app.use((req, res, next) => {
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    // Import and use optimized production static serving
+    const { setupProductionStatic } = await import('./production-static');
+    setupProductionStatic(app);
   }
 
   // ALWAYS serve the app on port 5000

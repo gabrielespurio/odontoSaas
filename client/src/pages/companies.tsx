@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { handleProductionError } from "@/config/production";
+import { productionApi } from "@/utils/production-api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -79,12 +80,21 @@ export default function Companies() {
 
   const { data: companies = [], isLoading, error } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
+    queryFn: async () => {
+      try {
+        console.log("🏢 Fetching companies...");
+        const data = await productionApi.get<Company[]>("/api/companies");
+        console.log("🏢 Companies fetched successfully:", data.length, "companies");
+        return data;
+      } catch (error) {
+        console.error("🏢 Companies fetch error:", error);
+        handleProductionError(error, 'companies-fetch');
+        throw error;
+      }
+    },
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    onError: (error) => {
-      handleProductionError(error, 'companies-module');
-      console.error("Companies query error:", error);
-    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Log para debug em produção
