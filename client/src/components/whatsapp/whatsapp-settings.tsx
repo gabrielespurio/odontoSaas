@@ -21,6 +21,8 @@ interface WhatsAppStatus {
   instanceId: string | null;
   qrCode: string | null;
   connectedAt: string | null;
+  phoneNumber?: string;
+  profileName?: string;
 }
 
 const testMessageSchema = z.object({
@@ -371,7 +373,21 @@ export default function WhatsAppSettings() {
                   <CheckCircle className="w-5 h-5 text-green-600" />
                   <h3 className="font-semibold text-green-800">WhatsApp Conectado!</h3>
                 </div>
-                <p className="text-sm text-green-700">
+                {whatsappStatus.phoneNumber && (
+                  <div className="mt-2">
+                    <p className="text-sm text-green-700">
+                      <span className="font-medium">Número conectado:</span> +{whatsappStatus.phoneNumber}
+                    </p>
+                  </div>
+                )}
+                {whatsappStatus.profileName && (
+                  <div className="mt-1">
+                    <p className="text-sm text-green-700">
+                      <span className="font-medium">Nome do perfil:</span> {whatsappStatus.profileName}
+                    </p>
+                  </div>
+                )}
+                <p className="text-sm text-green-700 mt-2">
                   Seu WhatsApp está conectado e funcionando. Os pacientes receberão lembretes automáticos.
                 </p>
                 {whatsappStatus.connectedAt && (

@@ -163,6 +163,65 @@ export async function getInstanceQRCode(instanceName: string): Promise<string | 
   }
 }
 
+// Get instance details (phone number, profile name)
+export async function getWhatsAppInstanceDetails(instanceName: string): Promise<{ phoneNumber?: string; profileName?: string } | null> {
+  try {
+    console.log(`Getting instance details for: ${instanceName}`);
+    
+    // Try /instance/info endpoint
+    const infoResponse = await fetch(`${EVOLUTION_API_BASE_URL}/instance/info/${instanceName}`, {
+      method: 'GET',
+      headers: {
+        'apikey': EVOLUTION_API_KEY
+      }
+    });
+    
+    console.log(`Instance info response status: ${infoResponse.status}`);
+    
+    if (infoResponse.ok) {
+      const infoData = await infoResponse.json() as any;
+      console.log('Instance info response:', JSON.stringify(infoData, null, 2));
+      
+      // Extract phone number and profile name from various possible locations
+      const phoneNumber = infoData.instance?.wuid || infoData.instance?.user?.id || infoData.wuid || infoData.user?.id;
+      const profileName = infoData.instance?.profileName || infoData.instance?.user?.name || infoData.profileName || infoData.user?.name;
+      
+      return {
+        phoneNumber: phoneNumber ? phoneNumber.replace('@s.whatsapp.net', '') : undefined,
+        profileName
+      };
+    }
+    
+    // Try alternative endpoint /instance/me
+    const meResponse = await fetch(`${EVOLUTION_API_BASE_URL}/instance/me/${instanceName}`, {
+      method: 'GET',
+      headers: {
+        'apikey': EVOLUTION_API_KEY
+      }
+    });
+    
+    console.log(`Instance me response status: ${meResponse.status}`);
+    
+    if (meResponse.ok) {
+      const meData = await meResponse.json() as any;
+      console.log('Instance me response:', JSON.stringify(meData, null, 2));
+      
+      const phoneNumber = meData.wuid || meData.id || meData.me?.id;
+      const profileName = meData.profileName || meData.name || meData.me?.name;
+      
+      return {
+        phoneNumber: phoneNumber ? phoneNumber.replace('@s.whatsapp.net', '') : undefined,
+        profileName
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error getting instance details:', error);
+    return null;
+  }
+}
+
 // Check instance status
 export async function checkInstanceStatus(instanceName: string): Promise<string> {
   try {

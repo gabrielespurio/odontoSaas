@@ -12,7 +12,8 @@ import {
   createWhatsAppInstance, 
   getInstanceQRCode, 
   checkInstanceStatus,
-  sendWhatsAppMessageByCompany 
+  sendWhatsAppMessageByCompany,
+  getWhatsAppInstanceDetails 
 } from "./whatsapp";
 import { sendDailyReminders } from "./scheduler";
 import { formatDateForDatabase, formatDateForFrontend } from "./utils/date-formatter";
@@ -3773,6 +3774,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (company.whatsappInstanceId) {
         const currentStatus = await checkInstanceStatus(company.whatsappInstanceId);
         
+        // Get instance details if connected
+        let instanceDetails = null;
+        if (currentStatus === 'connected') {
+          instanceDetails = await getWhatsAppInstanceDetails(company.whatsappInstanceId);
+        }
+        
         // Update status in database if changed
         if (currentStatus !== company.whatsappStatus) {
           await db.update(companies)
@@ -3787,7 +3794,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: currentStatus,
           instanceId: company.whatsappInstanceId,
           qrCode: company.whatsappQrCode,
-          connectedAt: company.whatsappConnectedAt
+          connectedAt: company.whatsappConnectedAt,
+          phoneNumber: instanceDetails?.phoneNumber,
+          profileName: instanceDetails?.profileName
         });
       } else {
         res.json({
