@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +68,14 @@ export default function WhatsAppSettings() {
   });
 
   const isSuperAdmin = userCompany?.isSuperAdmin;
-  const companyIdToUse = isSuperAdmin ? selectedCompanyId : userCompany?.companyId;
+  const companyIdToUse = isSuperAdmin ? (selectedCompanyId || userCompany?.companyId) : userCompany?.companyId;
+  
+  // Auto-select first company for superadmins if none selected
+  useEffect(() => {
+    if (isSuperAdmin && companies && companies.length > 0 && !selectedCompanyId) {
+      setSelectedCompanyId(companies[0].id);
+    }
+  }, [isSuperAdmin, companies, selectedCompanyId]);
   
   console.log('WhatsAppSettings: userCompany:', userCompany);
   console.log('WhatsAppSettings: isSuperAdmin:', isSuperAdmin);
@@ -332,7 +339,7 @@ export default function WhatsAppSettings() {
                     console.log('WhatsApp Setup: Button clicked directly!');
                     handleSetupWhatsApp();
                   }} 
-                  disabled={setupMutation.isPending}
+                  disabled={setupMutation.isPending || !companyIdToUse}
                   className="bg-green-600 hover:bg-green-700 w-full"
                 >
                   {setupMutation.isPending ? (
@@ -353,7 +360,8 @@ export default function WhatsAppSettings() {
                   Company ID: {companyIdToUse || 'N/A'}<br/>
                   SuperAdmin: {isSuperAdmin ? 'Sim' : 'Não'}<br/>
                   Status: {whatsappStatus?.status || 'N/A'}<br/>
-                  Button Disabled: {setupMutation.isPending ? 'Sim' : 'Não'}<br/>
+                  Button Disabled: {setupMutation.isPending || !companyIdToUse ? 'Sim' : 'Não'}<br/>
+                  Disabled Reason: {!companyIdToUse ? 'No Company ID' : setupMutation.isPending ? 'Pending' : 'None'}<br/>
                   WhatsApp Data: {JSON.stringify(whatsappStatus, null, 2)}
                 </div>
               </div>
