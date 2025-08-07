@@ -15,6 +15,11 @@ Preferred communication style: Simple, everyday language.
   - Modified PatientForm to properly include companyId for super administrators
   - Updated all components using useCompanyFilter to new object format
   - Added debugging logs to patient creation API endpoint for troubleshooting
+- **WhatsApp Status Fix**: Improved WhatsApp status verification with multiple API endpoints for better accuracy
+- **Schedule Module Company Filtering**: Fixed appointment form to properly filter patients, dentists, and procedures by selected company
+  - Updated AppointmentForm to include companyId in all data queries
+  - Fixed schedule page to use company filter correctly for appointments and dentists
+  - Now super administrators see only data from the selected company in header dropdown
 - **WhatsApp Configuration Fix**: Fixed WhatsApp setup error "Company ID is required" by correcting companyId handling in frontend and backend endpoints
 - **WhatsApp QR Code Enhancement**: Improved WhatsApp integration with better QR code generation and display
   - Enhanced Evolution API integration with better error handling and logging

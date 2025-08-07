@@ -12,6 +12,7 @@ import { X, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { useCompanyFilter } from "@/contexts/company-context";
 import type { Appointment, Patient, User, Procedure } from "@/lib/types";
 
 const appointmentSchema = z.object({
@@ -36,17 +37,37 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { companyId } = useCompanyFilter();
   const [isChecking, setIsChecking] = useState(false);
   const [selectedProcedures, setSelectedProcedures] = useState<Array<{ id: number; procedureId: number }>>([]);
 
   const { data: patients } = useQuery<Patient[]>({
-    queryKey: ["/api/patients"],
+    queryKey: ["/api/patients", companyId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (companyId) {
+        params.append('companyId', companyId.toString());
+      }
+      const url = `/api/patients${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch patients");
+      return response.json();
+    },
   });
 
   const { data: dentists, refetch: refetchDentists } = useQuery<User[]>({
-    queryKey: ["/api/users/dentists"],
+    queryKey: ["/api/users/dentists", companyId],
     queryFn: async () => {
-      const response = await fetch("/api/users/dentists", {
+      const params = new URLSearchParams();
+      if (companyId) {
+        params.append('companyId', companyId.toString());
+      }
+      const url = `/api/users/dentists${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
           'Cache-Control': 'no-cache',
@@ -61,7 +82,21 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
   });
 
   const { data: procedures } = useQuery<Procedure[]>({
-    queryKey: ["/api/procedures"],
+    queryKey: ["/api/procedures", companyId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (companyId) {
+        params.append('companyId', companyId.toString());
+      }
+      const url = `/api/procedures${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch procedures");
+      return response.json();
+    },
   });
 
   const { data: appointments } = useQuery<(Appointment & { patient: Patient; dentist: User; procedure: Procedure })[]>({

@@ -124,7 +124,7 @@ export default function Schedule() {
       startDate: weekDates[0].toISOString().split('T')[0], 
       endDate: weekDates[6].toISOString().split('T')[0],
       dentistId: selectedDentist !== "all" ? parseInt(selectedDentist) : undefined,
-      companyId: companyFilter
+      companyId: companyFilter.companyId
     }],
     queryFn: async () => {
       const token = localStorage.getItem("token");
@@ -137,8 +137,8 @@ export default function Schedule() {
         params.append('dentistId', selectedDentist);
       }
       
-      if (companyFilter) {
-        params.append('companyId', companyFilter.toString());
+      if (companyFilter.companyId) {
+        params.append('companyId', companyFilter.companyId.toString());
       }
       
       const response = await fetch(`/api/appointments?${params.toString()}`, {
@@ -157,7 +157,21 @@ export default function Schedule() {
   });
 
   const { data: dentists } = useQuery<User[]>({
-    queryKey: ["/api/users/dentists"],
+    queryKey: ["/api/users/dentists", companyFilter.companyId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (companyFilter.companyId) {
+        params.append('companyId', companyFilter.companyId.toString());
+      }
+      const url = `/api/users/dentists${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch dentists");
+      return response.json();
+    },
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache
   });
