@@ -2666,8 +2666,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user;
       const payableData = insertPayableSchema.partial().parse(req.body);
       
+      // Handle admin users who need to access company data
+      let targetCompanyId = user.companyId;
+      if (!targetCompanyId) {
+        // For admin users, get the company from the payable itself
+        const tempPayable = await db.select({ companyId: payables.companyId }).from(payables).where(eq(payables.id, id)).limit(1);
+        if (tempPayable.length === 0) {
+          return res.status(404).json({ message: "Payable not found" });
+        }
+        targetCompanyId = tempPayable[0].companyId;
+      }
+      
       // CRITICAL: Verify payable belongs to user's company
-      const existingPayable = await storage.getPayable(id, user.companyId);
+      const existingPayable = await storage.getPayable(id, targetCompanyId);
       if (!existingPayable) {
         return res.status(404).json({ message: "Payable not found" });
       }
@@ -2682,7 +2693,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dentistId: payableData.accountType === "dentist" ? payableData.dentistId : undefined,
       };
       
-      const payable = await storage.updatePayable(id, cleanedData, user.companyId);
+      const payable = await storage.updatePayable(id, cleanedData, targetCompanyId);
       res.json(payable);
     } catch (error) {
       console.error("Update payable error:", error);
@@ -2695,13 +2706,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const user = req.user;
       
+      // Handle admin users who need to access company data
+      let targetCompanyId = user.companyId;
+      if (!targetCompanyId) {
+        // For admin users, get the company from the payable itself
+        const tempPayable = await db.select({ companyId: payables.companyId }).from(payables).where(eq(payables.id, id)).limit(1);
+        if (tempPayable.length === 0) {
+          return res.status(404).json({ message: "Conta a pagar não encontrada" });
+        }
+        targetCompanyId = tempPayable[0].companyId;
+      }
+      
       // CRITICAL: Verify payable belongs to user's company
-      const existingPayable = await storage.getPayable(id, user.companyId);
+      const existingPayable = await storage.getPayable(id, targetCompanyId);
       if (!existingPayable) {
         return res.status(404).json({ message: "Conta a pagar não encontrada" });
       }
       
-      await storage.deletePayable(id, user.companyId);
+      await storage.deletePayable(id, targetCompanyId);
       res.json({ message: "Payable deleted successfully" });
     } catch (error) {
       console.error("Delete payable error:", error);
