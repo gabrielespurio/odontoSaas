@@ -246,7 +246,8 @@ export default function WhatsAppSettings() {
   console.log('WhatsApp Settings Debug:', {
     isSuperAdmin,
     companyIdToUse,
-    selectedCompanyId,
+    contextSelectedCompanyId,
+    localSelectedCompanyId,
     userCompany: userCompany?.companyId,
     isLoading,
     whatsappStatus,
@@ -273,7 +274,7 @@ export default function WhatsAppSettings() {
         Loading: {isLoading ? 'Yes' : 'No'}<br/>
         Company ID: {companyIdToUse || 'N/A'}<br/>
         SuperAdmin: {isSuperAdmin ? 'Yes' : 'No'}<br/>
-        Selected Company: {contextSelectedCompanyId || localSelectedCompanyId || 'N/A'}<br/>
+        Selected Company: {(contextSelectedCompanyId || localSelectedCompanyId || 'N/A').toString()}<br/>
         User Company: {userCompany?.companyId || 'N/A'}<br/>
         WhatsApp Status: {whatsappStatus?.status || 'N/A'}<br/>
         Has WhatsApp Data: {whatsappStatus ? 'Yes' : 'No'}
