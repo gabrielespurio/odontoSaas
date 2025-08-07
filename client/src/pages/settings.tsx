@@ -16,13 +16,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Users, Settings2, Edit, MoreHorizontal, Trash2, FolderPlus, Shield, Building, Bell, Database } from "lucide-react";
+import { Plus, Users, Settings2, Edit, MoreHorizontal, Trash2, FolderPlus, Shield, Building, Bell, Database, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useCompanyFilter } from "@/contexts/company-context";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/use-pagination";
 import type { User, ProcedureCategory, UserProfile } from "@/lib/types";
+import WhatsAppSettings from "@/components/whatsapp/whatsapp-settings";
 
 // User form schema
 const userSchema = z.object({
@@ -767,8 +768,12 @@ export default function Settings() {
                 </div>
               )}
 
+              {selectedSection === 'whatsapp' && (
+                <WhatsAppSettings />
+              )}
+
               {/* Placeholder for future sections */}
-              {!['users', 'profiles', 'categories'].includes(selectedSection) && (
+              {!['users', 'profiles', 'categories', 'whatsapp'].includes(selectedSection) && (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                     <Settings2 className="w-8 h-8 text-gray-400" />

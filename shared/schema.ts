@@ -48,6 +48,12 @@ export const companies = pgTable("companies", {
   state: text("state"),
   // Status
   isActive: boolean("is_active").notNull().default(true),
+  // WhatsApp Integration
+  whatsappInstanceId: text("whatsapp_instance_id"), // Instance name/id for Evolution API
+  whatsappHash: text("whatsapp_hash"), // Hash returned by Evolution API
+  whatsappStatus: text("whatsapp_status").default("disconnected"), // "disconnected", "qrcode", "connected"
+  whatsappQrCode: text("whatsapp_qrcode"), // Base64 QR code
+  whatsappConnectedAt: timestamp("whatsapp_connected_at"),
   // Dates
   trialEndDate: date("trial_end_date"),
   subscriptionStartDate: date("subscription_start_date"),

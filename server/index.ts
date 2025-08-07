@@ -91,6 +91,13 @@ app.use((req, res, next) => {
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
 
+    // Add WhatsApp columns to companies table
+    await db.execute(sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS whatsapp_instance_id TEXT`);
+    await db.execute(sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS whatsapp_hash TEXT`);
+    await db.execute(sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS whatsapp_status TEXT DEFAULT 'disconnected'`);
+    await db.execute(sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS whatsapp_qrcode TEXT`);
+    await db.execute(sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS whatsapp_connected_at TIMESTAMP`);
+
     // Create purchase module tables
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS "purchase_orders" (

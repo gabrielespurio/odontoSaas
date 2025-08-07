@@ -6,7 +6,14 @@ import { eq, and, or, sql, isNull, desc, ilike } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-import { sendWhatsAppMessage, formatAppointmentMessage } from "./whatsapp";
+import { 
+  sendWhatsAppMessage, 
+  formatAppointmentMessage, 
+  createWhatsAppInstance, 
+  getInstanceQRCode, 
+  checkInstanceStatus,
+  sendWhatsAppMessageByCompany 
+} from "./whatsapp";
 import { sendDailyReminders } from "./scheduler";
 import { formatDateForDatabase, formatDateForFrontend } from "./utils/date-formatter";
 import { 
@@ -3671,6 +3678,195 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(movement);
     } catch (error) {
       console.error("Create stock movement error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // WhatsApp Integration Routes
+  app.get("/api/whatsapp/status", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      
+      if (!user.companyId) {
+        return res.status(400).json({ message: "Company ID is required" });
+      }
+
+      // Get company WhatsApp info
+      const [company] = await db.select({
+        whatsappInstanceId: companies.whatsappInstanceId,
+        whatsappStatus: companies.whatsappStatus,
+        whatsappQrCode: companies.whatsappQrCode,
+        whatsappConnectedAt: companies.whatsappConnectedAt,
+      }).from(companies).where(eq(companies.id, user.companyId));
+
+      if (!company) {
+        return res.status(404).json({ message: "Empresa não encontrada" });
+      }
+
+      // If instance exists, check current status
+      if (company.whatsappInstanceId) {
+        const currentStatus = await checkInstanceStatus(company.whatsappInstanceId);
+        
+        // Update status in database if changed
+        if (currentStatus !== company.whatsappStatus) {
+          await db.update(companies)
+            .set({ 
+              whatsappStatus: currentStatus,
+              whatsappConnectedAt: currentStatus === 'connected' ? new Date() : null
+            })
+            .where(eq(companies.id, user.companyId));
+        }
+
+        res.json({
+          status: currentStatus,
+          instanceId: company.whatsappInstanceId,
+          qrCode: company.whatsappQrCode,
+          connectedAt: company.whatsappConnectedAt
+        });
+      } else {
+        res.json({
+          status: 'not_configured',
+          instanceId: null,
+          qrCode: null,
+          connectedAt: null
+        });
+      }
+    } catch (error) {
+      console.error("Get WhatsApp status error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/whatsapp/setup", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      
+      if (!user.companyId) {
+        return res.status(400).json({ message: "Company ID is required" });
+      }
+
+      // Get company info
+      const [company] = await db.select({
+        id: companies.id,
+        name: companies.name,
+        whatsappInstanceId: companies.whatsappInstanceId,
+      }).from(companies).where(eq(companies.id, user.companyId));
+
+      if (!company) {
+        return res.status(404).json({ message: "Empresa não encontrada" });
+      }
+
+      // Create WhatsApp instance
+      const result = await createWhatsAppInstance(company.id, company.name);
+      
+      if (!result) {
+        return res.status(500).json({ message: "Falha ao criar instância do WhatsApp" });
+      }
+
+      const instanceId = `company_${company.id}_${company.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      
+      // Update company with WhatsApp info
+      await db.update(companies)
+        .set({
+          whatsappInstanceId: instanceId,
+          whatsappHash: result.hash,
+          whatsappStatus: 'qrcode',
+          whatsappQrCode: result.qrcode?.base64,
+        })
+        .where(eq(companies.id, user.companyId));
+
+      res.json({
+        instanceId,
+        hash: result.hash,
+        qrCode: result.qrcode?.base64,
+        status: 'qrcode'
+      });
+    } catch (error) {
+      console.error("Setup WhatsApp error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/whatsapp/refresh-qr", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      
+      if (!user.companyId) {
+        return res.status(400).json({ message: "Company ID is required" });
+      }
+
+      // Get company info
+      const [company] = await db.select({
+        whatsappInstanceId: companies.whatsappInstanceId,
+      }).from(companies).where(eq(companies.id, user.companyId));
+
+      if (!company || !company.whatsappInstanceId) {
+        return res.status(400).json({ message: "Instância do WhatsApp não encontrada" });
+      }
+
+      // Get new QR code
+      const qrCode = await getInstanceQRCode(company.whatsappInstanceId);
+      
+      if (!qrCode) {
+        return res.status(500).json({ message: "Falha ao obter QR code" });
+      }
+
+      // Update QR code in database
+      await db.update(companies)
+        .set({
+          whatsappQrCode: qrCode,
+          whatsappStatus: 'qrcode'
+        })
+        .where(eq(companies.id, user.companyId));
+
+      res.json({ qrCode });
+    } catch (error) {
+      console.error("Refresh QR code error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/whatsapp/test-message", authenticateToken, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { phoneNumber, message } = req.body;
+      
+      if (!user.companyId) {
+        return res.status(400).json({ message: "Company ID is required" });
+      }
+
+      if (!phoneNumber || !message) {
+        return res.status(400).json({ message: "Número de telefone e mensagem são obrigatórios" });
+      }
+
+      // Get company WhatsApp instance
+      const [company] = await db.select({
+        whatsappInstanceId: companies.whatsappInstanceId,
+        whatsappStatus: companies.whatsappStatus,
+      }).from(companies).where(eq(companies.id, user.companyId));
+
+      if (!company || !company.whatsappInstanceId) {
+        return res.status(400).json({ message: "WhatsApp não configurado para esta empresa" });
+      }
+
+      if (company.whatsappStatus !== 'connected') {
+        return res.status(400).json({ message: "WhatsApp não está conectado" });
+      }
+
+      // Send test message
+      const success = await sendWhatsAppMessageByCompany(
+        company.whatsappInstanceId,
+        phoneNumber,
+        message
+      );
+
+      if (success) {
+        res.json({ message: "Mensagem de teste enviada com sucesso" });
+      } else {
+        res.status(500).json({ message: "Falha ao enviar mensagem de teste" });
+      }
+    } catch (error) {
+      console.error("Send test message error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
