@@ -28,7 +28,7 @@ import type { User, ProcedureCategory, UserProfile } from "@/lib/types";
 const userSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres").optional(),
   role: z.string().min(1, "Selecione um perfil"),
   dataScope: z.enum(["all", "own"], { required_error: "Selecione o escopo de dados" }),
   forcePasswordChange: z.boolean().optional(),
@@ -418,7 +418,7 @@ export default function Settings() {
     if (editingUser) {
       const updateData = { ...data };
       if (!data.password) {
-        delete updateData.password;
+        delete (updateData as any).password;
       }
       updateUserMutation.mutate(updateData);
     } else {
@@ -632,7 +632,7 @@ export default function Settings() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {usersPagination.currentItems.map((user) => (
+                            {usersPagination.currentData.map((user: User) => (
                               <TableRow key={user.id}>
                                 <TableCell className="font-medium">{user.name}</TableCell>
                                 <TableCell>{user.username}</TableCell>
@@ -686,7 +686,6 @@ export default function Settings() {
                         totalPages={usersPagination.totalPages}
                         onPageChange={usersPagination.goToPage}
                         totalItems={usersPagination.totalItems}
-                        itemsPerPage={usersPagination.itemsPerPage}
                       />
                     </>
                   )}
