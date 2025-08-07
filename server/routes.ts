@@ -878,17 +878,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user;
       
-      // Verificar se o usuário tem companyId
-      if (!user.companyId) {
-        return res.status(400).json({ message: "User must belong to a company" });
-      }
-      
       const patientData = insertPatientSchema.parse(req.body);
       
-      // CRITICAL: Add company ID from authenticated user
+      // Determine company ID
+      let companyId: number;
+      
+      if (user.companyId === null) {
+        // Super Administrator - must specify companyId in request body or query
+        const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : (patientData as any).companyId;
+        
+        if (!requestedCompanyId) {
+          return res.status(400).json({ message: "Super Administrator must specify a company ID" });
+        }
+        companyId = requestedCompanyId;
+      } else {
+        // Regular user - use their company
+        companyId = user.companyId;
+      }
+      
+      // CRITICAL: Add company ID from authenticated user or request
       const patientWithCompany = {
         ...patientData,
-        companyId: user.companyId
+        companyId: companyId
       };
       
       const patient = await storage.createPatient(patientWithCompany);

@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2 } from "lucide-react";
 import type { Patient } from "@/lib/types";
+import { useCompanyFilter } from "@/contexts/company-context";
 
 const patientSchema = z.object({
   name: z.string().min(2, "Nome é obrigatório"),
@@ -42,6 +43,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSearchingCEP, setIsSearchingCEP] = useState(false);
+  const { companyId } = useCompanyFilter();
   
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
@@ -105,10 +107,19 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
   });
 
   const onSubmit = (data: PatientFormData) => {
+    // Clean and prepare data
+    const cleanData = {
+      ...data,
+      cpf: data.cpf.replace(/\D/g, ""),
+      phone: data.phone.replace(/\D/g, ""),
+      cep: data.cep?.replace(/\D/g, "") || "",
+      companyId: companyId || undefined, // Include companyId for super admins
+    };
+
     if (patient) {
-      updateMutation.mutate(data);
+      updateMutation.mutate(cleanData);
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(cleanData);
     }
   };
 
