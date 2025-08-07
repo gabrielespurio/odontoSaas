@@ -3293,20 +3293,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Use the receiving's companyId if user has no companyId (admin case)
         const payableCompanyId = user.companyId || currentReceiving.companyId;
         
-        const payableData = {
-          companyId: payableCompanyId,
-          amount: parseFloat(receiving.totalAmount),
-          dueDate: receivingDate || new Date().toISOString().split('T')[0],
-          status: 'pending' as const,
-          category: 'materials' as const,
-          accountType: 'clinic' as const,
-          description: `Compra - Pedido ${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
-          supplier: receiving.supplier?.name,
-          notes: receiving.purchaseOrder?.orderNumber || `PO-${receiving.purchaseOrderId}`,
-          createdBy: user.id
-        };
+        // Handle installments - create separate payables for each installment
+        const installments = receiving.purchaseOrder?.installments || 1;
+        const totalAmount = parseFloat(receiving.totalAmount);
+        const installmentAmount = installments > 1 ? totalAmount / installments : totalAmount;
         
-        await storage.createPayable(payableData);
+        // Use the payment date from the purchase order if available, otherwise use receiving date or current date
+        const baseDate = receiving.purchaseOrder?.paymentDate || receivingDate || new Date().toISOString().split('T')[0];
+        const baseDueDate = new Date(baseDate);
+        
+        for (let i = 0; i < installments; i++) {
+          // Calculate due date for each installment (monthly intervals for multiple installments)
+          const installmentDueDate = new Date(baseDueDate);
+          if (installments > 1) {
+            installmentDueDate.setMonth(installmentDueDate.getMonth() + i);
+          }
+          
+          const payableData = {
+            companyId: payableCompanyId,
+            amount: installmentAmount,
+            dueDate: installmentDueDate.toISOString().split('T')[0],
+            status: 'pending' as const,
+            category: 'materials' as const,
+            accountType: 'clinic' as const,
+            description: installments > 1 
+              ? `Compra - Pedido ${receiving.purchaseOrder?.orderNumber} (${i + 1}/${installments})`
+              : `Compra - Pedido ${receiving.purchaseOrder?.orderNumber || receiving.purchaseOrderId}`,
+            supplier: receiving.supplier?.name,
+            notes: receiving.purchaseOrder?.orderNumber || `PO-${receiving.purchaseOrderId}`,
+            createdBy: user.id
+          };
+          
+          await storage.createPayable(payableData);
+        }
         
         // Update purchase order status to 'received'
         await storage.updatePurchaseOrderStatus(receiving.purchaseOrderId, 'received');
