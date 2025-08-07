@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useCompanyContext } from "@/contexts/company-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,8 +32,9 @@ type TestMessageFormData = z.infer<typeof testMessageSchema>;
 
 export default function WhatsAppSettings() {
   const [showTestDialog, setShowTestDialog] = useState(false);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [localSelectedCompanyId, setLocalSelectedCompanyId] = useState<number | null>(null);
   const { toast } = useToast();
+  const { selectedCompanyId: contextSelectedCompanyId, companies: contextCompanies, isSystemAdmin } = useCompanyContext();
 
   console.log('WhatsAppSettings: Component rendered');
 
@@ -67,22 +69,29 @@ export default function WhatsAppSettings() {
     enabled: userCompany?.isSuperAdmin,
   });
 
-  const isSuperAdmin = userCompany?.isSuperAdmin;
-  const companyIdToUse = isSuperAdmin ? (selectedCompanyId || userCompany?.companyId) : userCompany?.companyId;
+  const isSuperAdmin = userCompany?.isSuperAdmin || isSystemAdmin;
+  
+  // Use company context for superadmins, user company for regular users  
+  const companyIdToUse = isSuperAdmin 
+    ? (contextSelectedCompanyId || localSelectedCompanyId || userCompany?.companyId) 
+    : userCompany?.companyId;
   
   // Auto-select first company for superadmins if none selected
   useEffect(() => {
-    if (isSuperAdmin && companies && companies.length > 0 && !selectedCompanyId) {
-      console.log('Auto-selecting first company:', companies[0]);
-      setSelectedCompanyId(companies[0].id);
+    const availableCompanies = contextCompanies || companies || [];
+    if (isSuperAdmin && availableCompanies.length > 0 && !contextSelectedCompanyId && !localSelectedCompanyId) {
+      console.log('Auto-selecting first company:', availableCompanies[0]);
+      setLocalSelectedCompanyId(availableCompanies[0].id);
     }
-  }, [isSuperAdmin, companies, selectedCompanyId]);
+  }, [isSuperAdmin, contextCompanies, companies, contextSelectedCompanyId, localSelectedCompanyId]);
   
   console.log('WhatsAppSettings: userCompany:', userCompany);
   console.log('WhatsAppSettings: isSuperAdmin:', isSuperAdmin);
-  console.log('WhatsAppSettings: selectedCompanyId:', selectedCompanyId);
+  console.log('WhatsAppSettings: contextSelectedCompanyId:', contextSelectedCompanyId);
+  console.log('WhatsAppSettings: localSelectedCompanyId:', localSelectedCompanyId);
   console.log('WhatsAppSettings: companyIdToUse:', companyIdToUse);
   console.log('WhatsAppSettings: companies:', companies);
+  console.log('WhatsAppSettings: contextCompanies:', contextCompanies);
 
   // Fetch WhatsApp status
   const { data: whatsappStatus, isLoading, refetch } = useQuery<WhatsAppStatus>({
@@ -264,7 +273,7 @@ export default function WhatsAppSettings() {
         Loading: {isLoading ? 'Yes' : 'No'}<br/>
         Company ID: {companyIdToUse || 'N/A'}<br/>
         SuperAdmin: {isSuperAdmin ? 'Yes' : 'No'}<br/>
-        Selected Company: {selectedCompanyId || 'N/A'}<br/>
+        Selected Company: {contextSelectedCompanyId || localSelectedCompanyId || 'N/A'}<br/>
         User Company: {userCompany?.companyId || 'N/A'}<br/>
         WhatsApp Status: {whatsappStatus?.status || 'N/A'}<br/>
         Has WhatsApp Data: {whatsappStatus ? 'Yes' : 'No'}
@@ -283,10 +292,10 @@ export default function WhatsAppSettings() {
             <div className="space-y-2">
               <Label htmlFor="company-select">Empresa</Label>
               <Select 
-                value={selectedCompanyId?.toString() || ""} 
+                value={(contextSelectedCompanyId || localSelectedCompanyId)?.toString() || ""} 
                 onValueChange={(value) => {
                   const companyId = parseInt(value);
-                  setSelectedCompanyId(companyId);
+                  setLocalSelectedCompanyId(companyId);
                   console.log('Company selected:', companyId);
                 }}
               >
@@ -294,7 +303,7 @@ export default function WhatsAppSettings() {
                   <SelectValue placeholder="Selecione uma empresa" />
                 </SelectTrigger>
                 <SelectContent>
-                  {companies?.map((company: any) => (
+                  {(contextCompanies || companies)?.map((company: any) => (
                     <SelectItem key={company.id} value={company.id.toString()}>
                       {company.name}
                     </SelectItem>
@@ -314,14 +323,14 @@ export default function WhatsAppSettings() {
             <div className="mt-4 p-3 bg-blue-100 rounded text-sm">
               <strong>Auto-selection Debug:</strong><br/>
               Companies loaded: {companies ? companies.length : 0}<br/>
-              Selected company: {selectedCompanyId || 'None'}<br/>
-              {companies && companies.length > 0 && (
+              Selected company: {contextSelectedCompanyId || localSelectedCompanyId || 'None'}<br/>
+              {(contextCompanies || companies) && (contextCompanies || companies).length > 0 && (
                 <Button 
-                  onClick={() => setSelectedCompanyId(companies[0].id)}
+                  onClick={() => setLocalSelectedCompanyId((contextCompanies || companies)[0].id)}
                   className="mt-2 bg-blue-600 hover:bg-blue-700 text-white"
                   size="sm"
                 >
-                  Selecionar primeira empresa ({companies[0].name})
+                  Selecionar primeira empresa ({(contextCompanies || companies)[0].name})
                 </Button>
               )}
             </div>
