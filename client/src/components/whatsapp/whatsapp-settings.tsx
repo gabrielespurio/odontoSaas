@@ -413,13 +413,18 @@ export default function WhatsAppSettings() {
                 {whatsappStatus.qrCode ? (
                   <div className="flex justify-center mb-4">
                     <img 
-                      src={`data:image/png;base64,${whatsappStatus.qrCode}`}
+                      src={whatsappStatus.qrCode}
                       alt="WhatsApp QR Code"
                       className="w-48 h-48 border rounded-lg shadow-lg"
                       onError={(e) => {
                         console.error('QR Code image failed to load:', e);
                         console.log('QR Code data length:', whatsappStatus.qrCode?.length);
                         console.log('QR Code preview:', whatsappStatus.qrCode?.substring(0, 50) + '...');
+                        // Try with base64 prefix if it fails
+                        const img = e.target as HTMLImageElement;
+                        if (!whatsappStatus.qrCode.startsWith('data:')) {
+                          img.src = `data:image/png;base64,${whatsappStatus.qrCode}`;
+                        }
                       }}
                     />
                   </div>
