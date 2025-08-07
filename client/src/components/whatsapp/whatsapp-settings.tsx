@@ -303,7 +303,8 @@ export default function WhatsAppSettings() {
       )}
       
       {/* WhatsApp configuration - ALWAYS show for debugging */}
-      <Card>
+      {(companyIdToUse || true) && (
+        <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -570,7 +571,7 @@ export default function WhatsAppSettings() {
             </div>
           )}
         </CardContent>
-      </Card>
+        </Card>
       )}
     </div>
   );
