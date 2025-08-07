@@ -73,6 +73,7 @@ export default function WhatsAppSettings() {
   // Auto-select first company for superadmins if none selected
   useEffect(() => {
     if (isSuperAdmin && companies && companies.length > 0 && !selectedCompanyId) {
+      console.log('Auto-selecting first company:', companies[0]);
       setSelectedCompanyId(companies[0].id);
     }
   }, [isSuperAdmin, companies, selectedCompanyId]);
@@ -81,6 +82,7 @@ export default function WhatsAppSettings() {
   console.log('WhatsAppSettings: isSuperAdmin:', isSuperAdmin);
   console.log('WhatsAppSettings: selectedCompanyId:', selectedCompanyId);
   console.log('WhatsAppSettings: companyIdToUse:', companyIdToUse);
+  console.log('WhatsAppSettings: companies:', companies);
 
   // Fetch WhatsApp status
   const { data: whatsappStatus, isLoading, refetch } = useQuery<WhatsAppStatus>({
@@ -282,7 +284,11 @@ export default function WhatsAppSettings() {
               <Label htmlFor="company-select">Empresa</Label>
               <Select 
                 value={selectedCompanyId?.toString() || ""} 
-                onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
+                onValueChange={(value) => {
+                  const companyId = parseInt(value);
+                  setSelectedCompanyId(companyId);
+                  console.log('Company selected:', companyId);
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma empresa" />
@@ -305,6 +311,20 @@ export default function WhatsAppSettings() {
         <Card>
           <CardContent className="py-8 text-center">
             <p className="text-gray-600">Selecione uma empresa acima para configurar o WhatsApp</p>
+            <div className="mt-4 p-3 bg-blue-100 rounded text-sm">
+              <strong>Auto-selection Debug:</strong><br/>
+              Companies loaded: {companies ? companies.length : 0}<br/>
+              Selected company: {selectedCompanyId || 'None'}<br/>
+              {companies && companies.length > 0 && (
+                <Button 
+                  onClick={() => setSelectedCompanyId(companies[0].id)}
+                  className="mt-2 bg-blue-600 hover:bg-blue-700 text-white"
+                  size="sm"
+                >
+                  Selecionar primeira empresa ({companies[0].name})
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
