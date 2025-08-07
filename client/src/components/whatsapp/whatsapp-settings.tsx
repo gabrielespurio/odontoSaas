@@ -216,7 +216,8 @@ export default function WhatsAppSettings() {
   const handleSetupWhatsApp = () => {
     console.log('WhatsApp Setup: Button clicked!');
     console.log('WhatsApp Setup: isSuperAdmin:', isSuperAdmin);
-    console.log('WhatsApp Setup: selectedCompanyId:', selectedCompanyId);
+    console.log('WhatsApp Setup: contextSelectedCompanyId:', contextSelectedCompanyId);
+    console.log('WhatsApp Setup: localSelectedCompanyId:', localSelectedCompanyId);
     console.log('WhatsApp Setup: companyIdToUse:', companyIdToUse);
     
     setupMutation.mutate();
