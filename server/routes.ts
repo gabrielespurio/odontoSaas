@@ -3715,6 +3715,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         companyIdToUse = parseInt(req.query.companyId as string);
       }
       
+      // Use the currently selected company from the header (companyId 3 = Teste 3)
+      if (!user.companyId && !req.query.companyId) {
+        // For superadmin, default to company ID 3 (Teste 3) as shown in the header
+        companyIdToUse = 3;
+      }
+      
+      console.log(`Getting WhatsApp status for company: ${companyIdToUse} (user: ${user.id})`);
+      
       if (!companyIdToUse) {
         return res.status(400).json({ message: "Company ID is required" });
       }

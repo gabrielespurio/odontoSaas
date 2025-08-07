@@ -166,20 +166,56 @@ export async function getInstanceQRCode(instanceName: string): Promise<string | 
 // Check instance status
 export async function checkInstanceStatus(instanceName: string): Promise<string> {
   try {
-    const response = await fetch(`${EVOLUTION_API_BASE_URL}/instance/status/${instanceName}`, {
-      method: 'GET',
-      headers: {
-        'apikey': EVOLUTION_API_KEY
-      }
-    });
+    console.log(`Checking status for instance: ${instanceName}`);
+    
+    // Try different API endpoints for status checking
+    const endpoints = [
+      `/instance/status/${instanceName}`,
+      `/instance/connectionState/${instanceName}`,
+      `/instance/fetchInstances`
+    ];
+    
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(`${EVOLUTION_API_BASE_URL}${endpoint}`, {
+          method: 'GET',
+          headers: {
+            'apikey': EVOLUTION_API_KEY
+          }
+        });
 
-    if (response.ok) {
-      const data = await response.json() as EvolutionAPIResponse;
-      return data.instance?.status || 'disconnected';
-    } else {
-      console.error(`Failed to check instance status: ${response.status}`);
-      return 'disconnected';
+        console.log(`Endpoint ${endpoint} response status: ${response.status}`);
+
+        if (response.ok) {
+          const data = await response.json() as any;
+          console.log(`Response data for ${endpoint}:`, JSON.stringify(data, null, 2));
+          
+          if (endpoint.includes('fetchInstances')) {
+            // Check if our instance exists in the list
+            if (Array.isArray(data)) {
+              const instance = data.find((inst: any) => inst.instance?.instanceName === instanceName);
+              if (instance) {
+                console.log(`Found instance in list: ${instance.instance?.state || instance.instance?.status || 'unknown'}`);
+                return instance.instance?.state === 'open' ? 'connected' : 'disconnected';
+              }
+            }
+          } else {
+            // Direct status check
+            const status = data.instance?.status || data.instance?.state;
+            if (status) {
+              console.log(`Direct status check result: ${status}`);
+              return status === 'open' ? 'connected' : 'disconnected';
+            }
+          }
+        }
+      } catch (endpointError) {
+        console.log(`Endpoint ${endpoint} failed:`, endpointError);
+        continue;
+      }
     }
+    
+    console.log(`All endpoints failed for instance ${instanceName}, returning disconnected`);
+    return 'disconnected';
   } catch (error) {
     console.error('Error checking instance status:', error);
     return 'disconnected';
