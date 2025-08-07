@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,14 +31,55 @@ type TestMessageFormData = z.infer<typeof testMessageSchema>;
 
 export default function WhatsAppSettings() {
   const [showTestDialog, setShowTestDialog] = useState(false);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const { toast } = useToast();
+
+  // Fetch user info to check if superadmin
+  const { data: userCompany } = useQuery({
+    queryKey: ["/api/user/company"],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/user/company", {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      return response.json();
+    },
+  });
+
+  // Fetch companies list for superadmin
+  const { data: companies } = useQuery({
+    queryKey: ["/api/companies"],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/companies", {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      return response.json();
+    },
+    enabled: userCompany?.isSuperAdmin,
+  });
+
+  const isSuperAdmin = userCompany?.isSuperAdmin;
+  const companyIdToUse = isSuperAdmin ? selectedCompanyId : userCompany?.companyId;
 
   // Fetch WhatsApp status
   const { data: whatsappStatus, isLoading, refetch } = useQuery<WhatsAppStatus>({
-    queryKey: ["/api/whatsapp/status"],
+    queryKey: ["/api/whatsapp/status", companyIdToUse],
     queryFn: async () => {
+      if (!companyIdToUse) return null;
+      
       const token = localStorage.getItem("token");
-      const response = await fetch("/api/whatsapp/status", {
+      const url = isSuperAdmin 
+        ? `/api/whatsapp/status?companyId=${companyIdToUse}`
+        : "/api/whatsapp/status";
+        
+      const response = await fetch(url, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
@@ -51,6 +93,7 @@ export default function WhatsAppSettings() {
       return response.json();
     },
     refetchInterval: 5000, // Auto-refresh every 5 seconds
+    enabled: !!companyIdToUse,
   });
 
   // Test message form
@@ -64,7 +107,9 @@ export default function WhatsAppSettings() {
 
   // Setup WhatsApp mutation
   const setupMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/whatsapp/setup", {}),
+    mutationFn: () => apiRequest("POST", "/api/whatsapp/setup", 
+      isSuperAdmin ? { companyId: companyIdToUse } : {}
+    ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/status"] });
       toast({
@@ -83,7 +128,9 @@ export default function WhatsAppSettings() {
 
   // Refresh QR code mutation
   const refreshQRMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/whatsapp/refresh-qr", {}),
+    mutationFn: () => apiRequest("POST", "/api/whatsapp/refresh-qr", 
+      isSuperAdmin ? { companyId: companyIdToUse } : {}
+    ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/status"] });
       toast({
@@ -103,7 +150,9 @@ export default function WhatsAppSettings() {
   // Send test message mutation
   const sendTestMutation = useMutation({
     mutationFn: (data: TestMessageFormData) => 
-      apiRequest("POST", "/api/whatsapp/test-message", data),
+      apiRequest("POST", "/api/whatsapp/test-message", 
+        isSuperAdmin ? { ...data, companyId: companyIdToUse } : data
+      ),
     onSuccess: () => {
       setShowTestDialog(false);
       testForm.reset();
@@ -156,7 +205,41 @@ export default function WhatsAppSettings() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      {/* Company selection for superadmins */}
+      {isSuperAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Selecionar Empresa</CardTitle>
+            <CardDescription>
+              Escolha a empresa para configurar o WhatsApp
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label htmlFor="company-select">Empresa</Label>
+              <Select 
+                value={selectedCompanyId?.toString() || ""} 
+                onValueChange={(value) => setSelectedCompanyId(parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {companies?.map((company: any) => (
+                    <SelectItem key={company.id} value={company.id.toString()}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* WhatsApp configuration - only show if company is selected or user is not superadmin */}
+      {companyIdToUse && (
+        <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -366,6 +449,7 @@ export default function WhatsAppSettings() {
           )}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

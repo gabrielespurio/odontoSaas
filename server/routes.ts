@@ -3687,7 +3687,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = (req as any).user;
       
-      if (!user.companyId) {
+      // For superadmins, allow company filtering via query parameter
+      let companyIdToUse = user.companyId;
+      
+      if (!user.companyId && req.query.companyId) {
+        companyIdToUse = parseInt(req.query.companyId as string);
+      }
+      
+      if (!companyIdToUse) {
         return res.status(400).json({ message: "Company ID is required" });
       }
 
@@ -3697,7 +3704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         whatsappStatus: companies.whatsappStatus,
         whatsappQrCode: companies.whatsappQrCode,
         whatsappConnectedAt: companies.whatsappConnectedAt,
-      }).from(companies).where(eq(companies.id, user.companyId));
+      }).from(companies).where(eq(companies.id, companyIdToUse));
 
       if (!company) {
         return res.status(404).json({ message: "Empresa não encontrada" });
@@ -3714,7 +3721,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               whatsappStatus: currentStatus,
               whatsappConnectedAt: currentStatus === 'connected' ? new Date() : null
             })
-            .where(eq(companies.id, user.companyId));
+            .where(eq(companies.id, companyIdToUse));
         }
 
         res.json({
@@ -3741,7 +3748,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = (req as any).user;
       
-      if (!user.companyId) {
+      // For superadmins, allow company filtering via body parameter
+      let companyIdToUse = user.companyId;
+      
+      if (!user.companyId && req.body.companyId) {
+        companyIdToUse = parseInt(req.body.companyId as string);
+      }
+      
+      if (!companyIdToUse) {
         return res.status(400).json({ message: "Company ID is required" });
       }
 
@@ -3750,7 +3764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: companies.id,
         name: companies.name,
         whatsappInstanceId: companies.whatsappInstanceId,
-      }).from(companies).where(eq(companies.id, user.companyId));
+      }).from(companies).where(eq(companies.id, companyIdToUse));
 
       if (!company) {
         return res.status(404).json({ message: "Empresa não encontrada" });
@@ -3773,7 +3787,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           whatsappStatus: 'qrcode',
           whatsappQrCode: result.qrcode?.base64,
         })
-        .where(eq(companies.id, user.companyId));
+        .where(eq(companies.id, companyIdToUse));
 
       res.json({
         instanceId,
@@ -3791,14 +3805,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = (req as any).user;
       
-      if (!user.companyId) {
+      // For superadmins, allow company filtering via body parameter
+      let companyIdToUse = user.companyId;
+      
+      if (!user.companyId && req.body.companyId) {
+        companyIdToUse = parseInt(req.body.companyId as string);
+      }
+      
+      if (!companyIdToUse) {
         return res.status(400).json({ message: "Company ID is required" });
       }
 
       // Get company info
       const [company] = await db.select({
         whatsappInstanceId: companies.whatsappInstanceId,
-      }).from(companies).where(eq(companies.id, user.companyId));
+      }).from(companies).where(eq(companies.id, companyIdToUse));
 
       if (!company || !company.whatsappInstanceId) {
         return res.status(400).json({ message: "Instância do WhatsApp não encontrada" });
@@ -3817,7 +3838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           whatsappQrCode: qrCode,
           whatsappStatus: 'qrcode'
         })
-        .where(eq(companies.id, user.companyId));
+        .where(eq(companies.id, companyIdToUse));
 
       res.json({ qrCode });
     } catch (error) {
@@ -3831,7 +3852,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = (req as any).user;
       const { phoneNumber, message } = req.body;
       
-      if (!user.companyId) {
+      // For superadmins, allow company filtering via body parameter
+      let companyIdToUse = user.companyId;
+      
+      if (!user.companyId && req.body.companyId) {
+        companyIdToUse = parseInt(req.body.companyId as string);
+      }
+      
+      if (!companyIdToUse) {
         return res.status(400).json({ message: "Company ID is required" });
       }
 
@@ -3843,7 +3871,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [company] = await db.select({
         whatsappInstanceId: companies.whatsappInstanceId,
         whatsappStatus: companies.whatsappStatus,
-      }).from(companies).where(eq(companies.id, user.companyId));
+      }).from(companies).where(eq(companies.id, companyIdToUse));
 
       if (!company || !company.whatsappInstanceId) {
         return res.status(400).json({ message: "WhatsApp não configurado para esta empresa" });
