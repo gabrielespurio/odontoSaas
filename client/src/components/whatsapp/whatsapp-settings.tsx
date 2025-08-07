@@ -230,50 +230,6 @@ export default function WhatsAppSettings() {
 
   return (
     <div className="space-y-6">
-      {/* Company selection for superadmins */}
-      {isSuperAdmin && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Selecionar Empresa</CardTitle>
-            <CardDescription>
-              Escolha a empresa para configurar o WhatsApp
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="company-select">Empresa</Label>
-              <Select 
-                value={(contextSelectedCompanyId || localSelectedCompanyId)?.toString() || ""} 
-                onValueChange={(value) => {
-                  const companyId = parseInt(value);
-                  setLocalSelectedCompanyId(companyId);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma empresa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(contextCompanies || companies)?.map((company: any) => (
-                    <SelectItem key={company.id} value={company.id.toString()}>
-                      {company.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
-      {/* Show message if superadmin hasn't selected company */}
-      {isSuperAdmin && !companyIdToUse && (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-gray-600">Selecione uma empresa acima para configurar o WhatsApp</p>
-          </CardContent>
-        </Card>
-      )}
-      
       {/* WhatsApp configuration */}
       {companyIdToUse && (
         <Card>
