@@ -50,7 +50,7 @@ export default function WhatsAppSettings() {
       
       return response.json();
     },
-    refetchInterval: whatsappStatus?.status === 'qrcode' ? 5000 : false, // Auto-refresh when showing QR code
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
 
   // Test message form
