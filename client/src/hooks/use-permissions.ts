@@ -5,6 +5,12 @@ import type { UserProfile } from "@/lib/types";
 export function usePermissions() {
   const { user } = useAuth();
   
+  // Also fetch user company info to get the isSystemAdmin flag
+  const { data: userCompany } = useQuery<{ isSystemAdmin?: boolean }>({
+    queryKey: ["/api/user/company"],
+    enabled: !!user,
+  });
+  
   // Fetch user profiles to get module permissions
   const { data: profiles } = useQuery<UserProfile[]>({
     queryKey: ["/api/user-profiles"],
@@ -20,7 +26,23 @@ export function usePermissions() {
     
     // Companies module is only for system admin (admin role with null company_id)
     if (module === "companies") {
-      return (user.role === "admin" || user.role === "Administrador") && user.companyId === null;
+      const isAdmin = user.role === "admin" || user.role === "Administrador";
+      const hasNullCompanyId = user.companyId === null || user.companyId === undefined;
+      const isSystemAdminFromAPI = userCompany?.isSystemAdmin === true;
+      
+      // Use both checks for reliability - either local check or API check should work
+      const hasAccess = (isAdmin && hasNullCompanyId) || isSystemAdminFromAPI;
+      
+      console.log("Companies module access detailed check:", {
+        userRole: user.role,
+        userCompanyId: user.companyId,
+        isAdmin,
+        hasNullCompanyId,
+        isSystemAdminFromAPI,
+        hasAccess
+      });
+      
+      return hasAccess;
     }
     
     // Admin role has access to everything (backward compatibility)
