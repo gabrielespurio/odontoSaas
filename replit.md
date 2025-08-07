@@ -21,6 +21,10 @@ Preferred communication style: Simple, everyday language.
   - Kept only functional categories: "Usuários", "Procedimentos" and "Notificações"
   - Cleaned up unused imports and improved code organization
   - Interface now shows only developed features for better user experience
+- **User Profile Module Enhancement (January 8, 2025)**: Extended available modules for user profiles
+  - Added "Compras" module for purchase management access control
+  - Added "Estoque" module for inventory management access control
+  - Now supporting complete module permission system including financial operations
 - **Patient Creation Fix (January 8, 2025)**: Fixed "User must belong to a company" error when creating patients
   - Updated useCompanyFilter hook to return object with companyId property
   - Modified PatientForm to properly include companyId for super administrators

@@ -60,6 +60,8 @@ const SYSTEM_MODULES = [
   { id: "consultations", name: "Atendimentos", description: "Registro de consultas" },
   { id: "procedures", name: "Procedimentos", description: "Gestão de procedimentos" },
   { id: "financial", name: "Financeiros", description: "Controle financeiro" },
+  { id: "purchases", name: "Compras", description: "Gestão de compras e pedidos" },
+  { id: "inventory", name: "Estoque", description: "Controle de estoque" },
   { id: "reports", name: "Relatórios", description: "Relatórios e estatísticas" },
   { id: "settings", name: "Configurações", description: "Configurações do sistema" },
 ];
