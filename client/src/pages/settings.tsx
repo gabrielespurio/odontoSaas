@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Users, Settings2, Edit, MoreHorizontal, Trash2, FolderPlus, Shield, Building, Bell, Database, MessageCircle } from "lucide-react";
+import { Plus, Users, Settings2, Edit, MoreHorizontal, Trash2, FolderPlus, Bell, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useCompanyFilter } from "@/contexts/company-context";
@@ -86,26 +86,6 @@ const SETTINGS_CATEGORIES = [
     ]
   },
   {
-    id: 'company',
-    title: 'Empresa',
-    description: 'Configurações da clínica',
-    icon: Building,
-    sections: [
-      { id: 'info', title: 'Informações', description: 'Dados da clínica e configurações gerais' },
-      { id: 'branding', title: 'Identidade Visual', description: 'Logo, cores e personalização' }
-    ]
-  },
-  {
-    id: 'security',
-    title: 'Segurança',
-    description: 'Configurações de segurança',
-    icon: Shield,
-    sections: [
-      { id: 'auth', title: 'Autenticação', description: 'Configurações de login e senhas' },
-      { id: 'permissions', title: 'Permissões', description: 'Controle de acesso avançado' }
-    ]
-  },
-  {
     id: 'notifications',
     title: 'Notificações',
     description: 'Configure alertas e lembretes',
@@ -113,16 +93,6 @@ const SETTINGS_CATEGORIES = [
     sections: [
       { id: 'whatsapp', title: 'WhatsApp', description: 'Configurações de envio de mensagens' },
       { id: 'email', title: 'Email', description: 'Configurações de email' }
-    ]
-  },
-  {
-    id: 'system',
-    title: 'Sistema',
-    description: 'Configurações técnicas',
-    icon: Database,
-    sections: [
-      { id: 'backup', title: 'Backup', description: 'Configurações de backup automático' },
-      { id: 'api', title: 'API', description: 'Chaves de API e integrações' }
     ]
   }
 ];

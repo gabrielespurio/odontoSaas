@@ -12,10 +12,15 @@ Preferred communication style: Simple, everyday language.
 - **Environment Setup**: Fixed tsx dependency issue and confirmed all workflows functioning correctly
 - **WhatsApp UI Enhancement (January 8, 2025)**: Significantly improved WhatsApp configuration interface
   - Removed debug section "WhatsApp Settings Debug - Section: whatsapp" from settings page
-  - Removed redundant company selector from WhatsApp settings (company selection now handled via header dropdown)
-  - Cleaned up console.log statements for better production experience  
+  - Removed redundant company selector from WhatsApp settings (company selection now handled via header dropdown)  
+  - Cleaned up console.log statements for better production experience
   - Improved company selection logic for super administrators
   - Enhanced user experience with cleaner, more streamlined interface
+- **Settings Page Cleanup (January 8, 2025)**: Streamlined configuration categories
+  - Removed undeveloped categories: "Empresa", "Segurança" and "Sistema" 
+  - Kept only functional categories: "Usuários", "Procedimentos" and "Notificações"
+  - Cleaned up unused imports and improved code organization
+  - Interface now shows only developed features for better user experience
 - **Patient Creation Fix (January 8, 2025)**: Fixed "User must belong to a company" error when creating patients
   - Updated useCompanyFilter hook to return object with companyId property
   - Modified PatientForm to properly include companyId for super administrators
