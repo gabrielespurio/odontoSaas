@@ -868,6 +868,7 @@ export class DatabaseStorage implements IStorage {
         status: consultations.status,
         createdAt: consultations.createdAt,
         updatedAt: consultations.updatedAt,
+        companyId: consultations.companyId, // Include companyId in response
       })
         .from(consultations)
         .innerJoin(patients, eq(consultations.patientId, patients.id))
@@ -880,7 +881,21 @@ export class DatabaseStorage implements IStorage {
       
       return result[0] || undefined;
     } else {
-      const [consultation] = await db.select().from(consultations).where(eq(consultations.id, id));
+      const [consultation] = await db.select({
+        id: consultations.id,
+        attendanceNumber: consultations.attendanceNumber,
+        patientId: consultations.patientId,
+        dentistId: consultations.dentistId,
+        appointmentId: consultations.appointmentId,
+        date: consultations.date,
+        procedures: consultations.procedures,
+        clinicalNotes: consultations.clinicalNotes,
+        observations: consultations.observations,
+        status: consultations.status,
+        createdAt: consultations.createdAt,
+        updatedAt: consultations.updatedAt,
+        companyId: consultations.companyId, // Include companyId in response
+      }).from(consultations).where(eq(consultations.id, id));
       return consultation || undefined;
     }
   }
@@ -1248,7 +1263,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       const receivableData: InsertReceivable = {
-        companyId: companyId, // CRITICAL: Add company ID
+        companyId: companyId || consultation.companyId, // CRITICAL: Use companyId or fallback to consultation's companyId
         patientId: consultation.patientId,
         consultationId: consultationId,
         appointmentId: consultation.appointmentId || undefined,
@@ -1292,7 +1307,7 @@ export class DatabaseStorage implements IStorage {
           
           // Criar registro de movimentação de estoque
           const stockMovementData = {
-            companyId: companyId,
+            companyId: companyId || consultation.companyId,
             productId: productId,
             movementType: 'out',
             quantity: quantity.toString(),
