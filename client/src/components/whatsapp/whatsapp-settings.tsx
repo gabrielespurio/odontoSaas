@@ -399,7 +399,7 @@ export default function WhatsAppSettings() {
             </div>
           )}
 
-          {whatsappStatus?.status === 'qrcode' && (
+          {(whatsappStatus?.status === 'qrcode' || whatsappStatus?.qrCode) && (
             <div className="space-y-4">
               <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                 <div className="flex items-center space-x-2 mb-2">
@@ -416,10 +416,12 @@ export default function WhatsAppSettings() {
                     <strong>QR Debug:</strong><br/>
                     Has QR: {whatsappStatus.qrCode ? 'Yes' : 'No'}<br/>
                     QR Length: {whatsappStatus.qrCode?.length || 0}<br/>
+                    QR Type: {typeof whatsappStatus.qrCode}<br/>
+                    Status: {whatsappStatus.status}<br/>
                     QR Preview: {whatsappStatus.qrCode?.substring(0, 100)}...
                   </div>
                   
-                  {whatsappStatus.qrCode && whatsappStatus.qrCode.length > 50 ? (
+                  {whatsappStatus.qrCode && whatsappStatus.qrCode.length > 20 ? (
                     <div className="flex justify-center">
                       <div className="bg-white p-4 rounded-lg shadow-lg">
                         <img 
