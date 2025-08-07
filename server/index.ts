@@ -399,11 +399,11 @@ app.use((req, res, next) => {
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
-    console.log("🚀 PRODUCTION MODE - Using final production server config");
+    console.log("🚀 PRODUCTION MODE - Using override configuration");
     
-    // Use the final, optimized production configuration
-    const { setupProductionServer } = await import('./production-final');
-    setupProductionServer(app);
+    // Use override configuration to bypass all conflicts
+    const { overrideProductionServing } = await import('./production-override');
+    overrideProductionServing(app);
   }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

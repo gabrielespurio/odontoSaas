@@ -8,9 +8,9 @@ export class ProductionApiClient {
   private retryDelay: number;
 
   constructor() {
-    this.baseUrl = PRODUCTION_CONFIG.apiBaseUrl;
-    this.retryAttempts = PRODUCTION_CONFIG.retryAttempts;
-    this.retryDelay = PRODUCTION_CONFIG.retryDelay;
+    this.baseUrl = window.location.origin; // Use same origin to avoid CORS
+    this.retryAttempts = 3;
+    this.retryDelay = 1000;
   }
 
   private async sleep(ms: number): Promise<void> {
