@@ -770,7 +770,6 @@ export default function Settings() {
 
               {(selectedSection === 'whatsapp' || selectedSection === 'notifications') && (
                 <div>
-                  <h2>WhatsApp Settings Debug - Section: {selectedSection}</h2>
                   <WhatsAppSettings />
                 </div>
               )}

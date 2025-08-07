@@ -36,8 +36,6 @@ export default function WhatsAppSettings() {
   const { toast } = useToast();
   const { selectedCompanyId: contextSelectedCompanyId, companies: contextCompanies, isSystemAdmin } = useCompanyContext();
 
-  console.log('WhatsAppSettings: Component rendered');
-
   // Fetch user info to check if superadmin
   const { data: userCompany } = useQuery({
     queryKey: ["/api/user/company"],
@@ -73,43 +71,29 @@ export default function WhatsAppSettings() {
   
   // Use company context for superadmins, user company for regular users  
   const companyIdToUse = isSuperAdmin 
-    ? (contextSelectedCompanyId || localSelectedCompanyId || userCompany?.companyId) 
+    ? (contextSelectedCompanyId || localSelectedCompanyId) 
     : userCompany?.companyId;
   
   // Auto-select first company for superadmins if none selected
   useEffect(() => {
     const availableCompanies = contextCompanies || companies || [];
     if (isSuperAdmin && availableCompanies.length > 0 && !contextSelectedCompanyId && !localSelectedCompanyId) {
-      console.log('Auto-selecting first company:', availableCompanies[0]);
       setLocalSelectedCompanyId(availableCompanies[0].id);
     }
   }, [isSuperAdmin, contextCompanies, companies, contextSelectedCompanyId, localSelectedCompanyId]);
-  
-  console.log('WhatsAppSettings: userCompany:', userCompany);
-  console.log('WhatsAppSettings: isSuperAdmin:', isSuperAdmin);
-  console.log('WhatsAppSettings: contextSelectedCompanyId:', contextSelectedCompanyId);
-  console.log('WhatsAppSettings: localSelectedCompanyId:', localSelectedCompanyId);
-  console.log('WhatsAppSettings: companyIdToUse:', companyIdToUse);
-  console.log('WhatsAppSettings: companies:', companies);
-  console.log('WhatsAppSettings: contextCompanies:', contextCompanies);
 
   // Fetch WhatsApp status
   const { data: whatsappStatus, isLoading, refetch } = useQuery<WhatsAppStatus>({
     queryKey: ["/api/whatsapp/status", companyIdToUse],
     queryFn: async () => {
       if (!companyIdToUse) {
-        console.log('WhatsApp Query: No company ID available');
         return null;
       }
-      
-      console.log('WhatsApp Query: Fetching status for company:', companyIdToUse, 'SuperAdmin:', isSuperAdmin);
       
       const token = localStorage.getItem("token");
       const url = isSuperAdmin 
         ? `/api/whatsapp/status?companyId=${companyIdToUse}`
         : "/api/whatsapp/status";
-        
-      console.log('WhatsApp Query: URL:', url);
         
       const response = await fetch(url, {
         headers: {
@@ -118,11 +102,8 @@ export default function WhatsAppSettings() {
         credentials: "include",
       });
       
-      console.log('WhatsApp Query: Response status:', response.status);
-      
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('WhatsApp Query: Error response:', errorText);
         throw new Error(`${response.status}: ${response.statusText}`);
       }
       
@@ -147,20 +128,16 @@ export default function WhatsAppSettings() {
   const setupMutation = useMutation({
     mutationFn: () => {
       const payload = companyIdToUse ? { companyId: companyIdToUse } : {};
-      console.log('WhatsApp Setup: Mutation payload:', payload);
-      console.log('WhatsApp Setup: Making API request...');
       return apiRequest("POST", "/api/whatsapp/setup", payload);
     },
-    onSuccess: (data) => {
-      console.log('WhatsApp Setup: Success response:', data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/status"] });
       toast({
         title: "WhatsApp configurado!",
         description: "Escaneie o QR code com seu WhatsApp para conectar.",
       });
     },
-    onError: (error) => {
-      console.error('WhatsApp Setup: Error response:', error);
+    onError: () => {
       toast({
         title: "Erro na configuração",
         description: "Não foi possível configurar o WhatsApp.",
@@ -214,12 +191,6 @@ export default function WhatsAppSettings() {
   });
 
   const handleSetupWhatsApp = () => {
-    console.log('WhatsApp Setup: Button clicked!');
-    console.log('WhatsApp Setup: isSuperAdmin:', isSuperAdmin);
-    console.log('WhatsApp Setup: contextSelectedCompanyId:', contextSelectedCompanyId);
-    console.log('WhatsApp Setup: localSelectedCompanyId:', localSelectedCompanyId);
-    console.log('WhatsApp Setup: companyIdToUse:', companyIdToUse);
-    
     setupMutation.mutate();
   };
 
@@ -259,8 +230,6 @@ export default function WhatsAppSettings() {
 
   return (
     <div className="space-y-6">
-
-
       {/* Company selection for superadmins */}
       {isSuperAdmin && (
         <Card>
