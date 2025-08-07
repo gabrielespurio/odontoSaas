@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { handleProductionError } from "@/config/production";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -76,9 +77,26 @@ export default function Companies() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: companies = [], isLoading } = useQuery<Company[]>({
+  const { data: companies = [], isLoading, error } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    onError: (error) => {
+      handleProductionError(error, 'companies-module');
+      console.error("Companies query error:", error);
+    },
   });
+
+  // Log para debug em produção
+  useEffect(() => {
+    if (error) {
+      console.error("Companies loading error:", error);
+      handleProductionError(error, 'companies-loading');
+    }
+    if (companies) {
+      console.log("Companies loaded:", companies.length, "companies");
+    }
+  }, [companies, error]);
 
   const createCompanyMutation = useMutation({
     mutationFn: async (data: any) => {

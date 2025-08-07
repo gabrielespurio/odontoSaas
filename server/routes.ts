@@ -3039,11 +3039,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/companies", authenticateToken, requireSystemAdmin, async (req, res) => {
     try {
+      console.log("Fetching companies for user:", req.user?.email, "Role:", req.user?.role);
       const companiesList = await db.select().from(companies).orderBy(companies.name);
+      console.log("Companies fetched successfully:", companiesList.length, "companies");
       res.json(companiesList);
     } catch (error) {
       console.error("Get companies error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ 
+        message: "Internal server error", 
+        details: error.message,
+        timestamp: new Date().toISOString()
+      });
     }
   });
 

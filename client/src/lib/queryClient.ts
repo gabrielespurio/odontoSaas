@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { productionFetch, handleProductionError, PRODUCTION_CONFIG } from "@/config/production";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -12,8 +13,10 @@ async function throwIfResNotOk(res: Response) {
     
     // Handle token expiration - redirect to login
     if (res.status === 401 || res.status === 403) {
+      console.log("Authentication error - redirecting to login:", res.status, errorData);
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      localStorage.removeItem("selectedCompanyId");
       window.location.href = "/login";
       return;
     }
@@ -40,11 +43,10 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(url, {
+  const res = await productionFetch(url, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
   });
 
   await throwIfResNotOk(res);
@@ -64,8 +66,7 @@ export const getQueryFn: <T>(options: {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
+    const res = await productionFetch(queryKey[0] as string, {
       headers,
     });
 

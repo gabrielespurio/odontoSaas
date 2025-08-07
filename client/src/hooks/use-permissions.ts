@@ -53,6 +53,17 @@ export function usePermissions() {
           .catch(err => console.log("Debug fetch error:", err));
       }
       
+      // Additional check for companies access
+      if (import.meta.env.PROD) {
+        fetch('/api/debug/companies-access', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }).then(res => res.json())
+          .then(data => console.log("Companies access debug:", data))
+          .catch(err => console.log("Companies access debug error:", err));
+      }
+      
       return hasAccess;
     }
     
