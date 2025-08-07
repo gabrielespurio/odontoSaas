@@ -61,7 +61,7 @@ const navigation = [
   },
   { name: "Relatórios", href: "/reports", icon: FileText, module: "reports" },
   { name: "Configurações", href: "/settings", icon: Settings, module: "settings" },
-  { name: "Empresas", href: "/companies", icon: Building2, module: "companies" },
+  { name: "Empresa", href: "/companies", icon: Building2, module: "companies" },
 ];
 
 interface SidebarProps {

@@ -50,6 +50,7 @@ Preferred communication style: Simple, everyday language.
 - **UX Improvement**: Enhanced receiving form - status now defaults to "Recebido" and quantity received auto-fills with ordered quantity
 - **UI Fix**: Improved field alignment in receiving form items section for better visual consistency
 - **Database Structure Fix**: Completely rebuilt stock_movements table structure to match schema - removed legacy columns (type, total_price, description, reference) and added proper columns (movement_type, reason, reference_document, notes, unit_price, total_value)
+- **UI Update (January 8, 2025)**: Changed module name from "Empresas" to "Empresa" in navigation menu as requested by user
 
 ## System Architecture
 
