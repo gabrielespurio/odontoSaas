@@ -128,8 +128,8 @@ const SETTINGS_CATEGORIES = [
 ];
 
 export default function Settings() {
-  const [selectedCategory, setSelectedCategory] = useState('users');
-  const [selectedSection, setSelectedSection] = useState('users');
+  const [selectedCategory, setSelectedCategory] = useState('notifications');
+  const [selectedSection, setSelectedSection] = useState('whatsapp');
   const [showUserForm, setShowUserForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showProfileForm, setShowProfileForm] = useState(false);
@@ -768,12 +768,15 @@ export default function Settings() {
                 </div>
               )}
 
-              {selectedSection === 'whatsapp' && (
-                <WhatsAppSettings />
+              {(selectedSection === 'whatsapp' || selectedSection === 'notifications') && (
+                <div>
+                  <h2>WhatsApp Settings Debug - Section: {selectedSection}</h2>
+                  <WhatsAppSettings />
+                </div>
               )}
 
               {/* Placeholder for future sections */}
-              {!['users', 'profiles', 'categories', 'whatsapp'].includes(selectedSection) && (
+              {!['users', 'profiles', 'categories', 'whatsapp', 'notifications'].includes(selectedSection) && (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                     <Settings2 className="w-8 h-8 text-gray-400" />
