@@ -168,53 +168,92 @@ export async function getWhatsAppInstanceDetails(instanceName: string): Promise<
   try {
     console.log(`Getting instance details for: ${instanceName}`);
     
-    // Try /instance/info endpoint
-    const infoResponse = await fetch(`${EVOLUTION_API_BASE_URL}/instance/info/${instanceName}`, {
-      method: 'GET',
-      headers: {
-        'apikey': EVOLUTION_API_KEY
+    // Try different endpoints to get instance details
+    const endpoints = [
+      `/instance/fetchInstances`, // Get all instances and find ours
+      `/instance/connectionState/${instanceName}`, // Already works, might have more info
+      `/chat/whatsappNumbers/${instanceName}`, // Try to get WhatsApp numbers
+      `/instance/status/${instanceName}`, // Status endpoint
+      `/instance/${instanceName}` // Direct instance endpoint
+    ];
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Trying endpoint: ${endpoint}`);
+        const response = await fetch(`${EVOLUTION_API_BASE_URL}${endpoint}`, {
+          method: 'GET',
+          headers: {
+            'apikey': EVOLUTION_API_KEY
+          }
+        });
+        
+        console.log(`${endpoint} response status: ${response.status}`);
+        
+        if (response.ok) {
+          const data = await response.json() as any;
+          console.log(`${endpoint} response data:`, JSON.stringify(data, null, 2));
+          
+          // Handle fetchInstances response
+          if (endpoint.includes('fetchInstances') && Array.isArray(data)) {
+            console.log(`Found ${data.length} instances in fetchInstances`);
+            
+            const instance = data.find((inst: any) => 
+              inst.name === instanceName ||
+              inst.instanceName === instanceName ||
+              (inst.instance && inst.instance.instanceName === instanceName)
+            );
+            
+            if (instance) {
+              console.log('Found matching instance in fetchInstances:', JSON.stringify(instance, null, 2));
+              
+              const phoneNumber = instance.ownerJid || instance.wuid || 
+                                instance.instance?.wuid || instance.instance?.ownerJid ||
+                                instance.instance?.user?.id || instance.user?.id ||
+                                instance.owner || instance.instance?.owner;
+              const profileName = instance.profileName || instance.instance?.profileName ||
+                                instance.instance?.user?.name || instance.user?.name;
+              
+              if (phoneNumber) {
+                return {
+                  phoneNumber: phoneNumber.replace('@s.whatsapp.net', '').replace('@c.us', ''),
+                  profileName
+                };
+              }
+            } else {
+              console.log(`Instance ${instanceName} not found in fetchInstances list`);
+              // Log all instance names for debugging
+              const instanceNames = data.map(inst => inst.name || inst.instanceName).filter(Boolean);
+              console.log('Available instances:', instanceNames);
+              
+              // As our instance is not in the main list but shows as "open" in connectionState,
+              // it might be a newly created instance. Let's return a generic connected status
+              // without phone number details for now.
+            }
+          }
+          
+          // Handle direct instance data
+          if (data.instance || data.wuid || data.owner) {
+            const phoneNumber = data.instance?.wuid || data.wuid || 
+                              data.instance?.user?.id || data.user?.id ||
+                              data.instance?.owner || data.owner;
+            const profileName = data.instance?.profileName || data.profileName ||
+                              data.instance?.user?.name || data.user?.name;
+            
+            if (phoneNumber) {
+              return {
+                phoneNumber: phoneNumber.replace('@s.whatsapp.net', '').replace('@c.us', ''),
+                profileName
+              };
+            }
+          }
+        }
+      } catch (endpointError) {
+        console.log(`Endpoint ${endpoint} failed:`, endpointError);
+        continue;
       }
-    });
-    
-    console.log(`Instance info response status: ${infoResponse.status}`);
-    
-    if (infoResponse.ok) {
-      const infoData = await infoResponse.json() as any;
-      console.log('Instance info response:', JSON.stringify(infoData, null, 2));
-      
-      // Extract phone number and profile name from various possible locations
-      const phoneNumber = infoData.instance?.wuid || infoData.instance?.user?.id || infoData.wuid || infoData.user?.id;
-      const profileName = infoData.instance?.profileName || infoData.instance?.user?.name || infoData.profileName || infoData.user?.name;
-      
-      return {
-        phoneNumber: phoneNumber ? phoneNumber.replace('@s.whatsapp.net', '') : undefined,
-        profileName
-      };
     }
     
-    // Try alternative endpoint /instance/me
-    const meResponse = await fetch(`${EVOLUTION_API_BASE_URL}/instance/me/${instanceName}`, {
-      method: 'GET',
-      headers: {
-        'apikey': EVOLUTION_API_KEY
-      }
-    });
-    
-    console.log(`Instance me response status: ${meResponse.status}`);
-    
-    if (meResponse.ok) {
-      const meData = await meResponse.json() as any;
-      console.log('Instance me response:', JSON.stringify(meData, null, 2));
-      
-      const phoneNumber = meData.wuid || meData.id || meData.me?.id;
-      const profileName = meData.profileName || meData.name || meData.me?.name;
-      
-      return {
-        phoneNumber: phoneNumber ? phoneNumber.replace('@s.whatsapp.net', '') : undefined,
-        profileName
-      };
-    }
-    
+    console.log(`No valid phone number found for instance ${instanceName}`);
     return null;
   } catch (error) {
     console.error('Error getting instance details:', error);

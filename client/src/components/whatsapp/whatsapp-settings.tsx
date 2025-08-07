@@ -387,6 +387,16 @@ export default function WhatsAppSettings() {
                     </p>
                   </div>
                 )}
+                {!whatsappStatus.phoneNumber && (
+                  <div className="mt-2">
+                    <p className="text-sm text-amber-700">
+                      <span className="font-medium">Status:</span> Conectado, mas número não identificado
+                    </p>
+                    <p className="text-xs text-amber-600 mt-1">
+                      Tente escanear o QR code novamente ou envie uma mensagem de teste para verificar
+                    </p>
+                  </div>
+                )}
                 <p className="text-sm text-green-700 mt-2">
                   Seu WhatsApp está conectado e funcionando. Os pacientes receberão lembretes automáticos.
                 </p>
