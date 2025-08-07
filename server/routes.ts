@@ -3867,6 +3867,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Moved debug functionality inside the setup endpoint for better testing
+
   app.post("/api/whatsapp/test-message", authenticateToken, async (req, res) => {
     try {
       const user = (req as any).user;

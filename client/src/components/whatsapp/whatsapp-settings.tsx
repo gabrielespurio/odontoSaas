@@ -34,6 +34,8 @@ export default function WhatsAppSettings() {
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const { toast } = useToast();
 
+  console.log('WhatsAppSettings: Component rendered');
+
   // Fetch user info to check if superadmin
   const { data: userCompany } = useQuery({
     queryKey: ["/api/user/company"],
@@ -67,17 +69,29 @@ export default function WhatsAppSettings() {
 
   const isSuperAdmin = userCompany?.isSuperAdmin;
   const companyIdToUse = isSuperAdmin ? selectedCompanyId : userCompany?.companyId;
+  
+  console.log('WhatsAppSettings: userCompany:', userCompany);
+  console.log('WhatsAppSettings: isSuperAdmin:', isSuperAdmin);
+  console.log('WhatsAppSettings: selectedCompanyId:', selectedCompanyId);
+  console.log('WhatsAppSettings: companyIdToUse:', companyIdToUse);
 
   // Fetch WhatsApp status
   const { data: whatsappStatus, isLoading, refetch } = useQuery<WhatsAppStatus>({
     queryKey: ["/api/whatsapp/status", companyIdToUse],
     queryFn: async () => {
-      if (!companyIdToUse) return null;
+      if (!companyIdToUse) {
+        console.log('WhatsApp Query: No company ID available');
+        return null;
+      }
+      
+      console.log('WhatsApp Query: Fetching status for company:', companyIdToUse, 'SuperAdmin:', isSuperAdmin);
       
       const token = localStorage.getItem("token");
       const url = isSuperAdmin 
         ? `/api/whatsapp/status?companyId=${companyIdToUse}`
         : "/api/whatsapp/status";
+        
+      console.log('WhatsApp Query: URL:', url);
         
       const response = await fetch(url, {
         headers: {
@@ -86,11 +100,17 @@ export default function WhatsAppSettings() {
         credentials: "include",
       });
       
+      console.log('WhatsApp Query: Response status:', response.status);
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('WhatsApp Query: Error response:', errorText);
         throw new Error(`${response.status}: ${response.statusText}`);
       }
       
-      return response.json();
+      const data = await response.json();
+      console.log('WhatsApp Query: Response data:', data);
+      return data;
     },
     refetchInterval: 5000, // Auto-refresh every 5 seconds
     enabled: !!companyIdToUse,
@@ -278,23 +298,32 @@ export default function WhatsAppSettings() {
                 Para começar a usar o WhatsApp, você precisa configurar uma instância para sua empresa.
                 Isso permitirá o envio automático de lembretes de consultas.
               </p>
-              <Button 
-                onClick={handleSetupWhatsApp} 
-                disabled={setupMutation.isPending}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                {setupMutation.isPending ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Configurando...
-                  </>
-                ) : (
-                  <>
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Configurar WhatsApp
-                  </>
-                )}
-              </Button>
+              <div className="space-y-2">
+                <Button 
+                  onClick={handleSetupWhatsApp} 
+                  disabled={setupMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700 w-full"
+                >
+                  {setupMutation.isPending ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Configurando...
+                    </>
+                  ) : (
+                    <>
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Configurar WhatsApp
+                    </>
+                  )}
+                </Button>
+                
+                <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                  <strong>Debug Info:</strong><br/>
+                  Company ID: {companyIdToUse || 'N/A'}<br/>
+                  SuperAdmin: {isSuperAdmin ? 'Sim' : 'Não'}<br/>
+                  Status: {whatsappStatus?.status || 'N/A'}
+                </div>
+              </div>
             </div>
           )}
 

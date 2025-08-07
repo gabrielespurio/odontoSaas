@@ -112,14 +112,18 @@ export async function getInstanceQRCode(instanceName: string): Promise<string | 
     console.log(`QR code fetch response status: ${response.status}`);
 
     if (response.ok) {
-      const data = await response.json() as EvolutionAPIResponse;
+      const data = await response.json() as any;
       console.log('QR code response data:', JSON.stringify(data, null, 2));
       
-      if (data.qrcode?.base64) {
-        console.log('QR code found in response');
+      // Check multiple possible locations for the base64 QR code
+      if (data.base64) {
+        console.log('QR code found in response.base64');
+        return data.base64;
+      } else if (data.qrcode?.base64) {
+        console.log('QR code found in response.qrcode.base64');
         return data.qrcode.base64;
       } else {
-        console.log('No QR code in response, checking alternative endpoints...');
+        console.log('No QR code in response, available keys:', Object.keys(data));
         
         // Try alternative endpoint for QR code
         const altResponse = await fetch(`${EVOLUTION_API_BASE_URL}/instance/qrcode/${instanceName}`, {
