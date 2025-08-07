@@ -113,7 +113,7 @@ export default function PatientForm({ patient, onSuccess, onCancel }: PatientFor
       cpf: data.cpf.replace(/\D/g, ""),
       phone: data.phone.replace(/\D/g, ""),
       cep: data.cep?.replace(/\D/g, "") || "",
-      companyId: companyId.companyId || undefined, // Include companyId for super admins
+      companyId: companyId || undefined, // Include companyId for super admins
     };
 
     console.log("Submitting patient data:", cleanData);
