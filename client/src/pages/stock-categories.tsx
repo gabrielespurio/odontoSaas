@@ -72,7 +72,7 @@ export default function StockCategories() {
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const companyFilter = useCompanyFilter();
+  const { companyId: companyFilter } = useCompanyFilter();
 
   const form = useForm<z.infer<typeof categorySchema>>({
     resolver: zodResolver(categorySchema),

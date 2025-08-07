@@ -118,7 +118,7 @@ export default function StockProducts() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const companyFilter = useCompanyFilter();
+  const { companyId: companyFilter } = useCompanyFilter();
 
   const form = useForm<z.infer<typeof productSchema>>({
     resolver: zodResolver(productSchema),

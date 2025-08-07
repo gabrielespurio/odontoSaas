@@ -76,7 +76,7 @@ export default function PurchaseOrders() {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const companyId = useCompanyFilter();
+  const { companyId } = useCompanyFilter();
 
   const form = useForm<PurchaseOrderFormData>({
     resolver: zodResolver(purchaseOrderFormSchema),

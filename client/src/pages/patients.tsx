@@ -26,7 +26,7 @@ export default function Patients() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const companyFilter = useCompanyFilter();
+  const { companyId: companyFilter } = useCompanyFilter();
 
   // Debounce search to avoid too many API calls
   useEffect(() => {

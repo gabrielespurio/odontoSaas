@@ -27,7 +27,7 @@ export default function Reports() {
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [reportType, setReportType] = useState("overview");
   const [reportGenerated, setReportGenerated] = useState(false);
-  const companyFilter = useCompanyFilter();
+  const { companyId: companyFilter } = useCompanyFilter();
 
   // Dynamic report data based on selected type
   const { data: reportData, isLoading, refetch } = useQuery({

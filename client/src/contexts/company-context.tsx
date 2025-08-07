@@ -98,5 +98,9 @@ export function useCompanyFilter() {
   
   // Se for superadmin e tiver empresa selecionada, filtrar por ela
   // Se não for superadmin, o backend já filtra automaticamente pela empresa do usuário
-  return isSystemAdmin && selectedCompanyId ? selectedCompanyId : undefined;
+  return {
+    companyId: isSystemAdmin && selectedCompanyId ? selectedCompanyId : undefined,
+    isSystemAdmin,
+    selectedCompanyId
+  };
 }

@@ -878,14 +878,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user;
       
+      console.log("Creating patient - User:", { id: user.id, companyId: user.companyId });
+      console.log("Request body:", req.body);
+      console.log("Request query:", req.query);
+      
       const patientData = insertPatientSchema.parse(req.body);
       
       // Determine company ID
       let companyId: number;
       
       if (user.companyId === null) {
-        // Super Administrator - must specify companyId in request body or query
-        const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : (patientData as any).companyId;
+        // Super Administrator - check for companyId in request body or query
+        const requestedCompanyId = req.query.companyId 
+          ? parseInt(req.query.companyId as string) 
+          : req.body.companyId;
+        
+        console.log("Super admin requesting companyId:", requestedCompanyId);
         
         if (!requestedCompanyId) {
           return res.status(400).json({ message: "Super Administrator must specify a company ID" });
@@ -895,6 +903,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Regular user - use their company
         companyId = user.companyId;
       }
+      
+      console.log("Using companyId:", companyId);
       
       // CRITICAL: Add company ID from authenticated user or request
       const patientWithCompany = {
