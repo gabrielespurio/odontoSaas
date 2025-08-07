@@ -3748,11 +3748,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = (req as any).user;
       
-      // For superadmins, allow company filtering via body parameter
+      // For superadmins or users with companyId in body, allow company filtering via body parameter
       let companyIdToUse = user.companyId;
       
-      if (!user.companyId && req.body.companyId) {
+      if (req.body.companyId) {
         companyIdToUse = parseInt(req.body.companyId as string);
+      } else if (!user.companyId) {
+        return res.status(400).json({ message: "Company ID is required" });
       }
       
       if (!companyIdToUse) {
@@ -3827,11 +3829,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = (req as any).user;
       
-      // For superadmins, allow company filtering via body parameter
+      // For superadmins or users with companyId in body, allow company filtering via body parameter
       let companyIdToUse = user.companyId;
       
-      if (!user.companyId && req.body.companyId) {
+      if (req.body.companyId) {
         companyIdToUse = parseInt(req.body.companyId as string);
+      } else if (!user.companyId) {
+        return res.status(400).json({ message: "Company ID is required" });
       }
       
       if (!companyIdToUse) {
@@ -3883,11 +3887,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = (req as any).user;
       const { phoneNumber, message } = req.body;
       
-      // For superadmins, allow company filtering via body parameter
+      // For superadmins or users with companyId in body, allow company filtering via body parameter
       let companyIdToUse = user.companyId;
       
-      if (!user.companyId && req.body.companyId) {
+      if (req.body.companyId) {
         companyIdToUse = parseInt(req.body.companyId as string);
+      } else if (!user.companyId) {
+        return res.status(400).json({ message: "Company ID is required" });
       }
       
       if (!companyIdToUse) {

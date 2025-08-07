@@ -128,7 +128,7 @@ export default function WhatsAppSettings() {
   // Setup WhatsApp mutation
   const setupMutation = useMutation({
     mutationFn: () => {
-      const payload = isSuperAdmin ? { companyId: companyIdToUse } : {};
+      const payload = companyIdToUse ? { companyId: companyIdToUse } : {};
       console.log('WhatsApp Setup: Mutation payload:', payload);
       console.log('WhatsApp Setup: Making API request...');
       return apiRequest("POST", "/api/whatsapp/setup", payload);
@@ -154,7 +154,7 @@ export default function WhatsAppSettings() {
   // Refresh QR code mutation
   const refreshQRMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/whatsapp/refresh-qr", 
-      isSuperAdmin ? { companyId: companyIdToUse } : {}
+      companyIdToUse ? { companyId: companyIdToUse } : {}
     ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/status"] });
@@ -176,7 +176,7 @@ export default function WhatsAppSettings() {
   const sendTestMutation = useMutation({
     mutationFn: (data: TestMessageFormData) => 
       apiRequest("POST", "/api/whatsapp/test-message", 
-        isSuperAdmin ? { ...data, companyId: companyIdToUse } : data
+        companyIdToUse ? { ...data, companyId: companyIdToUse } : data
       ),
     onSuccess: () => {
       setShowTestDialog(false);

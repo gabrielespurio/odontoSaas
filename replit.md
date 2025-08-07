@@ -10,6 +10,7 @@ Preferred communication style: Simple, everyday language.
 - **Migration completed**: Successfully migrated OdontoSync from Replit Agent to standard Replit environment
 - **Database**: Maintained existing Neon PostgreSQL connection as requested by user (ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech)
 - **Environment Setup**: Fixed tsx dependency issue and confirmed all workflows functioning correctly
+- **WhatsApp Configuration Fix**: Fixed WhatsApp setup error "Company ID is required" by correcting companyId handling in frontend and backend endpoints
 - **WhatsApp QR Code Enhancement**: Improved WhatsApp integration with better QR code generation and display
   - Enhanced Evolution API integration with better error handling and logging
   - Improved QR code fetching with alternative endpoints for better reliability  
