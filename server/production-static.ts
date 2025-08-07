@@ -16,35 +16,62 @@ export function setupProductionStatic(app: Express): void {
     throw new Error(`Production build directory not found: ${distPath}`);
   }
 
-  // Middleware para logs de requisições de assets
-  app.use('/assets/*', (req, res, next) => {
-    console.log(`📦 Asset request: ${req.url}`);
-    next();
+  // CRITICAL: Handle .js files with exact pattern matching
+  app.get('/assets/*.js', (req, res) => {
+    const fileName = path.basename(req.path);
+    const filePath = path.join(distPath, 'assets', fileName);
+    
+    console.log(`🔥 DIRECT JS REQUEST: ${req.path}`);
+    console.log(`🔥 Looking for file: ${filePath}`);
+    console.log(`🔥 File exists: ${fs.existsSync(filePath)}`);
+    
+    if (fs.existsSync(filePath)) {
+      console.log(`✅ Serving JS file with correct headers`);
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.sendFile(filePath);
+    } else {
+      console.log(`❌ JS file not found at: ${filePath}`);
+      console.log(`📁 Available files:`, fs.readdirSync(path.join(distPath, 'assets')));
+      return res.status(404).send('JavaScript file not found');
+    }
   });
 
-  // Configurar serving de arquivos estáticos com headers corretos
+  // CRITICAL: Handle .css files FIRST before catch-all
+  app.get('/assets/*.css', (req, res, next) => {
+    const fileName = path.basename(req.path);
+    const filePath = path.join(distPath, 'assets', fileName);
+    
+    console.log(`🎨 CSS Request: ${req.path} -> ${filePath}`);
+    
+    if (fs.existsSync(filePath)) {
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+      res.sendFile(filePath);
+    } else {
+      console.log(`❌ CSS file not found: ${filePath}`);
+      res.status(404).send('CSS file not found');
+    }
+  });
+
+  // Fallback static serving for other assets
   app.use(express.static(distPath, {
-    maxAge: process.env.NODE_ENV === 'production' ? '1y' : 0,
-    etag: true,
-    lastModified: true,
+    maxAge: 0,
+    etag: false,
     setHeaders: (res, filePath) => {
-      console.log(`📄 Serving file: ${filePath}`);
-      
-      if (filePath.endsWith('.js')) {
-        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-        res.setHeader('Cache-Control', 'public, max-age=31536000');
-      } else if (filePath.endsWith('.css')) {
-        res.setHeader('Content-Type', 'text/css; charset=utf-8');
-        res.setHeader('Cache-Control', 'public, max-age=31536000');
-      } else if (filePath.endsWith('.html')) {
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader('Cache-Control', 'no-cache');
-      }
+      console.log(`📁 Static file: ${filePath}`);
     }
   }));
 
-  // Fallback para SPA - servir index.html para todas as rotas não encontradas
+  // Fallback para SPA - ONLY for non-asset routes
   app.use("*", (req, res) => {
+    // DO NOT serve index.html for asset requests
+    if (req.originalUrl.startsWith('/assets/')) {
+      console.log(`❌ Asset not found: ${req.originalUrl}`);
+      return res.status(404).send('Asset not found');
+    }
+    
     const indexPath = path.resolve(distPath, "index.html");
     console.log(`🏠 SPA Fallback: ${req.originalUrl} -> ${indexPath}`);
     

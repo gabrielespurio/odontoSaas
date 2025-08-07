@@ -381,11 +381,30 @@ app.use((req, res, next) => {
   // Register API routes BEFORE static serving
   const server = await registerRoutes(app);
   
+  console.log("🔧 Middleware order check:");
+  console.log("1. ✅ CORS configured");
+  console.log("2. ✅ Auth middleware configured");  
+  console.log("3. ✅ API routes registered");
+  console.log("4. ⏳ About to configure static serving...");
+  
   // Add production error handling
   addProductionErrorHandling(app);
   
   // Initialize the reminder scheduler
   initializeScheduler();
+
+  // importantly only setup vite in development and after
+  // setting up all the other routes so the catch-all route
+  // doesn't interfere with the other routes
+  if (process.env.NODE_ENV === "development") {
+    await setupVite(app, server);
+  } else {
+    console.log("🚀 PRODUCTION MODE - Using final production server config");
+    
+    // Use the final, optimized production configuration
+    const { setupProductionServer } = await import('./production-final');
+    setupProductionServer(app);
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -394,17 +413,6 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     throw err;
   });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (process.env.NODE_ENV === "development") {
-    await setupVite(app, server);
-  } else {
-    // Import and use optimized production static serving
-    const { setupProductionStatic } = await import('./production-static');
-    setupProductionStatic(app);
-  }
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
