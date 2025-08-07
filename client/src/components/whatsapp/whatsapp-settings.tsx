@@ -302,7 +302,7 @@ export default function WhatsAppSettings() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {whatsappStatus?.status === 'not_configured' && (
+          {(whatsappStatus?.status === 'not_configured' || !whatsappStatus || true) && (
             <div className="space-y-4">
               <p className="text-sm text-gray-600">
                 Para começar a usar o WhatsApp, você precisa configurar uma instância para sua empresa.
@@ -335,7 +335,8 @@ export default function WhatsAppSettings() {
                   Company ID: {companyIdToUse || 'N/A'}<br/>
                   SuperAdmin: {isSuperAdmin ? 'Sim' : 'Não'}<br/>
                   Status: {whatsappStatus?.status || 'N/A'}<br/>
-                  Button Disabled: {setupMutation.isPending ? 'Sim' : 'Não'}
+                  Button Disabled: {setupMutation.isPending ? 'Sim' : 'Não'}<br/>
+                  WhatsApp Data: {JSON.stringify(whatsappStatus, null, 2)}
                 </div>
               </div>
             </div>
