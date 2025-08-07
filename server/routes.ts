@@ -2564,7 +2564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Criar contas a receber a partir de consulta
   app.post("/api/receivables/from-consultation", authenticateToken, async (req, res) => {
     try {
-      const { consultationId, procedureIds, installments = 1, customAmount, paymentMethod = 'pix', dueDate } = req.body;
+      const { consultationId, procedureIds, selectedProducts = [], installments = 1, customAmount, paymentMethod = 'pix', dueDate } = req.body;
       const user = req.user;
       
       // CRITICAL: Verify consultation belongs to user's company
@@ -2572,8 +2572,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!consultation) {
         return res.status(404).json({ message: "Consulta não encontrada ou não pertence à sua empresa" });
       }
+
+      // Verificar estoque dos produtos selecionados
+      for (const selectedProduct of selectedProducts) {
+        const product = await storage.getProduct(selectedProduct.productId, user.companyId);
+        if (!product) {
+          return res.status(404).json({ message: `Produto com ID ${selectedProduct.productId} não encontrado` });
+        }
+        
+        const currentStock = parseFloat(product.currentStock);
+        if (currentStock < selectedProduct.quantity) {
+          return res.status(400).json({ 
+            message: `Estoque insuficiente para o produto "${product.name}". Disponível: ${currentStock}, Solicitado: ${selectedProduct.quantity}` 
+          });
+        }
+      }
       
-      const receivables = await storage.createReceivableFromConsultation(consultationId, procedureIds, installments, customAmount, paymentMethod, dueDate, user.companyId);
+      const receivables = await storage.createReceivableFromConsultation(
+        consultationId, 
+        procedureIds, 
+        selectedProducts, 
+        installments, 
+        customAmount, 
+        paymentMethod, 
+        dueDate, 
+        user.companyId,
+        user.id
+      );
       res.json(receivables);
     } catch (error) {
       console.error("Create receivables from consultation error:", error);

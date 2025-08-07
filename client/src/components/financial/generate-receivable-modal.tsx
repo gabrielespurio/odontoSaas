@@ -9,10 +9,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Calendar, CreditCard, FileText } from "lucide-react";
+import { DollarSign, Calendar, CreditCard, FileText, Package, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { Consultation, Procedure } from "@/lib/types";
+import type { Consultation, Procedure, Product } from "@/lib/types";
+
+interface SelectedProduct {
+  productId: number;
+  quantity: number;
+}
 
 interface GenerateReceivableModalProps {
   consultation: Consultation | null;
@@ -26,6 +31,7 @@ export default function GenerateReceivableModal({
   onOpenChange,
 }: GenerateReceivableModalProps) {
   const [selectedProcedures, setSelectedProcedures] = useState<number[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const [installments, setInstallments] = useState<number>(1);
   const [customAmount, setCustomAmount] = useState<string>("");
   const [useCustomAmount, setUseCustomAmount] = useState(false);
@@ -37,6 +43,12 @@ export default function GenerateReceivableModal({
   // Buscar procedimentos disponíveis
   const { data: procedures = [] } = useQuery<Procedure[]>({
     queryKey: ["/api/procedures"],
+    enabled: open,
+  });
+
+  // Buscar produtos disponíveis
+  const { data: products = [] } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
     enabled: open,
   });
 
@@ -57,6 +69,7 @@ export default function GenerateReceivableModal({
       }
       
       setSelectedProcedures(consultationProcedureIds);
+      setSelectedProducts([]);
       setInstallments(1);
       setCustomAmount("");
       setUseCustomAmount(false);
@@ -64,6 +77,7 @@ export default function GenerateReceivableModal({
       setDueDate(new Date().toISOString().split('T')[0]); // Data atual como padrão
     } else if (!open) {
       setSelectedProcedures([]);
+      setSelectedProducts([]);
       setInstallments(1);
       setCustomAmount("");
       setUseCustomAmount(false);
@@ -94,6 +108,27 @@ export default function GenerateReceivableModal({
   const totalAmount = calculateTotalAmount();
   const installmentAmount = totalAmount / installments;
 
+  // Funções para gerenciar produtos selecionados
+  const addProduct = () => {
+    setSelectedProducts([...selectedProducts, { productId: 0, quantity: 1 }]);
+  };
+
+  const removeProduct = (index: number) => {
+    setSelectedProducts(selectedProducts.filter((_, i) => i !== index));
+  };
+
+  const updateProductSelection = (index: number, productId: number) => {
+    const updated = [...selectedProducts];
+    updated[index].productId = productId;
+    setSelectedProducts(updated);
+  };
+
+  const updateProductQuantity = (index: number, quantity: number) => {
+    const updated = [...selectedProducts];
+    updated[index].quantity = quantity;
+    setSelectedProducts(updated);
+  };
+
   // Mutation para gerar conta a receber
   const generateReceivableMutation = useMutation({
     mutationFn: async () => {
@@ -102,6 +137,7 @@ export default function GenerateReceivableModal({
       const payload = {
         consultationId: consultation.id,
         procedureIds: selectedProcedures,
+        selectedProducts: selectedProducts.filter(p => p.productId > 0), // Apenas produtos válidos
         installments: installments,
         customAmount: useCustomAmount ? customAmount : undefined,
         paymentMethod: paymentMethod,
@@ -303,6 +339,93 @@ export default function GenerateReceivableModal({
                     >
                       + Adicionar procedimentos extras ou ajustar valor
                     </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Seleção de Produtos Utilizados */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-base font-medium flex items-center gap-2">
+                <Package className="w-4 h-4" />
+                Produtos Utilizados no Atendimento
+              </Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addProduct}
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Adicionar Produto
+              </Button>
+            </div>
+
+            {selectedProducts.length === 0 ? (
+              <div className="text-center py-8 text-neutral-500 border border-dashed border-neutral-200 rounded-lg">
+                <Package className="w-8 h-8 mx-auto mb-2 text-neutral-400" />
+                <p>Nenhum produto selecionado</p>
+                <p className="text-sm mt-1">Clique em "Adicionar Produto" para incluir produtos utilizados</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {selectedProducts.map((selectedProduct, index) => (
+                  <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <Label>Produto</Label>
+                      <Select
+                        value={selectedProduct.productId.toString()}
+                        onValueChange={(value) => updateProductSelection(index, parseInt(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um produto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products.filter(p => p.isActive && parseFloat(p.currentStock) > 0).map((product) => (
+                            <SelectItem key={product.id} value={product.id.toString()}>
+                              <div className="flex flex-col">
+                                <span className="font-medium">{product.name}</span>
+                                <span className="text-xs text-neutral-500">
+                                  Estoque: {parseFloat(product.currentStock).toFixed(2)} {product.unit}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="w-32">
+                      <Label>Quantidade</Label>
+                      <Input
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        value={selectedProduct.quantity}
+                        onChange={(e) => updateProductQuantity(index, parseFloat(e.target.value) || 0)}
+                        placeholder="1"
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeProduct(index)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+                
+                {selectedProducts.some(p => p.productId > 0) && (
+                  <div className="text-sm text-neutral-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="font-medium text-blue-800 mb-1">ℹ️ Informação importante:</p>
+                    <p>Ao gerar a cobrança, os produtos selecionados serão automaticamente deduzidos do estoque.</p>
                   </div>
                 )}
               </div>

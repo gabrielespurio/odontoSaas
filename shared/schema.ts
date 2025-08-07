@@ -168,6 +168,17 @@ export const consultations = pgTable("consultations", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Consultation Products table - produtos utilizados em consultas
+export const consultationProducts = pgTable("consultation_products", {
+  id: serial("id").primaryKey(),
+  consultationId: integer("consultation_id").notNull(),
+  productId: integer("product_id").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Dental Chart table
 export const dentalChart = pgTable("dental_chart", {
   id: serial("id").primaryKey(),
@@ -975,6 +986,18 @@ export const insertStockMovementSchema = createInsertSchema(stockMovements).omit
   notes: z.string().optional(),
 });
 
+// Consultation Products Schema
+export const insertConsultationProductSchema = createInsertSchema(consultationProducts).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  consultationId: z.number().min(1, "Consulta é obrigatória"),
+  productId: z.number().min(1, "Produto é obrigatório"),
+  quantity: z.number().positive("Quantidade deve ser positiva"),
+  unitPrice: z.number().min(0, "Preço unitário deve ser maior ou igual a zero"),
+  totalPrice: z.number().min(0, "Preço total deve ser maior ou igual a zero"),
+});
+
 // Stock Management Types
 export type ProductCategory = typeof productCategories.$inferSelect;
 export type InsertProductCategory = z.infer<typeof insertProductCategorySchema>;
@@ -982,3 +1005,5 @@ export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type StockMovement = typeof stockMovements.$inferSelect;
 export type InsertStockMovement = z.infer<typeof insertStockMovementSchema>;
+export type ConsultationProduct = typeof consultationProducts.$inferSelect;
+export type InsertConsultationProduct = z.infer<typeof insertConsultationProductSchema>;

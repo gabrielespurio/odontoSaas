@@ -5,6 +5,7 @@ import {
   procedures,
   appointments,
   consultations,
+  consultationProducts,
   dentalChart,
   anamnese,
   financial,
@@ -1202,7 +1203,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(receivables).where(eq(receivables.id, id));
   }
 
-  async createReceivableFromConsultation(consultationId: number, procedureIds: number[], installments: number = 1, customAmount?: string, paymentMethod: string = 'pix', dueDate?: string, companyId?: number): Promise<Receivable[]> {
+  async createReceivableFromConsultation(consultationId: number, procedureIds: number[], selectedProducts: any[] = [], installments: number = 1, customAmount?: string, paymentMethod: string = 'pix', dueDate?: string, companyId?: number, createdBy?: number): Promise<Receivable[]> {
     // Buscar consulta with company filtering
     const consultation = await this.getConsultation(consultationId, companyId);
     if (!consultation) {
@@ -1271,6 +1272,46 @@ export class DatabaseStorage implements IStorage {
           await db.update(receivables)
             .set({ parentReceivableId: receivable.id })
             .where(eq(receivables.id, receivablesList[j].id));
+        }
+      }
+    }
+
+    // Processar produtos selecionados (dar baixa no estoque)
+    if (selectedProducts && selectedProducts.length > 0) {
+      for (const selectedProduct of selectedProducts) {
+        const { productId, quantity } = selectedProduct;
+        
+        // Buscar produto atual
+        const product = await this.getProduct(productId, companyId);
+        if (product) {
+          const currentStock = parseFloat(product.currentStock);
+          const newStock = currentStock - quantity;
+          
+          // Atualizar estoque do produto
+          await this.updateProductStock(productId, newStock, companyId);
+          
+          // Criar registro de movimentação de estoque
+          const stockMovementData = {
+            companyId: companyId,
+            productId: productId,
+            movementType: 'out',
+            quantity: quantity.toString(),
+            reason: 'Utilização em consulta',
+            referenceDocument: `Consulta #${consultation.attendanceNumber}`,
+            notes: `Produto utilizado na consulta do paciente ${consultation.patient?.name || 'N/A'}`,
+            createdBy: createdBy || 1, // Default to admin if not provided
+          };
+          
+          await this.createStockMovement(stockMovementData);
+
+          // Criar registro na tabela consultation_products
+          await db.insert(consultationProducts).values({
+            consultationId: consultationId,
+            productId: productId,
+            quantity: quantity.toString(),
+            unitPrice: '0', // Por enquanto sem preço unitário
+            totalPrice: '0', // Por enquanto sem preço total
+          });
         }
       }
     }
