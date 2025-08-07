@@ -3770,30 +3770,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Empresa não encontrada" });
       }
 
+      console.log(`Setting up WhatsApp for company: ${company.name} (ID: ${company.id})`);
+
       // Create WhatsApp instance
       const result = await createWhatsAppInstance(company.id, company.name);
       
       if (!result) {
+        console.error('Failed to create WhatsApp instance - no result returned');
         return res.status(500).json({ message: "Falha ao criar instância do WhatsApp" });
       }
 
-      const instanceId = `company_${company.id}_${company.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      console.log('WhatsApp instance creation result:', JSON.stringify(result, null, 2));
+
+      // Generate consistent instance ID
+      const cleanName = company.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+      const instanceId = `odontosync_${company.id}_${cleanName}`;
+      
+      console.log(`Generated instance ID: ${instanceId}`);
+      console.log(`QR Code present: ${!!result.qrcode?.base64}`);
+      console.log(`QR Code length: ${result.qrcode?.base64?.length || 0}`);
       
       // Update company with WhatsApp info
       await db.update(companies)
         .set({
           whatsappInstanceId: instanceId,
           whatsappHash: result.hash,
-          whatsappStatus: 'qrcode',
+          whatsappStatus: result.qrcode?.base64 ? 'qrcode' : 'connecting',
           whatsappQrCode: result.qrcode?.base64,
         })
         .where(eq(companies.id, companyIdToUse));
+
+      console.log('Company WhatsApp info updated in database');
 
       res.json({
         instanceId,
         hash: result.hash,
         qrCode: result.qrcode?.base64,
-        status: 'qrcode'
+        status: result.qrcode?.base64 ? 'qrcode' : 'connecting'
       });
     } catch (error) {
       console.error("Setup WhatsApp error:", error);
@@ -3825,10 +3838,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Instância do WhatsApp não encontrada" });
       }
 
+      console.log(`Refreshing QR code for instance: ${company.whatsappInstanceId}`);
+
       // Get new QR code
       const qrCode = await getInstanceQRCode(company.whatsappInstanceId);
       
+      console.log(`QR code refresh result: ${!!qrCode} (length: ${qrCode?.length || 0})`);
+      
       if (!qrCode) {
+        console.error('Failed to get QR code from Evolution API');
         return res.status(500).json({ message: "Falha ao obter QR code" });
       }
 
@@ -3839,6 +3857,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           whatsappStatus: 'qrcode'
         })
         .where(eq(companies.id, companyIdToUse));
+
+      console.log('QR code updated in database');
 
       res.json({ qrCode });
     } catch (error) {

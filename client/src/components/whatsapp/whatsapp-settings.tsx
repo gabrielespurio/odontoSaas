@@ -298,7 +298,7 @@ export default function WhatsAppSettings() {
             </div>
           )}
 
-          {whatsappStatus?.status === 'qrcode' && whatsappStatus.qrCode && (
+          {whatsappStatus?.status === 'qrcode' && (
             <div className="space-y-4">
               <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                 <div className="flex items-center space-x-2 mb-2">
@@ -308,13 +308,30 @@ export default function WhatsAppSettings() {
                 <p className="text-sm text-yellow-700 mb-4">
                   Abra o WhatsApp no seu celular e escaneie o código abaixo para conectar:
                 </p>
-                <div className="flex justify-center mb-4">
-                  <img 
-                    src={`data:image/png;base64,${whatsappStatus.qrCode}`}
-                    alt="WhatsApp QR Code"
-                    className="w-48 h-48 border rounded-lg"
-                  />
-                </div>
+                
+                {whatsappStatus.qrCode ? (
+                  <div className="flex justify-center mb-4">
+                    <img 
+                      src={`data:image/png;base64,${whatsappStatus.qrCode}`}
+                      alt="WhatsApp QR Code"
+                      className="w-48 h-48 border rounded-lg shadow-lg"
+                      onError={(e) => {
+                        console.error('QR Code image failed to load:', e);
+                        console.log('QR Code data length:', whatsappStatus.qrCode?.length);
+                        console.log('QR Code preview:', whatsappStatus.qrCode?.substring(0, 50) + '...');
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex justify-center mb-4">
+                    <div className="w-48 h-48 border rounded-lg flex items-center justify-center bg-gray-100">
+                      <div className="text-center">
+                        <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin text-gray-400" />
+                        <p className="text-sm text-gray-500">Gerando QR Code...</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="flex space-x-2">
                   <Button 
                     variant="outline" 
@@ -334,6 +351,33 @@ export default function WhatsAppSettings() {
                     Verificar Status
                   </Button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {whatsappStatus?.status === 'qrcode' && !whatsappStatus.qrCode && (
+            <div className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-2 mb-2">
+                  <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />
+                  <h3 className="font-semibold text-blue-800">Configurando WhatsApp</h3>
+                </div>
+                <p className="text-sm text-blue-700 mb-4">
+                  Aguarde enquanto geramos o QR Code para conexão...
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleRefreshQR}
+                  disabled={refreshQRMutation.isPending}
+                >
+                  {refreshQRMutation.isPending ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                  )}
+                  Gerar QR Code
+                </Button>
               </div>
             </div>
           )}

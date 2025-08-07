@@ -30,13 +30,19 @@ export interface CreateInstanceRequest {
 // Create WhatsApp instance for a company
 export async function createWhatsAppInstance(companyId: number, companyName: string): Promise<EvolutionAPIResponse | null> {
   try {
-    const instanceName = `company_${companyId}_${companyName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    // Generate clean instance name
+    const cleanName = companyName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+    const instanceName = `odontosync_${companyId}_${cleanName}`;
+    
+    console.log(`Creating WhatsApp instance: ${instanceName} for company ${companyId}`);
     
     const payload: CreateInstanceRequest = {
       instanceName,
       qrcode: true,
       integration: 'WHATSAPP-BAILEYS'
     };
+
+    console.log('Payload being sent to Evolution API:', JSON.stringify(payload, null, 2));
 
     const response = await fetch(`${EVOLUTION_API_BASE_URL}/instance/create`, {
       method: 'POST',
@@ -47,13 +53,42 @@ export async function createWhatsAppInstance(companyId: number, companyName: str
       body: JSON.stringify(payload)
     });
 
+    console.log(`Evolution API response status: ${response.status}`);
+    
     if (response.ok) {
       const data = await response.json() as EvolutionAPIResponse;
       console.log(`WhatsApp instance created successfully for company ${companyId}:`, instanceName);
+      console.log('Response data:', JSON.stringify(data, null, 2));
+      
+      // Try to get QR code immediately after creation
+      if (data.hash && !data.qrcode?.base64) {
+        console.log('QR code not in creation response, trying to fetch it...');
+        const qrCode = await getInstanceQRCode(instanceName);
+        if (qrCode) {
+          data.qrcode = { base64: qrCode, code: qrCode };
+          console.log('QR code fetched successfully');
+        }
+      }
+      
       return data;
     } else {
       const errorText = await response.text();
       console.error(`Failed to create WhatsApp instance: ${response.status} - ${errorText}`);
+      
+      // Try to check if instance already exists
+      console.log('Checking if instance already exists...');
+      const existingQR = await getInstanceQRCode(instanceName);
+      if (existingQR) {
+        console.log('Instance exists, returning existing QR code');
+        return {
+          hash: 'existing',
+          qrcode: {
+            base64: existingQR,
+            code: existingQR
+          }
+        };
+      }
+      
       return null;
     }
   } catch (error) {
@@ -65,6 +100,8 @@ export async function createWhatsAppInstance(companyId: number, companyName: str
 // Get QR code for instance
 export async function getInstanceQRCode(instanceName: string): Promise<string | null> {
   try {
+    console.log(`Getting QR code for instance: ${instanceName}`);
+    
     const response = await fetch(`${EVOLUTION_API_BASE_URL}/instance/connect/${instanceName}`, {
       method: 'GET',
       headers: {
@@ -72,9 +109,34 @@ export async function getInstanceQRCode(instanceName: string): Promise<string | 
       }
     });
 
+    console.log(`QR code fetch response status: ${response.status}`);
+
     if (response.ok) {
       const data = await response.json() as EvolutionAPIResponse;
-      return data.qrcode?.base64 || null;
+      console.log('QR code response data:', JSON.stringify(data, null, 2));
+      
+      if (data.qrcode?.base64) {
+        console.log('QR code found in response');
+        return data.qrcode.base64;
+      } else {
+        console.log('No QR code in response, checking alternative endpoints...');
+        
+        // Try alternative endpoint for QR code
+        const altResponse = await fetch(`${EVOLUTION_API_BASE_URL}/instance/qrcode/${instanceName}`, {
+          method: 'GET',
+          headers: {
+            'apikey': EVOLUTION_API_KEY
+          }
+        });
+        
+        if (altResponse.ok) {
+          const altData = await altResponse.json() as any;
+          console.log('Alternative QR code response:', JSON.stringify(altData, null, 2));
+          return altData.qrcode?.base64 || altData.base64 || null;
+        }
+        
+        return null;
+      }
     } else {
       const errorText = await response.text();
       console.error(`Failed to get QR code: ${response.status} - ${errorText}`);
@@ -167,7 +229,7 @@ export async function sendWhatsAppMessage(phoneNumber: string, message: string):
       text: message
     };
 
-    const response = await fetch(WHATSAPP_API_URL, {
+    const response = await fetch(`${EVOLUTION_API_BASE_URL}/message/sendText`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
