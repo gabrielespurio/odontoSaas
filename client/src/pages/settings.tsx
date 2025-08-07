@@ -514,7 +514,6 @@ export default function Settings() {
 
   // Handle section navigation
   const handleSectionChange = (categoryId: string, sectionId: string) => {
-    console.log('Changing to category:', categoryId, 'section:', sectionId);
     setSelectedCategory(categoryId);
     setSelectedSection(sectionId);
   };
@@ -770,10 +769,7 @@ export default function Settings() {
               )}
 
               {selectedSection === 'whatsapp' && (
-                <div>
-                  <p>Debug: WhatsApp section is active</p>
-                  <WhatsAppSettings />
-                </div>
+                <WhatsAppSettings />
               )}
 
               {/* Placeholder for future sections */}

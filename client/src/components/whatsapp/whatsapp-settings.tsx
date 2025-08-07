@@ -195,6 +195,14 @@ export default function WhatsAppSettings() {
     }
   };
 
+  console.log('WhatsApp Settings Debug:', {
+    isSuperAdmin,
+    companyIdToUse,
+    selectedCompanyId,
+    userCompany: userCompany?.companyId,
+    isLoading
+  });
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
@@ -233,6 +241,15 @@ export default function WhatsAppSettings() {
                 </SelectContent>
               </Select>
             </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Show message if superadmin hasn't selected company */}
+      {isSuperAdmin && !companyIdToUse && (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p className="text-gray-600">Selecione uma empresa acima para configurar o WhatsApp</p>
           </CardContent>
         </Card>
       )}
