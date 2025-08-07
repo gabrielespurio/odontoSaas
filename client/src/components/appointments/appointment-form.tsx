@@ -186,6 +186,7 @@ export default function AppointmentForm({ appointment, prefilledDateTime, onSucc
       scheduledDate: data.scheduledDate,
       status: data.status,
       notes: data.notes,
+      companyId: companyId || undefined, // Include companyId for super admins
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });

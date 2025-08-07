@@ -1398,28 +1398,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         appointmentData.scheduledDate = formatDateForDatabase(appointmentData.scheduledDate);
       }
       
-      // Add companyId from authenticated user
+      // Determine company ID
+      let companyId: number;
+      
+      if (user.companyId === null) {
+        // Super Administrator - must specify companyId in request body or use default
+        const requestedCompanyId = body.companyId;
+        
+        if (!requestedCompanyId) {
+          return res.status(400).json({ message: "Super Administrator must specify a company ID" });
+        }
+        companyId = requestedCompanyId;
+      } else {
+        // Regular user - use their company
+        companyId = user.companyId;
+      }
+      
+      // Add companyId from authenticated user or request
       const appointmentWithCompany = {
         ...appointmentData,
-        companyId: user.companyId || 2 // Use user's companyId with fallback
+        companyId: companyId
       };
       
       // Enhanced conflict validation is now handled in storage layer
       const appointment = await storage.createAppointment(appointmentWithCompany);
       
-      // Send WhatsApp message to patient
+      // Send WhatsApp message to patient using company's instance
       try {
         if (appointment.patient?.phone) {
-          const message = formatAppointmentMessage(
-            appointment.patient.name, 
-            new Date(appointment.scheduledDate)
-          );
-          
-          const success = await sendWhatsAppMessage(appointment.patient.phone, message);
-          if (success) {
-            console.log(`WhatsApp notification sent successfully for appointment ${appointment.id}`);
+          // Get company WhatsApp instance
+          const [company] = await db.select({
+            whatsappInstanceId: companies.whatsappInstanceId,
+            whatsappStatus: companies.whatsappStatus,
+          }).from(companies).where(eq(companies.id, companyId));
+
+          if (company?.whatsappInstanceId && company?.whatsappStatus === 'connected') {
+            const message = formatAppointmentMessage(
+              appointment.patient.name, 
+              new Date(appointment.scheduledDate)
+            );
+            
+            const success = await sendWhatsAppMessageByCompany(
+              company.whatsappInstanceId, 
+              appointment.patient.phone, 
+              message
+            );
+            if (success) {
+              console.log(`WhatsApp notification sent successfully for appointment ${appointment.id}`);
+            } else {
+              console.log(`WhatsApp notification failed for appointment ${appointment.id}`);
+            }
           } else {
-            console.log(`WhatsApp notification failed for appointment ${appointment.id}`);
+            console.log(`WhatsApp not configured or disconnected for company ${companyId}`);
           }
         } else {
           console.log(`No phone number found for patient ${appointment.patient?.name}`);
