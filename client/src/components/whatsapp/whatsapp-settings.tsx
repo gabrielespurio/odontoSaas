@@ -230,19 +230,37 @@ export default function WhatsAppSettings() {
     companyIdToUse,
     selectedCompanyId,
     userCompany: userCompany?.companyId,
-    isLoading
+    isLoading,
+    whatsappStatus,
+    whatsappStatusLoading: isLoading
   });
+
+  console.log('WhatsApp Render Check:', { isLoading, companyIdToUse, whatsappStatus });
 
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-2"></div>
+          <p>Loading WhatsApp settings...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <div className="bg-yellow-100 p-3 rounded text-sm">
+        <strong>Debug Info:</strong><br/>
+        Loading: {isLoading ? 'Yes' : 'No'}<br/>
+        Company ID: {companyIdToUse || 'N/A'}<br/>
+        SuperAdmin: {isSuperAdmin ? 'Yes' : 'No'}<br/>
+        Selected Company: {selectedCompanyId || 'N/A'}<br/>
+        User Company: {userCompany?.companyId || 'N/A'}<br/>
+        WhatsApp Status: {whatsappStatus?.status || 'N/A'}<br/>
+        Has WhatsApp Data: {whatsappStatus ? 'Yes' : 'No'}
+      </div>
+
       {/* Company selection for superadmins */}
       {isSuperAdmin && (
         <Card>
@@ -284,9 +302,8 @@ export default function WhatsAppSettings() {
         </Card>
       )}
       
-      {/* WhatsApp configuration - only show if company is selected or user is not superadmin */}
-      {companyIdToUse && (
-        <Card>
+      {/* WhatsApp configuration - ALWAYS show for debugging */}
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
