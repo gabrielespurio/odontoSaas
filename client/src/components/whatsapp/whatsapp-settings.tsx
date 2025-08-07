@@ -127,17 +127,22 @@ export default function WhatsAppSettings() {
 
   // Setup WhatsApp mutation
   const setupMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/whatsapp/setup", 
-      isSuperAdmin ? { companyId: companyIdToUse } : {}
-    ),
-    onSuccess: () => {
+    mutationFn: () => {
+      const payload = isSuperAdmin ? { companyId: companyIdToUse } : {};
+      console.log('WhatsApp Setup: Mutation payload:', payload);
+      console.log('WhatsApp Setup: Making API request...');
+      return apiRequest("POST", "/api/whatsapp/setup", payload);
+    },
+    onSuccess: (data) => {
+      console.log('WhatsApp Setup: Success response:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/status"] });
       toast({
         title: "WhatsApp configurado!",
         description: "Escaneie o QR code com seu WhatsApp para conectar.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('WhatsApp Setup: Error response:', error);
       toast({
         title: "Erro na configuração",
         description: "Não foi possível configurar o WhatsApp.",
@@ -191,6 +196,11 @@ export default function WhatsAppSettings() {
   });
 
   const handleSetupWhatsApp = () => {
+    console.log('WhatsApp Setup: Button clicked!');
+    console.log('WhatsApp Setup: isSuperAdmin:', isSuperAdmin);
+    console.log('WhatsApp Setup: selectedCompanyId:', selectedCompanyId);
+    console.log('WhatsApp Setup: companyIdToUse:', companyIdToUse);
+    
     setupMutation.mutate();
   };
 
@@ -300,7 +310,10 @@ export default function WhatsAppSettings() {
               </p>
               <div className="space-y-2">
                 <Button 
-                  onClick={handleSetupWhatsApp} 
+                  onClick={() => {
+                    console.log('WhatsApp Setup: Button clicked directly!');
+                    handleSetupWhatsApp();
+                  }} 
                   disabled={setupMutation.isPending}
                   className="bg-green-600 hover:bg-green-700 w-full"
                 >
@@ -321,7 +334,8 @@ export default function WhatsAppSettings() {
                   <strong>Debug Info:</strong><br/>
                   Company ID: {companyIdToUse || 'N/A'}<br/>
                   SuperAdmin: {isSuperAdmin ? 'Sim' : 'Não'}<br/>
-                  Status: {whatsappStatus?.status || 'N/A'}
+                  Status: {whatsappStatus?.status || 'N/A'}<br/>
+                  Button Disabled: {setupMutation.isPending ? 'Sim' : 'Não'}
                 </div>
               </div>
             </div>
