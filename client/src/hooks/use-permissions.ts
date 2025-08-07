@@ -42,6 +42,17 @@ export function usePermissions() {
         hasAccess
       });
       
+      // In production, also log debug data
+      if (import.meta.env.PROD) {
+        fetch('/api/debug/user-data', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }).then(res => res.json())
+          .then(data => console.log("Production debug data:", data))
+          .catch(err => console.log("Debug fetch error:", err));
+      }
+      
       return hasAccess;
     }
     

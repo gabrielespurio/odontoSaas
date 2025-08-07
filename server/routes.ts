@@ -88,6 +88,13 @@ function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextF
         return res.status(403).json({ message: 'Invalid user' });
       }
       
+      console.log("Auth middleware - Fresh user data from DB:", {
+        id: freshUser.id,
+        role: freshUser.role,
+        companyId: freshUser.companyId,
+        nodeEnv: process.env.NODE_ENV
+      });
+      
       // Use fresh data from database, but keep token structure
       req.user = {
         id: freshUser.id,
@@ -702,12 +709,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint to check user data in production
+  app.get("/api/debug/user-data", authenticateToken, async (req, res) => {
+    try {
+      const user = req.user;
+      
+      // Also get raw data from database
+      const [dbUser] = await db.select()
+        .from(users)
+        .where(eq(users.id, user.id));
+      
+      res.json({
+        tokenUser: user,
+        dbUser: dbUser,
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Debug user data error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Get current user's company information
   app.get("/api/user/company", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
       
+      console.log("GET /api/user/company - User data:", {
+        id: user.id,
+        role: user.role,
+        companyId: user.companyId,
+        nodeEnv: process.env.NODE_ENV
+      });
+      
       if (!user.companyId) {
+        console.log("User has no companyId - returning isSystemAdmin: true");
         return res.json({ 
           companyName: "System Administrator",
           isSystemAdmin: true 
