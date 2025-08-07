@@ -244,18 +244,7 @@ export default function WhatsAppSettings() {
     }
   };
 
-  console.log('WhatsApp Settings Debug:', {
-    isSuperAdmin,
-    companyIdToUse,
-    contextSelectedCompanyId,
-    localSelectedCompanyId,
-    userCompany: userCompany?.companyId,
-    isLoading,
-    whatsappStatus,
-    whatsappStatusLoading: isLoading
-  });
 
-  console.log('WhatsApp Render Check:', { isLoading, companyIdToUse, whatsappStatus });
 
   if (isLoading) {
     return (
@@ -270,16 +259,7 @@ export default function WhatsAppSettings() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-yellow-100 p-3 rounded text-sm">
-        <strong>Debug Info:</strong><br/>
-        Loading: {isLoading ? 'Yes' : 'No'}<br/>
-        Company ID: {companyIdToUse || 'N/A'}<br/>
-        SuperAdmin: {isSuperAdmin ? 'Yes' : 'No'}<br/>
-        Selected Company: {(contextSelectedCompanyId || localSelectedCompanyId || 'N/A').toString()}<br/>
-        User Company: {userCompany?.companyId || 'N/A'}<br/>
-        WhatsApp Status: {whatsappStatus?.status || 'N/A'}<br/>
-        Has WhatsApp Data: {whatsappStatus ? 'Yes' : 'No'}
-      </div>
+
 
       {/* Company selection for superadmins */}
       {isSuperAdmin && (
@@ -298,7 +278,6 @@ export default function WhatsAppSettings() {
                 onValueChange={(value) => {
                   const companyId = parseInt(value);
                   setLocalSelectedCompanyId(companyId);
-                  console.log('Company selected:', companyId);
                 }}
               >
                 <SelectTrigger>
@@ -322,26 +301,12 @@ export default function WhatsAppSettings() {
         <Card>
           <CardContent className="py-8 text-center">
             <p className="text-gray-600">Selecione uma empresa acima para configurar o WhatsApp</p>
-            <div className="mt-4 p-3 bg-blue-100 rounded text-sm">
-              <strong>Auto-selection Debug:</strong><br/>
-              Companies loaded: {companies ? companies.length : 0}<br/>
-              Selected company: {contextSelectedCompanyId || localSelectedCompanyId || 'None'}<br/>
-              {(contextCompanies || companies) && (contextCompanies || companies).length > 0 && (
-                <Button 
-                  onClick={() => setLocalSelectedCompanyId((contextCompanies || companies)[0].id)}
-                  className="mt-2 bg-blue-600 hover:bg-blue-700 text-white"
-                  size="sm"
-                >
-                  Selecionar primeira empresa ({(contextCompanies || companies)[0].name})
-                </Button>
-              )}
-            </div>
           </CardContent>
         </Card>
       )}
       
-      {/* WhatsApp configuration - ALWAYS show for debugging */}
-      {(companyIdToUse || true) && (
+      {/* WhatsApp configuration */}
+      {companyIdToUse && (
         <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -366,10 +331,7 @@ export default function WhatsAppSettings() {
               </p>
               <div className="space-y-2">
                 <Button 
-                  onClick={() => {
-                    console.log('WhatsApp Setup: Button clicked directly!');
-                    handleSetupWhatsApp();
-                  }} 
+                  onClick={handleSetupWhatsApp} 
                   disabled={setupMutation.isPending || !companyIdToUse}
                   className="bg-green-600 hover:bg-green-700 w-full"
                 >
@@ -386,15 +348,7 @@ export default function WhatsAppSettings() {
                   )}
                 </Button>
                 
-                <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                  <strong>Debug Info:</strong><br/>
-                  Company ID: {companyIdToUse || 'N/A'}<br/>
-                  SuperAdmin: {isSuperAdmin ? 'Sim' : 'Não'}<br/>
-                  Status: {whatsappStatus?.status || 'N/A'}<br/>
-                  Button Disabled: {setupMutation.isPending || !companyIdToUse ? 'Sim' : 'Não'}<br/>
-                  Disabled Reason: {!companyIdToUse ? 'No Company ID' : setupMutation.isPending ? 'Pending' : 'None'}<br/>
-                  WhatsApp Data: {JSON.stringify(whatsappStatus, null, 2)}
-                </div>
+
               </div>
             </div>
           )}
@@ -411,15 +365,6 @@ export default function WhatsAppSettings() {
                 </p>
                 
                 <div className="mb-4">
-                  {/* Debug QR code info */}
-                  <div className="text-xs bg-gray-100 p-2 rounded mb-2">
-                    <strong>QR Debug:</strong><br/>
-                    Has QR: {whatsappStatus.qrCode ? 'Yes' : 'No'}<br/>
-                    QR Length: {whatsappStatus.qrCode?.length || 0}<br/>
-                    QR Type: {typeof whatsappStatus.qrCode}<br/>
-                    Status: {whatsappStatus.status}<br/>
-                    QR Preview: {whatsappStatus.qrCode?.substring(0, 100)}...
-                  </div>
                   
                   {whatsappStatus.qrCode && whatsappStatus.qrCode.length > 20 ? (
                     <div className="flex justify-center">
@@ -428,11 +373,7 @@ export default function WhatsAppSettings() {
                           src={whatsappStatus.qrCode.startsWith('data:') ? whatsappStatus.qrCode : `data:image/png;base64,${whatsappStatus.qrCode}`}
                           alt="WhatsApp QR Code"
                           className="w-64 h-64 border border-gray-200"
-                          onLoad={() => console.log('QR Code loaded successfully!')}
-                          onError={(e) => {
-                            console.error('QR Code image failed to load:', e);
-                            console.log('QR Code data:', whatsappStatus.qrCode);
-                          }}
+
                         />
                       </div>
                     </div>
