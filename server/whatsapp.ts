@@ -56,17 +56,28 @@ export async function createWhatsAppInstance(companyId: number, companyName: str
     console.log(`Evolution API response status: ${response.status}`);
     
     if (response.ok) {
-      const data = await response.json() as EvolutionAPIResponse;
+      const data = await response.json() as any;
       console.log(`WhatsApp instance created successfully for company ${companyId}:`, instanceName);
       console.log('Response data:', JSON.stringify(data, null, 2));
       
-      // Try to get QR code immediately after creation
-      if (data.hash && !data.qrcode?.base64) {
-        console.log('QR code not in creation response, trying to fetch it...');
+      // Check if QR code is already in the response
+      if (data.qrcode?.base64) {
+        console.log('QR code found in creation response!');
+      } else {
+        console.log('QR code not in creation response, waiting 2s and fetching separately...');
+        // Wait a bit for instance to initialize
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
         const qrCode = await getInstanceQRCode(instanceName);
         if (qrCode) {
-          data.qrcode = { base64: qrCode, code: qrCode };
-          console.log('QR code fetched successfully');
+          if (!data.qrcode) {
+            data.qrcode = {};
+          }
+          data.qrcode.base64 = qrCode;
+          data.qrcode.code = qrCode;
+          console.log('QR code fetched successfully after delay');
+        } else {
+          console.log('Failed to fetch QR code even after delay');
         }
       }
       

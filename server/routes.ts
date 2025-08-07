@@ -3790,24 +3790,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`QR Code present: ${!!result.qrcode?.base64}`);
       console.log(`QR Code length: ${result.qrcode?.base64?.length || 0}`);
       
-      // Update company with WhatsApp info
+      // Update company with WhatsApp info - handle both old and new API response formats
+      const hash = result.hash || result.instance?.instanceId;
+      const qrCode = result.qrcode?.base64;
+      
+      console.log(`Hash extracted: ${hash}`);
+      console.log(`QR Code extracted: ${qrCode ? 'Yes' : 'No'} (${qrCode?.length || 0} chars)`);
+      
       await db.update(companies)
         .set({
           whatsappInstanceId: instanceId,
-          whatsappHash: result.hash,
-          whatsappStatus: result.qrcode?.base64 ? 'qrcode' : 'connecting',
-          whatsappQrCode: result.qrcode?.base64,
+          whatsappHash: hash,
+          whatsappStatus: qrCode ? 'qrcode' : 'connecting',
+          whatsappQrCode: qrCode,
         })
         .where(eq(companies.id, companyIdToUse));
 
       console.log('Company WhatsApp info updated in database');
 
-      res.json({
+      const responseData = {
         instanceId,
-        hash: result.hash,
+        hash: result.hash || result.instance?.instanceId,
         qrCode: result.qrcode?.base64,
         status: result.qrcode?.base64 ? 'qrcode' : 'connecting'
-      });
+      };
+      
+      console.log('Setup response:', JSON.stringify(responseData, null, 2));
+      res.json(responseData);
     } catch (error) {
       console.error("Setup WhatsApp error:", error);
       res.status(500).json({ message: "Internal server error" });
