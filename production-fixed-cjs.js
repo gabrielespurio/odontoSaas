@@ -1,21 +1,15 @@
 #!/usr/bin/env node
 
 /**
- * OdontoSync Production Server - FIXED VERSION (ES Modules)
+ * OdontoSync Production Server - FIXED VERSION (CommonJS)
  * 
- * This server specifically fixes the "Unexpected token '<'" error
- * by ensuring JavaScript files are served with correct Content-Type headers
- * and preventing HTML responses for JS/CSS assets.
+ * This version uses CommonJS for maximum compatibility
+ * Fixes the "Unexpected token '<'" error in production
  */
 
-import express from 'express';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-
-// ES modules compatibility
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 
@@ -69,14 +63,6 @@ if (!fs.existsSync(assetsPath)) {
   process.exit(1);
 }
 
-// List available assets for debugging
-try {
-  const assetFiles = fs.readdirSync(assetsPath);
-  console.log(`📦 Available assets (${assetFiles.length}):`, assetFiles.slice(0, 5).join(', ') + (assetFiles.length > 5 ? '...' : ''));
-} catch (error) {
-  console.error('❌ Cannot read assets directory:', error.message);
-}
-
 /**
  * CRITICAL FIX: Handle JavaScript files FIRST with highest priority
  * This prevents the catch-all route from serving HTML instead of JS
@@ -86,16 +72,12 @@ app.get('/assets/*.js', (req, res) => {
   const filePath = path.join(assetsPath, fileName);
   
   console.log(`🔥 JS REQUEST: ${fileName}`);
-  console.log(`🔍 Looking at: ${filePath}`);
-  console.log(`📄 File exists: ${fs.existsSync(filePath)}`);
 
   if (!fs.existsSync(filePath)) {
     console.error(`❌ JS file not found: ${fileName}`);
-    console.log(`📁 Available files in assets:`, fs.readdirSync(assetsPath).filter(f => f.endsWith('.js')));
     return res.status(404).json({ 
       error: 'JavaScript file not found', 
-      requested: fileName,
-      available: fs.readdirSync(assetsPath).filter(f => f.endsWith('.js'))
+      requested: fileName
     });
   }
 
@@ -109,7 +91,6 @@ app.get('/assets/*.js', (req, res) => {
         fileContent.includes('<html') || 
         fileContent.startsWith('<!DOCTYPE')) {
       console.error(`🚨 CRITICAL: File ${fileName} contains HTML instead of JavaScript!`);
-      console.error(`🚨 First 200 chars: ${fileContent.substring(0, 200)}`);
       return res.status(500).json({
         error: 'File corruption detected',
         message: 'JavaScript file contains HTML content',
@@ -241,18 +222,6 @@ app.get('/health', (req, res) => {
 });
 
 /**
- * API endpoints would go here
- * For now, return 503 Service Unavailable for API calls
- */
-app.use('/api/*', (req, res) => {
-  res.status(503).json({
-    error: 'API temporarily unavailable',
-    message: 'Backend API is not integrated in this static server',
-    timestamp: new Date().toISOString()
-  });
-});
-
-/**
  * Root route - serve index.html
  */
 app.get('/', (req, res) => {
@@ -289,7 +258,6 @@ app.get('/', (req, res) => {
 
 /**
  * SPA fallback - CRITICAL: Only for non-asset routes
- * This ensures we never serve HTML for JS/CSS requests
  */
 app.get('*', (req, res) => {
   // CRITICAL: Prevent serving HTML for asset requests
@@ -297,16 +265,6 @@ app.get('*', (req, res) => {
     console.error(`❌ Asset route reached fallback: ${req.path}`);
     return res.status(404).json({
       error: 'Asset not found in fallback',
-      path: req.path,
-      message: 'This should not happen - check asset handlers'
-    });
-  }
-
-  // CRITICAL: Prevent serving HTML for API requests  
-  if (req.path.startsWith('/api/')) {
-    console.error(`❌ API route reached fallback: ${req.path}`);
-    return res.status(404).json({
-      error: 'API endpoint not found',
       path: req.path
     });
   }
@@ -339,53 +297,6 @@ app.get('*', (req, res) => {
   }
 });
 
-/**
- * Global error handler
- */
-app.use((error, req, res, next) => {
-  console.error('🚨 Global error handler:', error.message);
-  console.error('Stack:', error.stack);
-  
-  if (res.headersSent) {
-    return next(error);
-  }
-  
-  res.status(500).json({
-    error: 'Internal server error',
-    message: error.message,
-    timestamp: new Date().toISOString()
-  });
-});
-
-/**
- * Handle unhandled promise rejections
- */
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
-});
-
-/**
- * Handle uncaught exceptions
- */
-process.on('uncaughtException', (error) => {
-  console.error('🚨 Uncaught Exception:', error.message);
-  console.error('Stack:', error.stack);
-  process.exit(1);
-});
-
-/**
- * Graceful shutdown
- */
-process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM received, shutting down gracefully');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  console.log('🛑 SIGINT received, shutting down gracefully');
-  process.exit(0);
-});
-
 // Start server
 const port = process.env.PORT || 5000;
 const host = process.env.HOST || '0.0.0.0';
@@ -398,17 +309,8 @@ const server = app.listen(port, host, () => {
   console.log(`🌐 Server: http://${host}:${port}`);
   console.log(`📁 Static: ${distPath}`);
   console.log(`📦 Assets: ${assetsPath}`);
-  console.log(`🚀 PID: ${process.pid}`);
   console.log('🎯 =====================================');
-  console.log('');
-  console.log('✅ Key Features:');
-  console.log('   - Fixed JS/CSS Content-Type headers');
-  console.log('   - Prevents HTML responses for assets');
-  console.log('   - Proper CORS configuration');
-  console.log('   - SPA routing support');
-  console.log('   - Health check endpoint: /health');
-  console.log('');
 });
 
-// Export for testing or integration
-export { app, server };
+// Export for testing
+module.exports = { app, server };
