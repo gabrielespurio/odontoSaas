@@ -72,6 +72,12 @@ Preferred communication style: Simple, everyday language.
   - Implemented proper Content-Type headers for .js and .css files in production environment
   - Added multiple deployment options including Docker support and Apache/Nginx configurations
   - Created deployment scripts and documentation for seamless Git-based deployment workflow
+- **ESM Dynamic Require Fix (January 8, 2025)**: Resolved critical production deployment error
+  - Identified root cause: PM2 executing `dist/index.js` with ESM + dynamic require("express") incompatibility
+  - Created `emergency-server.js` - HTTP server bypassing Express/ESM issues entirely
+  - Added `fix-pm2-production.sh` - automated script to replace problematic dist/index.js with working server
+  - Documented complete solution in `PRODUCTION_FINAL_FIX.md` for definitive 502 Bad Gateway resolution
+  - Fixed Node.js v20 ESM restrictions preventing dynamic require() in production environment
 
 ## System Architecture
 
