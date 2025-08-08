@@ -59,6 +59,12 @@ Preferred communication style: Simple, everyday language.
 - **UI Fix**: Improved field alignment in receiving form items section for better visual consistency
 - **Database Structure Fix**: Completely rebuilt stock_movements table structure to match schema - removed legacy columns (type, total_price, description, reference) and added proper columns (movement_type, reason, reference_document, notes, unit_price, total_value)
 - **UI Update (January 8, 2025)**: Changed module name from "Empresas" to "Empresa" in navigation menu as requested by user
+- **Production Deployment Solution (January 8, 2025)**: Created comprehensive solution for Git-based external deployment
+  - Created `start-production.js` - dedicated production server for external deployment via Git
+  - Fixed JavaScript file serving issue causing "Unexpected token" errors in companies module
+  - Implemented proper Content-Type headers for .js and .css files in production environment
+  - Added multiple deployment options including Docker support and Apache/Nginx configurations
+  - Created deployment scripts and documentation for seamless Git-based deployment workflow
 
 ## System Architecture
 

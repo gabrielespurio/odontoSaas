@@ -1,14 +1,3 @@
-# Solução Rápida - Deploy via Git
-
-## O Problema
-O módulo de empresas não carrega no seu servidor porque os arquivos JavaScript estão sendo servidos como HTML em vez de `application/javascript`.
-
-## Solução Imediata
-
-### 1. Adicione estes arquivos ao seu repositório Git:
-
-**Arquivo: `start-production.js`**
-```javascript
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -84,39 +73,3 @@ app.get('*', (req, res) => {
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
 });
-```
-
-### 2. No seu servidor, execute:
-
-```bash
-# Após git pull
-npm install
-npm run build
-node start-production.js
-```
-
-### 3. Teste se funciona:
-
-```bash
-curl -I http://seu-servidor:5000/assets/index-DSlahus0.js
-# Deve retornar: Content-Type: application/javascript; charset=utf-8
-```
-
-## Se Ainda Não Funcionar
-
-### Opção A: Use servidor HTTP simples
-```bash
-cd dist/public
-python3 -m http.server 8000
-```
-
-### Opção B: Configure seu servidor web (Apache/Nginx)
-Adicione ao `.htaccess` (Apache):
-```apache
-<FilesMatch "\.js$">
-    Header set Content-Type "application/javascript; charset=utf-8"
-</FilesMatch>
-```
-
-## Resultado Esperado
-Após a correção, o módulo de empresas deve carregar sem erro "Unexpected token" e você deve ver a lista de empresas normalmente.
