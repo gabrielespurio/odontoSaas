@@ -1,21 +1,17 @@
 #!/usr/bin/env node
 
 /**
- * OdontoSync Production Server - FIXED VERSION (ES Modules)
+ * OdontoSync Production Server - FIXED VERSION
  * 
  * This server specifically fixes the "Unexpected token '<'" error
  * by ensuring JavaScript files are served with correct Content-Type headers
  * and preventing HTML responses for JS/CSS assets.
  */
 
-import express from 'express';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-
-// ES modules compatibility
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const mime = require('mime-types');
 
 const app = express();
 
@@ -187,24 +183,7 @@ app.get('/assets/*', (req, res) => {
   }
 
   try {
-    // Simple MIME type detection without external dependency
-    const ext = path.extname(filePath).toLowerCase();
-    let mimeType = 'application/octet-stream';
-    
-    const mimeMap = {
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.gif': 'image/gif',
-      '.svg': 'image/svg+xml',
-      '.woff': 'font/woff',
-      '.woff2': 'font/woff2',
-      '.ttf': 'font/ttf',
-      '.eot': 'application/vnd.ms-fontobject'
-    };
-    
-    mimeType = mimeMap[ext] || mimeType;
-    
+    const mimeType = mime.lookup(filePath) || 'application/octet-stream';
     res.setHeader('Content-Type', mimeType);
     res.setHeader('Cache-Control', 'public, max-age=86400');
     
@@ -411,4 +390,4 @@ const server = app.listen(port, host, () => {
 });
 
 // Export for testing or integration
-export { app, server };
+module.exports = { app, server };
