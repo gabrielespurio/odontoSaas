@@ -18,7 +18,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 // Configuração
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 const NODE_ENV = process.env.NODE_ENV || 'production';
 const DOMAIN = process.env.DOMAIN || 'localhost';
 
@@ -52,7 +52,7 @@ app.use((req, res, next) => {
     `http://www.${DOMAIN}`,
     `https://www.${DOMAIN}`,
     'http://localhost:3000',
-    'http://localhost:5000'
+    'http://localhost:5001'
   ];
   
   const origin = req.headers.origin;

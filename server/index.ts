@@ -414,10 +414,10 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // ALWAYS serve the app on port 5000
+  // ALWAYS serve the app on configured port
   // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
+  // Port can be configured via environment variable.
+  const port = process.env.NODE_ENV === 'production' ? (process.env.PORT || 5001) : 5000;
   server.listen({
     port,
     host: "0.0.0.0",

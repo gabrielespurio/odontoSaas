@@ -239,7 +239,7 @@ log_info "Realizando verificações finais..."
 
 # Verificar se aplicação está rodando
 if ! curl -f http://localhost:5001/health > /dev/null 2>&1; then
-    log_error "Aplicação não está respondendo na porta 5000"
+    log_error "Aplicação não está respondendo na porta 5001"
     pm2 logs odontosync --lines 20
     exit 1
 fi
@@ -288,14 +288,14 @@ echo ""
 echo "📊 Informações do deploy:"
 echo "  ✅ Aplicação: http://$DOMAIN"
 echo "  ✅ SSL: $([ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ] && echo "Configurado" || echo "Não configurado")"
-echo "  ✅ Status: $(curl -s http://localhost:5000/health | jq -r .status 2>/dev/null || echo "Verificar manualmente")"
+echo "  ✅ Status: $(curl -s http://localhost:5001/health | jq -r .status 2>/dev/null || echo "Verificar manualmente")"
 echo ""
 echo "🛠️  Comandos úteis:"
 echo "  pm2 status              # Status da aplicação"
 echo "  pm2 logs odontosync     # Logs da aplicação"
 echo "  pm2 restart odontosync  # Reiniciar aplicação"
 echo "  sudo nginx -s reload    # Recarregar Nginx"
-echo "  curl http://localhost:5000/health  # Health check"
+echo "  curl http://localhost:5001/health  # Health check"
 echo ""
 echo "📁 Arquivos importantes:"
 echo "  Aplicação: $INSTALL_PATH"

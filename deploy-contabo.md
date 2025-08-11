@@ -69,7 +69,7 @@ Conteúdo do .env:
 ```env
 # Ambiente
 NODE_ENV=production
-PORT=5000
+PORT=5001
 
 # Database (sua string de conexão Neon)
 DATABASE_URL="postgresql://neondb_owner:npg_uCjQlFSAK78T@ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
@@ -224,4 +224,4 @@ Em caso de problemas, verifique:
 1. `pm2 status` - Se a aplicação está rodando
 2. `pm2 logs odontosync` - Logs da aplicação  
 3. `sudo nginx -t` - Configuração do Nginx
-4. `curl http://localhost:5000` - Se a app responde localmente
+4. `curl http://localhost:5001` - Se a app responde localmente

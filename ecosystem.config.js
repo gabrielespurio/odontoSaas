@@ -8,7 +8,7 @@ module.exports = {
     {
       // Aplicação principal
       name: 'odontosync',
-      script: './production-server.js',
+      script: './production-fixed.js',
       instances: 'max', // Usar todos os cores disponíveis
       exec_mode: 'cluster',
       
