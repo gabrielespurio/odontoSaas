@@ -1,42 +1,31 @@
 #!/usr/bin/env node
 
 /**
- * Script de verificação para produção do OdontoSync
- * Testa se o servidor está funcionando corretamente e resolve o erro "Unexpected token '<'"
+ * OdontoSync - Script de Verificação de Produção
+ * 
+ * Verifica se a aplicação está funcionando corretamente em produção
  */
 
-const fs = require('fs');
-const path = require('path');
-const http = require('http');
+import http from 'http';
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-console.log('🔍 OdontoSync Production Verification');
-console.log('=====================================');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Configuração
-const baseUrl = process.env.TEST_URL || 'http://localhost:5000';
-const distPath = path.resolve(__dirname, 'dist', 'public');
+const PORT = process.env.PORT || 5000;
+const DOMAIN = process.env.DOMAIN || 'localhost';
 
-console.log(`🌐 Testing URL: ${baseUrl}`);
-console.log(`📁 Build path: ${distPath}`);
-console.log('');
+console.log('🔍 OdontoSync - Verificação de Produção');
+console.log('======================================');
 
-let testsPassed = 0;
-let testsFailed = 0;
-
-function logTest(name, passed, details = '') {
-  const status = passed ? '✅ PASS' : '❌ FAIL';
-  console.log(`${status} ${name}`);
-  if (details) {
-    console.log(`    ${details}`);
-  }
-  
-  if (passed) testsPassed++;
-  else testsFailed++;
-}
-
-function makeRequest(url, options = {}) {
+async function makeRequest(url) {
   return new Promise((resolve, reject) => {
-    const req = http.get(url, options, (res) => {
+    const protocol = url.startsWith('https:') ? https : http;
+    
+    const req = protocol.get(url, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
@@ -47,9 +36,9 @@ function makeRequest(url, options = {}) {
         });
       });
     });
-    
+
     req.on('error', reject);
-    req.setTimeout(5000, () => {
+    req.setTimeout(10000, () => {
       req.destroy();
       reject(new Error('Request timeout'));
     });
@@ -57,198 +46,196 @@ function makeRequest(url, options = {}) {
 }
 
 async function runTests() {
-  console.log('📋 Running verification tests...\n');
-  
-  // Test 1: Build directory exists
-  const buildExists = fs.existsSync(distPath);
-  logTest('Build directory exists', buildExists, buildExists ? distPath : 'Run npm run build first');
-  
-  if (!buildExists) {
-    console.log('\n❌ Cannot continue without build directory');
-    process.exit(1);
-  }
-  
-  // Test 2: Assets directory exists
-  const assetsPath = path.join(distPath, 'assets');
-  const assetsExist = fs.existsSync(assetsPath);
-  logTest('Assets directory exists', assetsExist, assetsExist ? assetsPath : 'Assets missing in build');
-  
-  if (!assetsExist) {
-    console.log('\n❌ Cannot continue without assets directory');
-    process.exit(1);
-  }
-  
-  // Test 3: Find JS and CSS files
-  const assetFiles = fs.readdirSync(assetsPath);
-  const jsFiles = assetFiles.filter(f => f.endsWith('.js'));
-  const cssFiles = assetFiles.filter(f => f.endsWith('.css'));
-  
-  logTest('JavaScript files found', jsFiles.length > 0, `Found ${jsFiles.length} JS files`);
-  logTest('CSS files found', cssFiles.length > 0, `Found ${cssFiles.length} CSS files`);
-  
-  console.log(`\n📦 Assets inventory:`);
-  console.log(`   JS files: ${jsFiles.join(', ')}`);
-  console.log(`   CSS files: ${cssFiles.join(', ')}`);
-  console.log(`   Total assets: ${assetFiles.length}`);
-  
-  // Test 4: Check if JS files contain actual JavaScript (not HTML)
-  for (const jsFile of jsFiles.slice(0, 3)) { // Test first 3 JS files
-    const jsFilePath = path.join(assetsPath, jsFile);
-    try {
-      const content = fs.readFileSync(jsFilePath, 'utf8');
-      const isActualJS = !content.includes('<!DOCTYPE html>') && 
-                        !content.includes('<html') && 
-                        !content.startsWith('<!DOCTYPE');
-      
-      logTest(`${jsFile} contains valid JavaScript`, isActualJS, 
-        isActualJS ? 'Clean JS content' : 'CORRUPTED - Contains HTML!');
-        
-      if (!isActualJS) {
-        console.log(`    First 100 chars: ${content.substring(0, 100)}`);
-      }
-    } catch (error) {
-      logTest(`${jsFile} is readable`, false, error.message);
+  const tests = [
+    {
+      name: 'Health Check',
+      url: `http://localhost:${PORT}/health`,
+      expectedStatus: 200,
+      expectedContent: 'healthy'
+    },
+    {
+      name: 'Static Files - Index HTML',
+      url: `http://localhost:${PORT}/`,
+      expectedStatus: 200,
+      expectedContent: '<!DOCTYPE html>'
+    },
+    {
+      name: 'API - Login Endpoint',
+      url: `http://localhost:${PORT}/api/auth/login`,
+      method: 'POST',
+      body: JSON.stringify({
+        email: 'superadmin@odontosync.com',
+        password: 'superadmin123'
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      expectedStatus: 200,
+      expectedContent: 'token'
     }
-  }
-  
-  console.log('\n🌐 Testing server endpoints...\n');
-  
-  try {
-    // Test 5: Health check
+  ];
+
+  console.log('\n📋 Executando testes...\n');
+
+  let passed = 0;
+  let failed = 0;
+
+  for (const test of tests) {
     try {
-      const healthResponse = await makeRequest(`${baseUrl}/health`);
-      const isHealthy = healthResponse.statusCode === 200;
-      logTest('Health check endpoint', isHealthy, 
-        isHealthy ? 'Server is healthy' : `Status: ${healthResponse.statusCode}`);
-        
-      if (isHealthy) {
-        try {
-          const healthData = JSON.parse(healthResponse.data);
-          console.log(`    Uptime: ${Math.round(healthData.uptime)}s`);
-          console.log(`    Assets files: ${healthData.assets.files}`);
-        } catch (e) {
-          // Ignore JSON parse errors for health display
+      console.log(`🧪 ${test.name}...`);
+      
+      let response;
+      
+      if (test.method === 'POST') {
+        // Para POST requests
+        response = await new Promise((resolve, reject) => {
+          const url = new URL(test.url);
+          const options = {
+            hostname: url.hostname,
+            port: url.port,
+            path: url.pathname,
+            method: 'POST',
+            headers: test.headers || {}
+          };
+
+          const req = http.request(options, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+              resolve({
+                statusCode: res.statusCode,
+                headers: res.headers,
+                data: data
+              });
+            });
+          });
+
+          req.on('error', reject);
+          req.setTimeout(10000, () => {
+            req.destroy();
+            reject(new Error('Request timeout'));
+          });
+
+          if (test.body) {
+            req.write(test.body);
+          }
+          
+          req.end();
+        });
+      } else {
+        response = await makeRequest(test.url);
+      }
+
+      // Verificar status code
+      if (response.statusCode === test.expectedStatus) {
+        console.log(`   ✅ Status: ${response.statusCode}`);
+      } else {
+        console.log(`   ❌ Status: ${response.statusCode} (esperado: ${test.expectedStatus})`);
+        failed++;
+        continue;
+      }
+
+      // Verificar conteúdo se especificado
+      if (test.expectedContent) {
+        if (response.data.includes(test.expectedContent)) {
+          console.log(`   ✅ Conteúdo: OK`);
+        } else {
+          console.log(`   ❌ Conteúdo: "${test.expectedContent}" não encontrado`);
+          console.log(`   📄 Resposta: ${response.data.substring(0, 200)}...`);
+          failed++;
+          continue;
         }
       }
+
+      passed++;
+      
     } catch (error) {
-      logTest('Health check endpoint', false, error.message);
+      console.log(`   ❌ Erro: ${error.message}`);
+      failed++;
     }
     
-    // Test 6: Root endpoint returns HTML
-    try {
-      const rootResponse = await makeRequest(`${baseUrl}/`);
-      const isHtml = rootResponse.statusCode === 200 && 
-                    rootResponse.headers['content-type']?.includes('text/html');
-      logTest('Root endpoint serves HTML', isHtml, 
-        `Content-Type: ${rootResponse.headers['content-type']}`);
-    } catch (error) {
-      logTest('Root endpoint serves HTML', false, error.message);
-    }
+    console.log('');
+  }
+
+  // Verificar arquivos específicos para problema "Unexpected token"
+  console.log('🔍 Verificando arquivos JavaScript...\n');
+
+  const distDir = './dist/public/assets';
+  if (fs.existsSync(distDir)) {
+    const files = fs.readdirSync(distDir);
+    const jsFiles = files.filter(f => f.endsWith('.js'));
     
-    // Test 7: JavaScript files served with correct Content-Type
-    if (jsFiles.length > 0) {
-      const testJsFile = jsFiles[0];
+    for (const jsFile of jsFiles) {
+      console.log(`📄 Verificando ${jsFile}...`);
+      
       try {
-        const jsResponse = await makeRequest(`${baseUrl}/assets/${testJsFile}`);
-        const correctContentType = jsResponse.headers['content-type'] === 'application/javascript; charset=utf-8';
-        const isSuccessful = jsResponse.statusCode === 200;
+        const filePath = path.join(distDir, jsFile);
+        const content = fs.readFileSync(filePath, 'utf8');
         
-        logTest(`JS file Content-Type (${testJsFile})`, correctContentType && isSuccessful, 
-          `Status: ${jsResponse.statusCode}, Type: ${jsResponse.headers['content-type']}`);
+        if (content.startsWith('<!DOCTYPE html>')) {
+          console.log(`   ❌ PROBLEMA: Arquivo contém HTML em vez de JavaScript!`);
+          failed++;
+        } else if (content.trim().length === 0) {
+          console.log(`   ❌ PROBLEMA: Arquivo está vazio!`);
+          failed++;
+        } else {
+          console.log(`   ✅ Arquivo OK (${content.length} chars)`);
           
-        // Extra check: ensure response is not HTML
-        const responseIsNotHtml = !jsResponse.data.includes('<!DOCTYPE html>') &&
-                                 !jsResponse.data.includes('<html');
-        logTest(`JS file content is not HTML (${testJsFile})`, responseIsNotHtml,
-          responseIsNotHtml ? 'Clean JS response' : 'WARNING: HTML in JS response!');
-      } catch (error) {
-        logTest(`JS file accessibility (${testJsFile})`, false, error.message);
-      }
-    }
-    
-    // Test 8: CSS files served with correct Content-Type
-    if (cssFiles.length > 0) {
-      const testCssFile = cssFiles[0];
-      try {
-        const cssResponse = await makeRequest(`${baseUrl}/assets/${testCssFile}`);
-        const correctContentType = cssResponse.headers['content-type'] === 'text/css; charset=utf-8';
-        const isSuccessful = cssResponse.statusCode === 200;
+          // Testar via HTTP
+          try {
+            const jsResponse = await makeRequest(`http://localhost:${PORT}/assets/${jsFile}`);
+            
+            if (jsResponse.headers['content-type'] === 'application/javascript; charset=utf-8') {
+              console.log(`   ✅ Content-Type correto`);
+            } else {
+              console.log(`   ❌ Content-Type incorreto: ${jsResponse.headers['content-type']}`);
+              failed++;
+            }
+          } catch (error) {
+            console.log(`   ❌ Erro ao acessar via HTTP: ${error.message}`);
+            failed++;
+          }
+        }
         
-        logTest(`CSS file Content-Type (${testCssFile})`, correctContentType && isSuccessful, 
-          `Status: ${cssResponse.statusCode}, Type: ${cssResponse.headers['content-type']}`);
       } catch (error) {
-        logTest(`CSS file accessibility (${testCssFile})`, false, error.message);
+        console.log(`   ❌ Erro ao ler arquivo: ${error.message}`);
+        failed++;
       }
+      
+      console.log('');
     }
-    
-    // Test 9: 404 for non-existent assets
-    try {
-      const notFoundResponse = await makeRequest(`${baseUrl}/assets/non-existent-file.js`);
-      const is404 = notFoundResponse.statusCode === 404;
-      logTest('Non-existent asset returns 404', is404, `Status: ${notFoundResponse.statusCode}`);
-    } catch (error) {
-      logTest('Non-existent asset returns 404', false, error.message);
-    }
-    
-    // Test 10: SPA fallback for routes
-    try {
-      const spaResponse = await makeRequest(`${baseUrl}/empresas`);
-      const isSpaFallback = spaResponse.statusCode === 200 && 
-                           spaResponse.headers['content-type']?.includes('text/html');
-      logTest('SPA fallback works for routes', isSpaFallback, 
-        `Status: ${spaResponse.statusCode}, Type: ${spaResponse.headers['content-type']}`);
-    } catch (error) {
-      logTest('SPA fallback works for routes', false, error.message);
-    }
-    
-  } catch (error) {
-    console.log(`\n❌ Server appears to be down: ${error.message}`);
-    console.log('   Make sure to start the server first: node production-fixed.js');
-  }
-  
-  // Summary
-  console.log('\n📊 Test Results');
-  console.log('===============');
-  console.log(`✅ Passed: ${testsPassed}`);
-  console.log(`❌ Failed: ${testsFailed}`);
-  console.log(`📈 Success rate: ${Math.round((testsPassed / (testsPassed + testsFailed)) * 100)}%`);
-  
-  if (testsFailed === 0) {
-    console.log('\n🎉 All tests passed! Your production setup should work correctly.');
-    console.log('   The "Unexpected token \'<\'" error should be resolved.');
   } else {
-    console.log('\n⚠️  Some tests failed. Please check the issues above before deploying.');
-    
-    if (testsFailed > testsPassed) {
-      console.log('\n🚨 Critical issues detected:');
-      console.log('   1. Make sure to run "npm run build" first');
-      console.log('   2. Start the server with "node production-fixed.js"');
-      console.log('   3. Check server logs for detailed error messages');
-    }
+    console.log('❌ Diretório dist/public/assets não encontrado!');
+    console.log('💡 Execute: npm run build\n');
+    failed++;
   }
+
+  // Resultado final
+  console.log('📊 RESULTADO DA VERIFICAÇÃO');
+  console.log('===========================');
+  console.log(`✅ Testes passou: ${passed}`);
+  console.log(`❌ Testes falharam: ${failed}`);
   
-  console.log('\n📝 Next steps:');
-  console.log('   1. If tests pass, deploy production-fixed.js to your server');
-  console.log('   2. Configure nginx/apache proxy as shown in PRODUCTION_DEPLOY_GUIDE.md');
-  console.log('   3. Monitor server logs for any issues');
-  console.log('   4. Test in browser to confirm the fix works');
-  
-  process.exit(testsFailed > 0 ? 1 : 0);
+  if (failed === 0) {
+    console.log('\n🎉 SUCESSO: Aplicação está funcionando perfeitamente!');
+    console.log(`🌐 Acesse: http://${DOMAIN}${PORT !== 80 ? ':' + PORT : ''}`);
+    console.log(`🔐 Login: superadmin@odontosync.com / superadmin123`);
+    return true;
+  } else {
+    console.log('\n⚠️  PROBLEMAS ENCONTRADOS: Verifique os erros acima');
+    console.log('💡 Dicas:');
+    console.log('   - Execute: npm run build');
+    console.log('   - Verifique o arquivo .env');
+    console.log('   - Verifique os logs: node production-fixed.js');
+    return false;
+  }
 }
 
-// Handle errors gracefully
-process.on('uncaughtException', (error) => {
-  console.error('\n🚨 Uncaught exception:', error.message);
-  process.exit(1);
-});
+// Executar verificação se chamado diretamente
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runTests().then(success => {
+    process.exit(success ? 0 : 1);
+  });
+}
 
-process.on('unhandledRejection', (reason) => {
-  console.error('\n🚨 Unhandled rejection:', reason);
-  process.exit(1);
-});
-
-// Run tests
-runTests().catch(error => {
-  console.error('\n💥 Test runner failed:', error.message);
-  process.exit(1);
-});
+export { runTests };

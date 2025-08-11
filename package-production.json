@@ -1,20 +1,41 @@
 {
   "name": "odontosync-production",
   "version": "1.0.0",
-  "description": "OdontoSync - Sistema de Gestão Odontológica",
-  "main": "server.js",
-  "type": "commonjs",
+  "description": "OdontoSync - Sistema de Gestão Odontológica (Production)",
+  "type": "module",
+  "license": "MIT",
+  "main": "production-server.js",
   "scripts": {
-    "start": "node server.js",
-    "build": "npm install && npm run build:app && npm run build:server",
-    "build:app": "vite build",
-    "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=cjs --outfile=dist/index.js",
-    "postinstall": "npm run build || echo 'Build failed, continuing...'"
+    "start": "NODE_ENV=production node production-server.js",
+    "build": "vite build",
+    "pm2:start": "pm2 start ecosystem.config.js --env production",
+    "pm2:restart": "pm2 restart odontosync",
+    "pm2:stop": "pm2 stop odontosync",
+    "pm2:logs": "pm2 logs odontosync",
+    "health": "curl -s http://localhost:5000/health || echo 'Health check failed'",
+    "backup": "/usr/local/bin/odontosync-backup.sh"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.21.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.0.1",
+    "http-proxy-middleware": "^2.0.6",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
   },
   "engines": {
-    "node": ">=18.0.0"
-  }
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "odontosync",
+    "dental",
+    "clinic",
+    "management",
+    "saas",
+    "production"
+  ]
 }

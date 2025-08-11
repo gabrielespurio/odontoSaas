@@ -1,75 +1,141 @@
-const express = require('express');
+#!/usr/bin/env node
+
+/**
+ * OdontoSync - Script de Inicialização de Produção
+ * 
+ * Este é o ponto de entrada principal para produção na Contabo
+ */
+
+require('dotenv').config();
+
 const path = require('path');
 const fs = require('fs');
+const { spawn } = require('child_process');
 
-const app = express();
-const port = process.env.PORT || 5000;
+console.log('🚀 OdontoSync - Inicializando Produção');
+console.log('=====================================');
 
-// CORS
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  if (req.method === 'OPTIONS') return res.sendStatus(200);
-  next();
-});
+// Verificar arquivos necessários
+const requiredFiles = [
+  './production-fixed.js',
+  './dist/public/index.html',
+  './.env'
+];
 
-const publicDir = path.join(__dirname, 'dist', 'public');
+console.log('🔍 Verificando arquivos necessários...');
 
-// JavaScript files with correct Content-Type
-app.get('/assets/:filename.js', (req, res) => {
-  const filename = req.params.filename + '.js';
-  const filePath = path.join(publicDir, 'assets', filename);
+for (const file of requiredFiles) {
+  if (fs.existsSync(file)) {
+    console.log(`✅ ${file}`);
+  } else {
+    console.log(`❌ ${file} - ARQUIVO NECESSÁRIO AUSENTE`);
+    
+    if (file === './.env') {
+      console.log('💡 Crie o arquivo .env baseado em .env.production.example');
+    } else if (file === './dist/public/index.html') {
+      console.log('💡 Execute: npm run build');
+    }
+  }
+}
+
+// Verificar variáveis de ambiente críticas
+console.log('\n🔧 Verificando configurações...');
+
+const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'];
+const missingVars = [];
+
+for (const envVar of requiredEnvVars) {
+  if (process.env[envVar]) {
+    console.log(`✅ ${envVar} configurada`);
+  } else {
+    console.log(`❌ ${envVar} - VARIÁVEL AUSENTE`);
+    missingVars.push(envVar);
+  }
+}
+
+if (missingVars.length > 0) {
+  console.log('\n❌ Configuração incompleta!');
+  console.log('Configure as seguintes variáveis no arquivo .env:');
+  missingVars.forEach(varName => {
+    console.log(`   ${varName}=sua-configuracao-aqui`);
+  });
+  console.log('\nVeja o arquivo .env.production.example para exemplos');
+  process.exit(1);
+}
+
+// Verificar dependências de produção
+console.log('\n📦 Verificando dependências...');
+
+const productionDeps = [
+  'express',
+  'cors', 
+  'bcrypt',
+  'jsonwebtoken',
+  '@neondatabase/serverless'
+];
+
+let missingDeps = [];
+
+for (const dep of productionDeps) {
+  try {
+    require.resolve(dep);
+    console.log(`✅ ${dep}`);
+  } catch (error) {
+    console.log(`❌ ${dep} - NÃO INSTALADA`);
+    missingDeps.push(dep);
+  }
+}
+
+if (missingDeps.length > 0) {
+  console.log('\n📥 Instalando dependências ausentes...');
+  console.log('Execute: npm install ' + missingDeps.join(' '));
   
-  if (fs.existsSync(filePath)) {
-    const content = fs.readFileSync(filePath, 'utf8');
-    res.set('Content-Type', 'application/javascript; charset=utf-8');
-    return res.send(content);
-  } else {
-    return res.status(404).send('JS file not found');
-  }
-});
-
-// CSS files
-app.get('/assets/:filename.css', (req, res) => {
-  const filename = req.params.filename + '.css';
-  const filePath = path.join(publicDir, 'assets', filename);
+  // Tentar instalar automaticamente
+  const npmInstall = spawn('npm', ['install', ...missingDeps], {
+    stdio: 'inherit',
+    shell: true
+  });
   
-  if (fs.existsSync(filePath)) {
-    const content = fs.readFileSync(filePath, 'utf8');
-    res.set('Content-Type', 'text/css; charset=utf-8');
-    return res.send(content);
-  } else {
-    return res.status(404).send('CSS file not found');
-  }
-});
+  npmInstall.on('close', (code) => {
+    if (code === 0) {
+      console.log('✅ Dependências instaladas com sucesso');
+      startProduction();
+    } else {
+      console.log('❌ Falha ao instalar dependências');
+      process.exit(1);
+    }
+  });
+} else {
+  startProduction();
+}
 
-// Other assets
-app.use('/assets', express.static(path.join(publicDir, 'assets')));
+function startProduction() {
+  console.log('\n🎯 Iniciando servidor de produção...');
+  console.log('=====================================\n');
 
-// Root and SPA fallback
-app.get('/', (req, res) => {
-  const indexPath = path.join(publicDir, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    return res.sendFile(indexPath);
-  } else {
-    return res.status(404).send('App not found');
-  }
-});
+  // Iniciar o servidor principal
+  const serverProcess = spawn('node', ['production-fixed.js'], {
+    stdio: 'inherit',
+    env: { ...process.env, NODE_ENV: 'production' }
+  });
 
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/assets/')) {
-    return res.status(404).send('Asset not found');
-  }
-  
-  const indexPath = path.join(publicDir, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    return res.sendFile(indexPath);
-  } else {
-    return res.status(404).send('App not found');
-  }
-});
+  serverProcess.on('close', (code) => {
+    console.log(`\n📴 Servidor encerrado com código ${code}`);
+  });
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on port ${port}`);
-});
+  serverProcess.on('error', (error) => {
+    console.error('❌ Erro ao iniciar servidor:', error.message);
+    process.exit(1);
+  });
+
+  // Capturar sinais de encerramento
+  process.on('SIGINT', () => {
+    console.log('\n📴 Encerrando servidor...');
+    serverProcess.kill('SIGINT');
+  });
+
+  process.on('SIGTERM', () => {
+    console.log('\n📴 Encerrando servidor...');
+    serverProcess.kill('SIGTERM');
+  });
+}
