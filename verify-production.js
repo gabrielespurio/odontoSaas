@@ -15,7 +15,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 4001;
 const DOMAIN = process.env.DOMAIN || 'localhost';
 
 console.log('🔍 OdontoSync - Verificação de Produção');

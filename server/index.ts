@@ -417,7 +417,7 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on configured port
   // this serves both the API and the client.
   // Port can be configured via environment variable.
-  const port = process.env.NODE_ENV === 'production' ? (process.env.PORT || 5001) : 5000;
+  const port = process.env.NODE_ENV === 'production' ? (process.env.PORT || 4001) : 5000;
   server.listen({
     port,
     host: "0.0.0.0",

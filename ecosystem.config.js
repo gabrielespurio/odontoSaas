@@ -15,7 +15,7 @@ module.exports = {
       // Configurações de ambiente
       env: {
         NODE_ENV: 'production',
-        PORT: 5001,
+        PORT: 4001,
       },
       
       // Configurações de restart automático
@@ -56,7 +56,7 @@ module.exports = {
       // Variáveis de ambiente específicas
       env_production: {
         NODE_ENV: 'production',
-        PORT: 5001,
+        PORT: 4001,
         DATABASE_URL: process.env.DATABASE_URL,
         JWT_SECRET: process.env.JWT_SECRET,
         SESSION_SECRET: process.env.SESSION_SECRET,

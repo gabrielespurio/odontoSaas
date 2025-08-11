@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const port = process.env.PORT || 5001;
+const port = process.env.PORT || 4001;
 
 // Trust proxy for production
 app.set('trust proxy', true);

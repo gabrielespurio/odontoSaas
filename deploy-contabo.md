@@ -69,7 +69,7 @@ Conteúdo do .env:
 ```env
 # Ambiente
 NODE_ENV=production
-PORT=5001
+PORT=4001
 
 # Database (sua string de conexão Neon)
 DATABASE_URL="postgresql://neondb_owner:npg_uCjQlFSAK78T@ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
@@ -105,7 +105,7 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     
     location / {
-        proxy_pass http://localhost:5001;
+        proxy_pass http://localhost:4001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -118,7 +118,7 @@ server {
     
     # Asset caching
     location /assets/ {
-        proxy_pass http://localhost:5001;
+        proxy_pass http://localhost:4001;
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
@@ -224,4 +224,4 @@ Em caso de problemas, verifique:
 1. `pm2 status` - Se a aplicação está rodando
 2. `pm2 logs odontosync` - Logs da aplicação  
 3. `sudo nginx -t` - Configuração do Nginx
-4. `curl http://localhost:5001` - Se a app responde localmente
+4. `curl http://localhost:4001` - Se a app responde localmente

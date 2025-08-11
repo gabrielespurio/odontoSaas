@@ -121,13 +121,13 @@ node start-production.js
 
 ### Endpoint de Health Check
 ```bash
-curl http://seu-servidor:5001/health
+curl http://seu-servidor:4001/health
 ```
 
 ### Verificação de JavaScript
 ```bash
 # Verificar Content-Type
-curl -I http://seu-servidor:5001/assets/index-DSlahus0.js
+curl -I http://seu-servidor:4001/assets/index-DSlahus0.js
 
 # Deve retornar:
 # Content-Type: application/javascript; charset=utf-8
@@ -135,7 +135,7 @@ curl -I http://seu-servidor:5001/assets/index-DSlahus0.js
 
 ### Login Test
 ```bash
-curl -X POST http://seu-servidor:5001/api/auth/login \
+curl -X POST http://seu-servidor:4001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"superadmin@odontosync.com","password":"superadmin123"}'
 ```
@@ -145,7 +145,7 @@ curl -X POST http://seu-servidor:5001/api/auth/login \
 ### Variáveis de Ambiente (.env)
 ```env
 NODE_ENV=production
-PORT=5001
+PORT=4001
 DATABASE_URL="postgresql://neondb_owner:senha@host/db?sslmode=require"
 JWT_SECRET="sua-chave-jwt-32-chars-minimo"
 SESSION_SECRET="sua-chave-session-32-chars-minimo"
@@ -173,7 +173,7 @@ server {
     server_name seu-dominio.com;
     
     location / {
-        proxy_pass http://localhost:5001;
+        proxy_pass http://localhost:4001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -181,7 +181,7 @@ server {
     }
     
     location /assets/ {
-        proxy_pass http://localhost:5001;
+        proxy_pass http://localhost:4001;
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
@@ -204,7 +204,7 @@ Em caso de problemas:
 1. Execute: `node verify-production.js`
 2. Verifique logs: `pm2 logs odontosync`
 3. Confirme variáveis: `printenv | grep -E "(NODE_ENV|DATABASE_URL|JWT_SECRET)"`
-4. Teste health: `curl http://localhost:5001/health`
+4. Teste health: `curl http://localhost:4001/health`
 
 ## 🎉 CONCLUSÃO
 

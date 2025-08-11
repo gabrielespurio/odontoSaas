@@ -36,7 +36,7 @@ GIT_REPO=${GIT_REPO:-"https://github.com/seu-usuario/odontosync.git"}
 INSTALL_PATH="/var/www/odontosync"
 
 log_info "Configurações do deploy:"
-echo "  - Porta: 5001"
+echo "  - Porta: 4001"
 echo "  - Domínio: $DOMAIN"
 echo "  - Caminho: $INSTALL_PATH"
 echo "  - Repositório: $GIT_REPO"
@@ -109,7 +109,7 @@ fi
 cat > .env << EOF
 # Ambiente
 NODE_ENV=production
-PORT=5001
+PORT=4001
 
 # Database
 DATABASE_URL="$DATABASE_URL"
@@ -175,7 +175,7 @@ server {
     gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
     
     location / {
-        proxy_pass http://localhost:5001;
+        proxy_pass http://localhost:4001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -191,7 +191,7 @@ server {
     
     # Static assets caching
     location /assets/ {
-        proxy_pass http://localhost:5001;
+        proxy_pass http://localhost:4001;
         expires 1y;
         add_header Cache-Control "public, immutable";
         add_header X-Content-Type-Options nosniff;
@@ -199,7 +199,7 @@ server {
     
     # Health check
     location /health {
-        proxy_pass http://localhost:5001/health;
+        proxy_pass http://localhost:4001/health;
         access_log off;
     }
 }
@@ -238,8 +238,8 @@ fi
 log_info "Realizando verificações finais..."
 
 # Verificar se aplicação está rodando
-if ! curl -f http://localhost:5001/health > /dev/null 2>&1; then
-    log_error "Aplicação não está respondendo na porta 5001"
+if ! curl -f http://localhost:4001/health > /dev/null 2>&1; then
+    log_error "Aplicação não está respondendo na porta 4001"
     pm2 logs odontosync --lines 20
     exit 1
 fi
@@ -288,14 +288,14 @@ echo ""
 echo "📊 Informações do deploy:"
 echo "  ✅ Aplicação: http://$DOMAIN"
 echo "  ✅ SSL: $([ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ] && echo "Configurado" || echo "Não configurado")"
-echo "  ✅ Status: $(curl -s http://localhost:5001/health | jq -r .status 2>/dev/null || echo "Verificar manualmente")"
+echo "  ✅ Status: $(curl -s http://localhost:4001/health | jq -r .status 2>/dev/null || echo "Verificar manualmente")"
 echo ""
 echo "🛠️  Comandos úteis:"
 echo "  pm2 status              # Status da aplicação"
 echo "  pm2 logs odontosync     # Logs da aplicação"
 echo "  pm2 restart odontosync  # Reiniciar aplicação"
 echo "  sudo nginx -s reload    # Recarregar Nginx"
-echo "  curl http://localhost:5001/health  # Health check"
+echo "  curl http://localhost:4001/health  # Health check"
 echo ""
 echo "📁 Arquivos importantes:"
 echo "  Aplicação: $INSTALL_PATH"

@@ -20,12 +20,12 @@ Preferred communication style: Simple, everyday language.
   - **Issue Analysis**: Identified critical production problems - hardcoded DATABASE_URL, "Unexpected token '<'" errors, missing PM2 config, CORS security issues
   - **production-fixed.js**: Definitive production server with correct Content-Type headers for JS/CSS files, integrated API routes, database connection, health checks
   - **Database Configuration**: Fixed hardcoded DATABASE_URL to use environment variables with fallback for development
-  - **Port Configuration**: Configured for port 5001 in production (user preference) - updated all related files
+  - **Port Configuration**: Configured for port 4001 in production (user preference) - updated all related files
   - **Deployment Scripts**: Created automated deployment scripts (deploy-contabo-auto.sh, start-production.js) with dependency checking and environment validation
   - **Environment Configuration**: Created .env.production.example and .env.contabo with all required variables and security best practices
   - **Verification Tools**: Built verify-production.js script for comprehensive production health checks including "Unexpected token" prevention
   - **PM2 Configuration**: Created ecosystem.config.js with cluster mode, logging, auto-restart, and monitoring for production scale
-  - **Nginx Configuration**: Included production-ready proxy configuration with SSL, compression, caching, and security headers (port 5001)
+  - **Nginx Configuration**: Included production-ready proxy configuration with SSL, compression, caching, and security headers (port 4001)
   - **Documentation**: Created complete deploy-contabo.md guide with step-by-step instructions, troubleshooting, and maintenance commands
 - **Production Fix (January 8, 2025)**: Created comprehensive solution for "Unexpected token '<'" error in production deployment
   - Developed `production-fixed.js` - robust production server with proper Content-Type headers for JavaScript files
