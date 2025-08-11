@@ -3,7 +3,7 @@
 
 export const PRODUCTION_CONFIG = {
   // API Base URL - automatically detect production vs development
-  apiBaseUrl: import.meta.env.PROD ? '' : 'http://localhost:5000',
+  apiBaseUrl: import.meta.env.PROD ? '' : '',
   
   // Enable debug mode in production for troubleshooting
   debugMode: import.meta.env.PROD ? true : true,
