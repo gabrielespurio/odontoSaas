@@ -1,35 +1,26 @@
-# Dockerfile for OdontoSync external deployment
-FROM node:18-alpine
+FROM node:20-alpine
 
+# Criar diretório da aplicação
 WORKDIR /app
 
-# Copy package files
+# Instalar dependências do sistema necessárias
+RUN apk add --no-cache curl
+
+# Copiar arquivos de dependências
 COPY package*.json ./
-COPY package-production.json ./
 
-# Install dependencies
-RUN npm ci --only=production --silent
+# Instalar dependências
+RUN npm install --only=production && \
+    npm install pg bcrypt jsonwebtoken express
 
-# Copy source code
-COPY . .
+# Copiar código da aplicação
+COPY production-simple.cjs ./
 
-# Build the application
-RUN npm run build || echo "Build failed, using existing build"
+# Criar diretório para logs
+RUN mkdir -p /app/logs
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+# Expor porta
+EXPOSE 4001
 
-# Change ownership
-RUN chown -R nextjs:nodejs /app
-USER nextjs
-
-# Expose port
-EXPOSE 5000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5000/health || exit 1
-
-# Start the server
-CMD ["node", "server.js"]
+# Comando para executar a aplicação
+CMD ["node", "production-simple.cjs"]
