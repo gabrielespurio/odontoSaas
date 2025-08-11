@@ -36,6 +36,7 @@ GIT_REPO=${GIT_REPO:-"https://github.com/seu-usuario/odontosync.git"}
 INSTALL_PATH="/var/www/odontosync"
 
 log_info "Configurações do deploy:"
+echo "  - Porta: 5001"
 echo "  - Domínio: $DOMAIN"
 echo "  - Caminho: $INSTALL_PATH"
 echo "  - Repositório: $GIT_REPO"
@@ -108,7 +109,7 @@ fi
 cat > .env << EOF
 # Ambiente
 NODE_ENV=production
-PORT=5000
+PORT=5001
 
 # Database
 DATABASE_URL="$DATABASE_URL"
@@ -174,7 +175,7 @@ server {
     gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
     
     location / {
-        proxy_pass http://localhost:5000;
+        proxy_pass http://localhost:5001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -190,7 +191,7 @@ server {
     
     # Static assets caching
     location /assets/ {
-        proxy_pass http://localhost:5000;
+        proxy_pass http://localhost:5001;
         expires 1y;
         add_header Cache-Control "public, immutable";
         add_header X-Content-Type-Options nosniff;
@@ -198,7 +199,7 @@ server {
     
     # Health check
     location /health {
-        proxy_pass http://localhost:5000/health;
+        proxy_pass http://localhost:5001/health;
         access_log off;
     }
 }
@@ -237,7 +238,7 @@ fi
 log_info "Realizando verificações finais..."
 
 # Verificar se aplicação está rodando
-if ! curl -f http://localhost:5000/health > /dev/null 2>&1; then
+if ! curl -f http://localhost:5001/health > /dev/null 2>&1; then
     log_error "Aplicação não está respondendo na porta 5000"
     pm2 logs odontosync --lines 20
     exit 1
