@@ -7,6 +7,14 @@ OdontoSync is a comprehensive dental clinic management SaaS system. It functions
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (January 2025)
+- **Production Port 4001 Fix (January 11, 2025)**: RESOLVED production authentication issues on port 4001
+  - **Issue**: Login errors with 404 "Not Found" on API calls to odontosync.hurtecnologia.com.br:4001
+  - **Root Cause**: Production server not running due to missing dependencies (cors module)
+  - **Solution**: Created production-simple.cjs - lightweight production server using only core dependencies
+  - **Features**: Direct Neon DB connection with pg driver, manual CORS setup, superadmin auth working
+  - **Status**: ✅ Server running, ✅ Database connected, ✅ Authentication functional
+  - **Files**: production-simple.cjs, start-production-port-4001.sh, PRODUCTION_READY_PORT_4001.md
+  - **Credentials**: superadmin@odontosync.com / superadmin123 working correctly
 - **Migration completed**: Successfully migrated OdontoSync from Replit Agent to standard Replit environment  
 - **Database**: Maintained existing Neon PostgreSQL connection as requested by user (ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech)
 - **Environment Setup**: Fixed tsx dependency issue and confirmed all workflows functioning correctly
