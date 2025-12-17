@@ -1602,14 +1602,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Apply data scope control
       const user = req.user;
-      console.log(`[DEBUG] User ${user.id} (company ${user.companyId}) requesting appointments without consultation`);
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
+      
+      // Determine which company to filter by
+      let companyId = user.companyId;
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        // Super admin can filter by any company
+        companyId = requestedCompanyId;
+      }
+      
+      console.log(`[DEBUG] User ${user.id} (company ${user.companyId}) requesting appointments without consultation for company ${companyId}`);
       
       // NOVA ABORDAGEM: Buscar todos os agendamentos e filtrar os que NÃO têm consulta
       let appointmentWhereConditions = [
         sql`${appointments.status} != 'cancelado'`, // Filter out cancelled appointments
-        eq(appointments.companyId, user.companyId), // CRITICAL: Filter by company
         sql`DATE(${appointments.scheduledDate}) >= CURRENT_DATE` // Only show today and future appointments
       ];
+      
+      // Add company filter if we have a valid companyId
+      if (companyId !== null && companyId !== undefined) {
+        appointmentWhereConditions.push(eq(appointments.companyId, companyId));
+      }
       
       if (user.dataScope === "own") {
         // Users with "own" scope can only see their own appointments (regardless of role)
@@ -1663,11 +1676,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Buscar todos os IDs de agendamentos que JÁ TÊM consulta
+      let consultationWhereConditions = [];
+      if (companyId !== null && companyId !== undefined) {
+        consultationWhereConditions.push(eq(consultations.companyId, companyId));
+      }
+      
       const appointmentIdsWithConsultation = await db.select({
         appointmentId: consultations.appointmentId
       })
       .from(consultations)
-      .where(eq(consultations.companyId, user.companyId));
+      .where(consultationWhereConditions.length > 0 ? and(...consultationWhereConditions) : undefined);
       
       const appointmentIdsWithConsultationSet = new Set(
         appointmentIdsWithConsultation.map(c => c.appointmentId)

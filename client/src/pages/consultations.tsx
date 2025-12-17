@@ -95,7 +95,7 @@ export default function Consultations() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const companyFilter = useCompanyFilter();
+  const { companyId: companyFilter } = useCompanyFilter();
 
   // Status management functions
   const getStatusColor = (status: string) => {
@@ -201,7 +201,21 @@ export default function Consultations() {
 
   // Buscar agendamentos que não têm consulta correspondente - SIMPLIFICADO
   const { data: rawAppointmentsWithoutConsultation, error: appointmentsError, isLoading: appointmentsLoading } = useQuery({
-    queryKey: ["/api/appointments-without-consultation"],
+    queryKey: ["/api/appointments-without-consultation", { companyId: companyFilter }],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (companyFilter) {
+        params.append('companyId', companyFilter.toString());
+      }
+      const url = `/api/appointments-without-consultation${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch appointments");
+      return response.json();
+    },
     enabled: !!user, // Only run if user is authenticated
   });
 
@@ -239,9 +253,14 @@ export default function Consultations() {
 
   // Query para buscar agendamentos
   const { data: appointments } = useQuery({
-    queryKey: ["/api/appointments"],
+    queryKey: ["/api/appointments", { companyId: companyFilter }],
     queryFn: async () => {
-      const response = await fetch("/api/appointments", {
+      const params = new URLSearchParams();
+      if (companyFilter) {
+        params.append('companyId', companyFilter.toString());
+      }
+      const url = `/api/appointments${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
