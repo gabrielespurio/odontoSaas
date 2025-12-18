@@ -27,7 +27,6 @@ export const purchaseOrderStatusEnum = pgEnum("purchase_order_status", ["draft",
 export const receivingStatusEnum = pgEnum("receiving_status", ["pending", "partial", "received", "cancelled"]);
 export const toothConditionEnum = pgEnum("tooth_condition", ["healthy", "carie", "restoration", "extraction", "planned_treatment", "completed_treatment"]);
 export const productUnitEnum = pgEnum("product_unit", ["unit", "kg", "g", "l", "ml", "box", "package", "meter", "cm"]);
-export const planEnum = pgEnum("plan", ["Starter", "Premium", "Personalizado"]);
 
 // Companies table for SaaS multi-tenancy
 export const companies = pgTable("companies", {
@@ -55,8 +54,6 @@ export const companies = pgTable("companies", {
   whatsappStatus: text("whatsapp_status").default("disconnected"), // "disconnected", "qrcode", "connected"
   whatsappQrCode: text("whatsapp_qrcode"), // Base64 QR code
   whatsappConnectedAt: timestamp("whatsapp_connected_at"),
-  // Plan
-  plan: planEnum("plan").default("Starter"),
   // Dates
   trialEndDate: date("trial_end_date"),
   subscriptionStartDate: date("subscription_start_date"),
