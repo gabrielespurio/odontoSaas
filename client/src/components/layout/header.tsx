@@ -49,7 +49,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
   } = useCompanyContext();
 
   // Encontrar a empresa selecionada
-  const selectedCompany = companies.find(c => c.id === selectedCompanyId);
+  const selectedCompany = Array.isArray(companies) ? companies.find(c => c.id === selectedCompanyId) : undefined;
   
   // Para display: se for superadmin e tiver empresa selecionada, mostrar ela
   // Senão, mostrar o nome da empresa do usuário normal

@@ -38,7 +38,7 @@ interface Company {
   neighborhood?: string;
   city?: string;
   state?: string;
-  plan?: string;
+  plan?: "Starter" | "Premium" | "Personalizado" | null;
   isActive: boolean;
   trialEndDate?: string;
   subscriptionStartDate?: string;
