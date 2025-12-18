@@ -17,8 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Users, Settings2, Edit, MoreHorizontal, Trash2, FolderPlus, MessageCircle } from "lucide-react";
-import { SiWhatsapp } from "react-icons/si";
+import { Plus, Users, Settings2, Edit, MoreHorizontal, Trash2, FolderPlus, Bell, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useCompanyFilter } from "@/contexts/company-context";
@@ -482,7 +481,7 @@ export default function Settings() {
                 <span className="hidden sm:inline">Perfis</span>
               </TabsTrigger>
               <TabsTrigger value="notifications">
-                <SiWhatsapp className="w-4 h-4 mr-2" />
+                <Bell className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">Notificações</span>
               </TabsTrigger>
             </TabsList>

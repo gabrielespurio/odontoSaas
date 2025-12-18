@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { MessageCircle, QrCode, CheckCircle, AlertCircle, RefreshCw, Send } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 
@@ -238,7 +239,7 @@ export default function WhatsAppSettings() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <MessageCircle className="w-6 h-6 text-green-600" />
+              <SiWhatsapp className="w-6 h-6 text-green-600" />
               <div>
                 <CardTitle>Configuração do WhatsApp</CardTitle>
                 <CardDescription>
