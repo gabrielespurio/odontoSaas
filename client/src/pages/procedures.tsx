@@ -90,7 +90,7 @@ export default function Procedures() {
   const createProcedureMutation = useMutation({
     mutationFn: (data: ProcedureFormData) => apiRequest("POST", "/api/procedures", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/procedures"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/procedures", { companyId: companyFilter }] });
       toast({
         title: "Sucesso",
         description: "Procedimento criado com sucesso",
@@ -109,7 +109,7 @@ export default function Procedures() {
   const updateProcedureMutation = useMutation({
     mutationFn: (data: ProcedureFormData) => apiRequest("PUT", `/api/procedures/${editingProcedure?.id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/procedures"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/procedures", { companyId: companyFilter }] });
       toast({
         title: "Sucesso",
         description: "Procedimento atualizado com sucesso",
@@ -128,7 +128,7 @@ export default function Procedures() {
   const deleteProcedureMutation = useMutation({
     mutationFn: (id: number) => apiRequest("PUT", `/api/procedures/${id}`, { isActive: false }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/procedures"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/procedures", { companyId: companyFilter }] });
       toast({
         title: "Sucesso",
         description: "Procedimento removido com sucesso",

@@ -1344,12 +1344,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/procedures", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
+      const requestedCompanyId = req.body.companyId ? parseInt(req.body.companyId as string) : undefined;
       const procedureData = insertProcedureSchema.omit({ companyId: true }).parse(req.body);
+      
+      // Determine which company this procedure belongs to
+      let companyId = user.companyId;
+      
+      // If user is system admin and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
       
       // CRITICAL: Add company ID to procedure
       const procedureWithCompany = {
         ...procedureData,
-        companyId: user.companyId
+        companyId: companyId
       };
       
       const procedure = await storage.createProcedure(procedureWithCompany);
@@ -1372,7 +1381,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Procedimento não encontrado" });
       }
       
-      if (user.companyId && existingProcedure.companyId !== user.companyId) {
+      // Allow system admin to edit procedures, or user to edit their own company procedures
+      if (user.companyId !== null && existingProcedure.companyId !== user.companyId) {
         return res.status(403).json({ message: "Acesso negado - procedimento não pertence à sua empresa" });
       }
       
@@ -2142,10 +2152,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Você só pode criar consultas para si mesmo" });
       }
       
+      // Determine which company this consultation belongs to
+      let companyIdForConsultation = user.companyId;
+      
+      // If user is system admin, use the company from patient or dentist
+      if (user.companyId === null && patient) {
+        companyIdForConsultation = patient.companyId;
+      }
+      
       // Add companyId to consultation data after validation
       const consultationDataWithCompany = {
         ...consultationData,
-        companyId: user.companyId
+        companyId: companyIdForConsultation
       };
       
       // Criar a consulta primeiro
@@ -2777,12 +2795,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/payables", authenticateToken, async (req, res) => {
     try {
       const user = (req as any).user;
+      const requestedCompanyId = req.body.companyId ? parseInt(req.body.companyId as string) : undefined;
       const payableData = insertPayableSchema.parse(req.body);
+      
+      // Determine which company this payable belongs to
+      let companyId = user.companyId;
+      
+      // If user is system admin and requested a specific company
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      } else if (user.companyId === null) {
+        return res.status(400).json({ message: "System Administrator must specify a company ID" });
+      }
       
       // Clean up empty strings to undefined/null for optional fields
       const cleanedData = {
         ...payableData,
-        companyId: user.companyId || 2, // CRITICAL: Add company ID (default to 2 if null)
+        companyId: companyId, // CRITICAL: Add company ID
         paymentDate: payableData.paymentDate && payableData.paymentDate.trim() !== "" ? payableData.paymentDate : undefined,
         paymentMethod: payableData.paymentMethod && payableData.paymentMethod.trim() !== "" ? payableData.paymentMethod : undefined,
         supplier: payableData.supplier && payableData.supplier.trim() !== "" ? payableData.supplier : undefined,
