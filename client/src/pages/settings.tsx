@@ -691,57 +691,6 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Floating Action Buttons */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-3">
-        <Button
-          onClick={() => {
-            setEditingUser(null);
-            userForm.reset({
-              name: "",
-              email: "",
-              password: "",
-              role: "",
-              dataScope: "all",
-              forcePasswordChange: false,
-            });
-            setShowUserForm(true);
-          }}
-          className="bg-teal-600 hover:bg-teal-700 rounded-full w-14 h-14 shadow-lg"
-          data-testid="button-add-user"
-        >
-          <Plus className="w-6 h-6" />
-        </Button>
-        <Button
-          onClick={() => {
-            setEditingCategory(null);
-            categoryForm.reset({
-              name: "",
-              description: "",
-            });
-            setShowCategoryForm(true);
-          }}
-          className="bg-teal-600 hover:bg-teal-700 rounded-full w-14 h-14 shadow-lg"
-          data-testid="button-add-category"
-        >
-          <Plus className="w-6 h-6" />
-        </Button>
-        <Button
-          onClick={() => {
-            setEditingProfile(null);
-            profileForm.reset({
-              name: "",
-              description: "",
-              modules: [],
-            });
-            setShowProfileForm(true);
-          }}
-          className="bg-teal-600 hover:bg-teal-700 rounded-full w-14 h-14 shadow-lg"
-          data-testid="button-add-profile"
-        >
-          <Plus className="w-6 h-6" />
-        </Button>
-      </div>
-
       {/* User Form Dialog */}
       <Dialog open={showUserForm} onOpenChange={setShowUserForm}>
         <DialogContent className="!max-w-4xl w-full">
