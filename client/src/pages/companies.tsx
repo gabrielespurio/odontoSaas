@@ -38,6 +38,7 @@ interface Company {
   neighborhood?: string;
   city?: string;
   state?: string;
+  plan?: string;
   isActive: boolean;
   trialEndDate?: string;
   subscriptionStartDate?: string;

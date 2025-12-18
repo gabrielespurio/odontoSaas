@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 // import { Textarea } from "@/components/ui/textarea"; // Not used in this component
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -90,6 +91,7 @@ export function CompanyForm({ company, onSubmit, isLoading }: CompanyFormProps) 
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -107,6 +109,7 @@ export function CompanyForm({ company, onSubmit, isLoading }: CompanyFormProps) 
       neighborhood: company?.neighborhood || "",
       city: company?.city || "",
       state: company?.state || "",
+      plan: company?.plan || "Starter",
       isActive: company?.isActive ?? true,
       trialEndDate: company?.trialEndDate || "",
       subscriptionStartDate: company?.subscriptionStartDate || "",
@@ -295,6 +298,21 @@ export function CompanyForm({ company, onSubmit, isLoading }: CompanyFormProps) 
         </CardHeader>
         <CardContent className="space-y-6 p-6">
           <div className="space-y-6 max-w-md">
+            <div className="space-y-2">
+              <Label htmlFor="plan" className="text-sm font-medium text-gray-700">
+                Plano *
+              </Label>
+              <Select value={watch("plan")} onValueChange={(value) => setValue("plan", value as any)}>
+                <SelectTrigger className="h-12 w-full text-base">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Starter">Starter</SelectItem>
+                  <SelectItem value="Premium">Premium</SelectItem>
+                  <SelectItem value="Personalizado">Personalizado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="trialEndDate" className="text-sm font-medium text-gray-700">
                 Fim do Trial
