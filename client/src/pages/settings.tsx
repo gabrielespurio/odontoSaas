@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Users, Settings2, Edit, MoreHorizontal, Trash2, FolderPlus, Bell, MessageCircle } from "lucide-react";
+import { Plus, Users, Settings2, Edit, MoreHorizontal, Trash2, FolderPlus, Bell, MessageCircle, Wrench } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useCompanyFilter } from "@/contexts/company-context";
@@ -467,7 +467,7 @@ export default function Settings() {
       <Card>
         <CardContent className="pt-6">
           <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-5 lg:w-auto">
               <TabsTrigger value="users">
                 <Users className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">Usuários</span>
@@ -475,6 +475,10 @@ export default function Settings() {
               <TabsTrigger value="categories">
                 <FolderPlus className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">Categorias</span>
+              </TabsTrigger>
+              <TabsTrigger value="procedures">
+                <Wrench className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Procedimentos</span>
               </TabsTrigger>
               <TabsTrigger value="profiles">
                 <Users className="w-4 h-4 mr-2" />
@@ -560,6 +564,16 @@ export default function Settings() {
                     )}
                   </>
                 )}
+              </div>
+            </TabsContent>
+
+            {/* Procedimentos Tab */}
+            <TabsContent value="procedures" className="space-y-4 mt-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Gerenciar Procedimentos</h3>
+                <div className="text-center py-8 text-gray-500">
+                  <p>Vá para a seção de Procedimentos no menu principal para gerenciar procedimentos</p>
+                </div>
               </div>
             </TabsContent>
 
