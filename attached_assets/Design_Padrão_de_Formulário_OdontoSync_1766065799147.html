@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OdontoSync SaaS Form Template</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet">
+    <style>
+        /* Font Imports */
+        @font-face {
+            font-family: 'MiSans';
+            src: url('https://assets-persist.lovart.ai/agent-static-assets/MiSans-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'MiSans';
+            src: url('https://assets-persist.lovart.ai/agent-static-assets/MiSans-Medium.ttf') format('truetype');
+            font-weight: 500;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'MiSans';
+            src: url('https://assets-persist.lovart.ai/agent-static-assets/MiSans-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        /* Variables */
+        :root {
+            --primary-teal: #00A86B;
+            --primary-hover: #008f5b;
+            --accent-blue: #0066CC;
+            --success-green: #28A745;
+            --warning-orange: #FF8C00;
+            --error-red: #DC3545;
+            --info-blue: #17A2B8;
+            --bg-color: #F4F6F8;
+            --card-bg: #FFFFFF;
+            --text-dark: #333333;
+            --text-gray: #6C757D;
+            --border-color: #CED4DA;
+            --border-radius: 8px;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+            --font-family: 'MiSans', sans-serif;
+        }
+
+        /* Reset & Base */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            width: 1920px; /* Fixed width as requested */
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 60px;
+            padding-bottom: 60px;
+        }
+
+        /* Main Container */
+        .container {
+            width: 1200px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Section */
+        .form-header {
+            padding: 40px 40px 24px;
+            border-bottom: 1px solid #E9ECEF;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .brand-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-teal);
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .brand-logo i {
+            font-size: 28px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: var(--text-gray);
+            line-height: 1.5;
+        }
+
+        .header-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 16px;
+        }
+
+        .trust-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 168, 107, 0.1);
+            color: var(--primary-teal);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .step {
+            width: 40px;
+            height: 4px;
+            background: #E9ECEF;
+            border-radius: 2px;
+        }
+        .step.active {
+            background: var(--primary-teal);
+        }
+
+        /* Form Content */
+        .form-body {
+            padding: 40px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #F1F3F5;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            color: var(--primary-teal);
+            font-size: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .col-12 { grid-column: span 12; }
+        .col-8 { grid-column: span 8; }
+        .col-6 { grid-column: span 6; }
+        .col-4 { grid-column: span 4; }
+        .col-3 { grid-column: span 3; }
+
+        /* Form Fields */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .required-star {
+            color: var(--error-red);
+            margin-left: 2px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-family: var(--font-family);
+            color: var(--text-dark);
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-teal);
+            box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: #ADB5BD;
+        }
+
+        /* Validation States */
+        .form-control.is-valid {
+            border-color: var(--success-green);
+            padding-right: 40px;
+        }
+        
+        .form-control.is-invalid {
+            border-color: var(--error-red);
+            padding-right: 40px;
+        }
+
+        .validation-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            pointer-events: none;
+        }
+        
+        .icon-success { color: var(--success-green); }
+        .icon-error { color: var(--error-red); }
+
+        .error-message {
+            font-size: 12px;
+            color: var(--error-red);
+            font-weight: 500;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: var(--text-gray);
+            margin-top: 4px;
+        }
+
+        /* Select Styling */
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' d='M0 0h24v24H0z'/%3E%3Cpath d='M12 13.172l4.95-4.95 1.414 1.414L12 16 5.636 9.636 7.05 8.222z' fill='%236C757D'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 20px;
+        }
+
+        /* Radio & Checkbox */
+        .radio-group {
+            display: flex;
+            gap: 24px;
+            padding-top: 8px;
+        }
+
+        .custom-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .custom-control input {
+            display: none;
+        }
+
+        .control-indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            position: relative;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .custom-control input[type="checkbox"] + .control-indicator {
+            border-radius: 6px;
+        }
+
+        .custom-control input:checked + .control-indicator {
+            border-color: var(--primary-teal);
+            background-color: var(--primary-teal);
+        }
+
+        .control-indicator::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.2s;
+        }
+
+        .custom-control input[type="checkbox"]:checked + .control-indicator::after {
+            content: '\2713'; /* Checkmark */
+            width: auto;
+            height: auto;
+            background: none;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        .custom-control input[type="radio"]:checked + .control-indicator::after {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .control-label {
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+
+        /* File Upload */
+        .file-upload-box {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            background: #FAFAFA;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-upload-box:hover {
+            border-color: var(--primary-teal);
+            background: rgba(0, 168, 107, 0.02);
+        }
+
+        .file-icon {
+            font-size: 32px;
+            color: var(--primary-teal);
+            margin-bottom: 8px;
+        }
+
+        .file-text {
+            font-size: 14px;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+        
+        .file-hint {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        /* Buttons & Footer */
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            padding-top: 24px;
+            border-top: 1px solid #E9ECEF;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary {
+            background-color: #F1F3F5;
+            color: var(--text-gray);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #E9ECEF;
+            color: var(--text-dark);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-teal);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            box-shadow: 0 4px 12px rgba(0, 168, 107, 0.3);
+        }
+
+        .form-footer {
+            padding: 20px 40px;
+            background: #F8F9FA;
+            border-top: 1px solid #E9ECEF;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        .footer-links a {
+            color: var(--primary-teal);
+            text-decoration: none;
+            margin-left: 16px;
+            font-weight: 500;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Visual styling for example */
+        .input-group-text {
+            position: absolute;
+            left: 1px;
+            top: 1px;
+            bottom: 1px;
+            background: #F8F9FA;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            border-right: 1px solid var(--border-color);
+            border-radius: 7px 0 0 7px;
+            color: var(--text-gray);
+            font-size: 14px;
+        }
+        
+        .form-control.has-prefix {
+            padding-left: 60px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="form-header">
+            <div class="brand-area">
+                <div class="brand-logo">
+                    <i class="ri-tooth-fill"></i>
+                    <span>OdontoSync</span>
+                </div>
+                <h1 class="page-title">Cadastro de Paciente</h1>
+                <p class="page-subtitle">Preencha os dados abaixo para cadastrar um novo paciente no sistema. <br>Certifique-se de que todas as informações obrigatórias estão corretas.</p>
+            </div>
+            <div class="header-meta">
+                <div class="trust-badge">
+                    <i class="ri-lock-2-line"></i> SSL 100% Seguro
+                </div>
+                <div class="progress-indicator">
+                    <div style="font-size: 12px; color: var(--text-gray); margin-bottom: 6px; text-align: right;">Etapa 1 de 3</div>
+                    <div class="progress-steps">
+                        <div class="step active"></div>
+                        <div class="step"></div>
+                        <div class="step"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Form Body -->
+        <div class="form-body">
+            <form>
+                
+                <!-- Section 1: Dados Pessoais -->
+                <div class="section-title">
+                    <i class="ri-user-smile-line"></i>
+                    Dados Pessoais
+                </div>
+
+                <div class="form-grid">
+                    <!-- Full Name -->
+                    <div class="form-group col-8">
+                        <label class="form-label">Nome Completo <span class="required-star">*</span></label>
+                        <div class="input-wrapper">
+                            <input type="text" class="form-control" placeholder="Ex: Maria Silva Santos" value="Maria Silva">
+                        </div>
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="form-group col-4">
+                        <label class="form-label">Gênero <span class="required-star">*</span></label>
+                        <div class="radio-group">
+                            <label class="custom-control">
+                                <input type="radio" name="gender" checked>
+                                <span class="control-indicator"></span>
+                                <span class="control-label">Feminino</span>
+                            </label>
+                            <label class="custom-control">
+                                <input type="radio" name="gender">
+                                <span class="control-indicator"></span>
+                                <span class="control-label">Masculino</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- CPF -->
+                    <div class="form-group col-4">
+                        <label class="form-label">CPF <span class="required-star">*</span></label>
+                        <div class="input-wrapper">
+                            <input type="text" class="form-control is-valid" value="123.456.789-00">
+                            <i class="ri-checkbox-circle-fill validation-icon icon-success"></i>
+                        </div>
+                    </div>
+
+                    <!-- RG -->
+                    <div class="form-group col-4">
+                        <label class="form-label">RG</label>
+                        <input type="text" class="form-control" placeholder="00.000.000-0">
+                    </div>
+
+                    <!-- DOB -->
+                    <div class="form-group col-4">
+                        <label class="form-label">Data de Nascimento <span class="required-star">*</span></label>
+                        <input type="date" class="form-control" value="1990-05-15">
+                    </div>
+                </div>
+
+                <!-- Section 2: Contato -->
+                <div class="section-title">
+                    <i class="ri-contacts-line"></i>
+                    Contato e Endereço
+                </div>
+
+                <div class="form-grid">
+                    <!-- Email -->
+                    <div class="form-group col-6">
+                        <label class="form-label">E-mail <span class="required-star">*</span></label>
+                        <div class="input-wrapper">
+                            <input type="email" class="form-control" placeholder="maria.silva@email.com">
+                            <i class="ri-mail-line validation-icon" style="color: #ADB5BD; font-size: 16px;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="form-group col-6">
+                        <label class="form-label">Celular / WhatsApp <span class="required-star">*</span></label>
+                        <div class="input-wrapper">
+                            <span class="input-group-text">+55</span>
+                            <input type="tel" class="form-control has-prefix" placeholder="(00) 00000-0000">
+                        </div>
+                    </div>
+
+                    <!-- CEP -->
+                    <div class="form-group col-3">
+                        <label class="form-label">CEP <span class="required-star">*</span></label>
+                        <div class="input-wrapper">
+                            <input type="text" class="form-control is-invalid" value="00000-000">
+                            <i class="ri-error-warning-fill validation-icon icon-error"></i>
+                        </div>
+                        <div class="error-message">
+                            <i class="ri-alert-line"></i> CEP inválido ou não encontrado.
+                        </div>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="form-group col-6">
+                        <label class="form-label">Endereço <span class="required-star">*</span></label>
+                        <input type="text" class="form-control" placeholder="Rua, Avenida, etc.">
+                    </div>
+
+                    <!-- Number -->
+                    <div class="form-group col-3">
+                        <label class="form-label">Número <span class="required-star">*</span></label>
+                        <input type="text" class="form-control" placeholder="123">
+                    </div>
+                </div>
+
+                <!-- Section 3: Anamnese & Extras -->
+                <div class="section-title">
+                    <i class="ri-file-list-3-line"></i>
+                    Informações Médicas
+                </div>
+
+                <div class="form-grid">
+                    <!-- Medical History -->
+                    <div class="form-group col-12">
+                        <label class="form-label">Histórico Médico / Alergias</label>
+                        <textarea class="form-control" rows="3" placeholder="Descreva brevemente o histórico médico do paciente ou liste alergias conhecidas..."></textarea>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="form-group col-12">
+                        <label class="form-label">Documentos ou Exames Anteriores</label>
+                        <div class="file-upload-box">
+                            <i class="ri-upload-cloud-2-line file-icon"></i>
+                            <div class="file-text">Arraste e solte arquivos aqui ou clique para selecionar</div>
+                            <div class="file-hint">PDF, JPG ou PNG (Máx. 5MB)</div>
+                        </div>
+                    </div>
+
+                    <!-- Terms Checkbox -->
+                    <div class="form-group col-12" style="margin-top: 10px;">
+                        <label class="custom-control">
+                            <input type="checkbox">
+                            <span class="control-indicator"></span>
+                            <span class="control-label" style="font-size: 13px; color: var(--text-dark);">
+                                Confirmo que as informações acima são verdadeiras e autorizo o cadastro no sistema OdontoSync.
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary">
+                        <span>Salvar Cadastro</span>
+                        <i class="ri-arrow-right-line"></i>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <footer class="form-footer">
+            <div class="copyright">
+                &copy; 2024 OdontoSync. Todos os direitos reservados.
+            </div>
+            <div class="footer-links">
+                <a href="#">Política de Privacidade</a>
+                <a href="#">Termos de Uso</a>
+                <a href="#"><i class="ri-customer-service-2-line" style="vertical-align: middle; margin-right: 4px;"></i>Suporte</a>
+            </div>
+        </footer>
+    </div>
+
+</body>
+</html>
