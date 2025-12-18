@@ -179,7 +179,7 @@ export default function Consultations() {
       }
       
       if (companyFilter.companyId) {
-        params.append('companyId', companyFilter.toString());
+        params.append('companyId', companyFilter);
       }
       
       const url = `/api/consultations${params.toString() ? '?' + params.toString() : ''}`;
@@ -205,7 +205,7 @@ export default function Consultations() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (companyFilter.companyId) {
-        params.append('companyId', companyFilter.toString());
+        params.append('companyId', companyFilter);
       }
       const url = `/api/appointments-without-consultation${params.toString() ? '?' + params.toString() : ''}`;
       const response = await fetch(url, {
@@ -257,7 +257,7 @@ export default function Consultations() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (companyFilter.companyId) {
-        params.append('companyId', companyFilter.toString());
+        params.append('companyId', companyFilter);
       }
       const url = `/api/appointments${params.toString() ? '?' + params.toString() : ''}`;
       const response = await fetch(url, {

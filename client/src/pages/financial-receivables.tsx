@@ -84,7 +84,7 @@ export default function FinancialReceivables() {
   const [payingReceivable, setPayingReceivable] = useState<Receivable | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const companyFilter = useCompanyFilter();
+  const { companyId: companyFilter } = useCompanyFilter();
 
   const { data: receivables, isLoading: receivablesLoading } = useQuery<Receivable[]>({
     queryKey: ["/api/receivables", {

@@ -139,7 +139,7 @@ export default function Settings() {
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const { toast } = useToast();
-  const companyFilter = useCompanyFilter();
+  const { companyId: companyFilter } = useCompanyFilter();
 
   // Fetch users
   const { data: users, isLoading: usersLoading } = useQuery<User[]>({

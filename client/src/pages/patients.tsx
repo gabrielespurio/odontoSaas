@@ -48,7 +48,7 @@ export default function Patients() {
       }
       
       if (companyFilter.companyId) {
-        params.append('companyId', companyFilter.toString());
+        params.append('companyId', companyFilter);
       }
       
       const url = `/api/patients${params.toString() ? '?' + params.toString() : ''}`;

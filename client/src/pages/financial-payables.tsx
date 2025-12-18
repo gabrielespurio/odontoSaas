@@ -84,7 +84,7 @@ export default function FinancialPayables() {
   const [editingPayable, setEditingPayable] = useState<Payable | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const companyFilter = useCompanyFilter();
+  const { companyId: companyFilter } = useCompanyFilter();
 
   const form = useForm<z.infer<typeof payableSchema>>({
     resolver: zodResolver(payableSchema),

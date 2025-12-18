@@ -33,7 +33,7 @@ export default function Schedule() {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const companyFilter = useCompanyFilter();
+  const { companyId: companyFilter } = useCompanyFilter();
 
   // Time slots for schedule (8 AM to 6 PM)
   const timeSlots = Array.from({ length: 20 }, (_, i) => {
@@ -180,8 +180,8 @@ export default function Schedule() {
     mutationFn: (data: { id: number; status: string }) =>
       apiRequest("PUT", `/api/appointments/${data.id}`, { status: data.status }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments", { companyId: companyFilter.companyId }] });
+      queryClient.invalidateQueries({ queryKey: ["/api/consultations", { companyId: companyFilter }] });
       toast({
         title: "Sucesso",
         description: "Status do agendamento atualizado",

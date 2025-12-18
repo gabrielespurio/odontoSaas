@@ -1409,6 +1409,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let dentistId = req.query.dentistId ? parseInt(req.query.dentistId as string) : undefined;
       const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
       
+      console.log("[DEBUG] GET /api/appointments - User:", { userId: req.user.id, userCompanyId: req.user.companyId });
+      console.log("[DEBUG] Query params:", { requestedCompanyId, dentistId, date, startDate, endDate });
+      
       // Apply data scope control
       const user = req.user;
       if (user.role !== "admin" && user.dataScope === "own") {
@@ -1424,7 +1427,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         companyId = requestedCompanyId;
       }
       
+      console.log("[DEBUG] Final companyId for filtering:", companyId);
+      
       const appointments = await storage.getAppointments(date, dentistId, startDate, endDate, companyId);
+      console.log("[DEBUG] Appointments returned:", { count: appointments.length, companyIds: appointments.slice(0, 3).map(a => a.companyId) });
       
       // Format dates for frontend
       const formattedAppointments = appointments.map(appointment => ({
