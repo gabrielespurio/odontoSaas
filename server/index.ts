@@ -167,10 +167,14 @@ app.use((req, res, next) => {
       END $$;
     `);
     
-    // Update completed status to received
-    await db.execute(sql`
-      UPDATE receivings SET status = 'received' WHERE status = 'completed';
-    `);
+    // Update completed status to received (if exists as text)
+    try {
+      await db.execute(sql`
+        UPDATE receivings SET status = 'received' WHERE status::text = 'completed';
+      `);
+    } catch (e) {
+      // Table may not exist yet, ignore
+    }
     
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS "receivings" (
