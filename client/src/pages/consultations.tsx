@@ -796,7 +796,7 @@ export default function Consultations() {
               Nova Consulta
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogContent className="!max-w-6xl w-full !max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Registrar Nova Consulta</DialogTitle>
             </DialogHeader>
@@ -1700,7 +1700,7 @@ export default function Consultations() {
 
       {/* Edit Consultation Modal */}
       <Dialog open={showEditForm} onOpenChange={setShowEditForm}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+        <DialogContent className="!max-w-6xl w-full !max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Consulta</DialogTitle>
           </DialogHeader>
