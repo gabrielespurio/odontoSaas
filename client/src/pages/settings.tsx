@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -66,42 +67,7 @@ const SYSTEM_MODULES = [
   { id: "settings", name: "Configurações", description: "Configurações do sistema" },
 ];
 
-// Settings categories configuration
-const SETTINGS_CATEGORIES = [
-  {
-    id: 'users',
-    title: 'Usuários',
-    description: 'Gerencie usuários e permissões',
-    icon: Users,
-    sections: [
-      { id: 'users', title: 'Usuários do Sistema', description: 'Gerenciar dentistas, recepcionistas e administradores' },
-      { id: 'profiles', title: 'Perfis de Usuário', description: 'Criar e editar perfis personalizados' }
-    ]
-  },
-  {
-    id: 'procedures',
-    title: 'Procedimentos',
-    description: 'Configure procedimentos e categorias',
-    icon: FolderPlus,
-    sections: [
-      { id: 'categories', title: 'Categorias', description: 'Organizar procedimentos por categoria' }
-    ]
-  },
-  {
-    id: 'notifications',
-    title: 'Notificações',
-    description: 'Configure alertas e lembretes',
-    icon: Bell,
-    sections: [
-      { id: 'whatsapp', title: 'WhatsApp', description: 'Configurações de envio de mensagens' },
-      { id: 'email', title: 'Email', description: 'Configurações de email' }
-    ]
-  }
-];
-
 export default function Settings() {
-  const [selectedCategory, setSelectedCategory] = useState('notifications');
-  const [selectedSection, setSelectedSection] = useState('whatsapp');
   const [showUserForm, setShowUserForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showProfileForm, setShowProfileForm] = useState(false);
@@ -484,16 +450,6 @@ export default function Settings() {
     }
   };
 
-  // Handle section navigation
-  const handleSectionChange = (categoryId: string, sectionId: string) => {
-    setSelectedCategory(categoryId);
-    setSelectedSection(sectionId);
-  };
-
-  // Get current category and section
-  const currentCategory = SETTINGS_CATEGORIES.find(cat => cat.id === selectedCategory);
-  const currentSection = currentCategory?.sections.find(sec => sec.id === selectedSection);
-
   return (
     <div className="page-container">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-6">
@@ -508,221 +464,129 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar Navigation */}
-        <div className="lg:col-span-1">
-          <Card className="h-fit">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">Categorias</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {SETTINGS_CATEGORIES.map((category) => {
-                const Icon = category.icon;
-                const isActive = selectedCategory === category.id;
-                
-                return (
-                  <div key={category.id} className="space-y-1">
-                    <button
-                      onClick={() => handleSectionChange(category.id, category.sections[0].id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
-                        isActive 
-                          ? 'bg-teal-50 text-teal-700 border border-teal-200' 
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Icon className={`w-5 h-5 ${isActive ? 'text-teal-600' : 'text-gray-400'}`} />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm">{category.title}</div>
-                        <div className={`text-xs truncate ${isActive ? 'text-teal-600' : 'text-gray-500'}`}>
-                          {category.description}
-                        </div>
-                      </div>
-                    </button>
-                    
-                    {/* Subcategories/Sections */}
-                    {isActive && category.sections.length > 1 && (
-                      <div className="ml-8 space-y-1">
-                        {category.sections.map((section) => (
-                          <button
-                            key={section.id}
-                            onClick={() => setSelectedSection(section.id)}
-                            className={`w-full text-left p-2 rounded text-sm transition-colors ${
-                              selectedSection === section.id
-                                ? 'text-teal-700 bg-teal-25 font-medium'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                            }`}
-                          >
-                            {section.title}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </div>
+      <Card>
+        <CardContent className="pt-6">
+          <Tabs defaultValue="users" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 lg:w-auto">
+              <TabsTrigger value="users">
+                <Users className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Usuários</span>
+              </TabsTrigger>
+              <TabsTrigger value="procedures">
+                <FolderPlus className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Procedimentos</span>
+              </TabsTrigger>
+              <TabsTrigger value="notifications">
+                <Bell className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Notificações</span>
+              </TabsTrigger>
+            </TabsList>
 
-        {/* Main Content */}
-        <div className="lg:col-span-3">
-          <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    {currentCategory && <currentCategory.icon className="w-5 h-5 text-teal-600" />}
-                    {currentSection?.title || currentCategory?.title}
-                  </CardTitle>
-                  <CardDescription className="mt-1">
-                    {currentSection?.description || currentCategory?.description}
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {/* Content based on selected section */}
-              {selectedSection === 'users' && (
-                <div className="space-y-4">
-                  {usersLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Desktop Table */}
-                      <div className="hidden md:block rounded-md border">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Nome</TableHead>
-                              <TableHead>Username</TableHead>
-                              <TableHead>Email</TableHead>
-                              <TableHead>Perfil</TableHead>
-                              <TableHead>Acesso</TableHead>
-                              <TableHead>Status</TableHead>
-                              <TableHead className="text-right">Ações</TableHead>
+            {/* Usuários Tab */}
+            <TabsContent value="users" className="space-y-4 mt-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Gerenciar Usuários</h3>
+                {usersLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="hidden md:block rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Nome</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Perfil</TableHead>
+                            <TableHead>Acesso</TableHead>
+                            <TableHead className="text-right">Ações</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {usersPagination.currentData.map((user: User) => (
+                            <TableRow key={user.id}>
+                              <TableCell className="font-medium">{user.name}</TableCell>
+                              <TableCell>{user.email}</TableCell>
+                              <TableCell>
+                                <Badge variant={getRoleBadgeVariant(user.role)}>
+                                  {getRoleLabel(user.role)}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Badge 
+                                  variant={user.dataScope === "all" ? "default" : "secondary"}
+                                >
+                                  {user.dataScope === "all" ? "Todos os dados" : "Dados próprios"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      <MoreHorizontal className="w-4 h-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                                      <Edit className="w-4 h-4 mr-2" />
+                                      Editar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleDeleteUser(user)}
+                                      className="text-red-600"
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Excluir
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
                             </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {usersPagination.currentData.map((user: User) => (
-                              <TableRow key={user.id}>
-                                <TableCell className="font-medium">{user.name}</TableCell>
-                                <TableCell>{user.username}</TableCell>
-                                <TableCell>{user.email}</TableCell>
-                                <TableCell>
-                                  <Badge variant={getRoleBadgeVariant(user.role)}>
-                                    {getRoleLabel(user.role)}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge 
-                                    variant={user.dataScope === "all" ? "default" : "secondary"}
-                                  >
-                                    {user.dataScope === "all" ? "Todos os dados" : "Dados próprios"}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant="default">Ativo</Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" className="h-8 w-8 p-0">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                                        <Edit className="w-4 h-4 mr-2" />
-                                        Editar
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem 
-                                        onClick={() => handleDeleteUser(user)}
-                                        className="text-red-600"
-                                      >
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        Excluir
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                      
-                      {/* Pagination */}
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    {usersPagination.totalPages > 1 && (
                       <TablePagination
                         currentPage={usersPagination.currentPage}
                         totalPages={usersPagination.totalPages}
                         onPageChange={usersPagination.goToPage}
-                        totalItems={usersPagination.totalItems}
                       />
-                    </>
-                  )}
-                </div>
-              )}
+                    )}
+                  </>
+                )}
+              </div>
+            </TabsContent>
 
-              {selectedSection === 'profiles' && (
-                <div className="space-y-4">
-                  {profilesLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
-                    </div>
-                  ) : (
-                    <div className="grid gap-4">
-                      {profiles?.map((profile) => (
-                        <Card key={profile.id} className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="font-semibold">{profile.name}</h3>
-                              <p className="text-sm text-gray-600">{profile.description}</p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {Array.isArray(profile.modules) ? profile.modules.length : 0} módulos
-                              </p>
-                            </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEditProfile(profile)}>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Editar
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+            {/* Procedimentos Tab */}
+            <TabsContent value="procedures" className="space-y-4 mt-6">
+              <Tabs defaultValue="categories" className="w-full">
+                <TabsList className="w-full grid grid-cols-2">
+                  <TabsTrigger value="categories">Categorias</TabsTrigger>
+                  <TabsTrigger value="profiles">Perfis</TabsTrigger>
+                </TabsList>
 
-              {selectedSection === 'categories' && (
-                <div className="space-y-4">
+                {/* Categorias Subtab */}
+                <TabsContent value="categories" className="space-y-4 mt-4">
+                  <h3 className="text-lg font-semibold">Categorias de Procedimentos</h3>
                   {categoriesLoading ? (
                     <div className="flex justify-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
                     </div>
                   ) : (
-                    <div className="grid gap-4">
+                    <div className="space-y-2">
                       {categories?.map((category) => (
-                        <Card key={category.id} className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="font-semibold">{category.name}</h3>
+                        <Card key={category.id}>
+                          <CardContent className="flex items-center justify-between p-4">
+                            <div className="flex-1">
+                              <h4 className="font-medium">{category.name}</h4>
                               <p className="text-sm text-gray-600">{category.description}</p>
                             </div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="w-4 h-4" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
@@ -732,35 +596,109 @@ export default function Settings() {
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
-                          </div>
+                          </CardContent>
                         </Card>
                       ))}
                     </div>
                   )}
-                </div>
-              )}
+                </TabsContent>
 
-              {(selectedSection === 'whatsapp' || selectedSection === 'notifications') && (
-                <div>
-                  <WhatsAppSettings />
-                </div>
-              )}
+                {/* Perfis Subtab */}
+                <TabsContent value="profiles" className="space-y-4 mt-4">
+                  <h3 className="text-lg font-semibold">Perfis de Usuário</h3>
+                  {profilesLoading ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {profiles?.map((profile) => (
+                        <Card key={profile.id}>
+                          <CardContent className="flex items-center justify-between p-4">
+                            <div className="flex-1">
+                              <h4 className="font-medium">{profile.name}</h4>
+                              <p className="text-sm text-gray-600">{profile.description}</p>
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEditProfile(profile)}>
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Editar
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </TabsContent>
 
-              {/* Placeholder for future sections */}
-              {!['users', 'profiles', 'categories', 'whatsapp', 'notifications'].includes(selectedSection) && (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Settings2 className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Em Desenvolvimento</h3>
-                  <p className="text-gray-600">
-                    Esta seção estará disponível em breve.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+            {/* Notificações Tab */}
+            <TabsContent value="notifications" className="space-y-4 mt-6">
+              <h3 className="text-lg font-semibold mb-4">Configurações de Notificações</h3>
+              <WhatsAppSettings />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-6 right-6 flex flex-col gap-3">
+        <Button
+          onClick={() => {
+            setEditingUser(null);
+            userForm.reset({
+              name: "",
+              email: "",
+              password: "",
+              role: "",
+              dataScope: "all",
+              forcePasswordChange: false,
+            });
+            setShowUserForm(true);
+          }}
+          className="bg-teal-600 hover:bg-teal-700 rounded-full w-14 h-14 shadow-lg"
+          data-testid="button-add-user"
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
+        <Button
+          onClick={() => {
+            setEditingCategory(null);
+            categoryForm.reset({
+              name: "",
+              description: "",
+            });
+            setShowCategoryForm(true);
+          }}
+          className="bg-teal-600 hover:bg-teal-700 rounded-full w-14 h-14 shadow-lg"
+          data-testid="button-add-category"
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
+        <Button
+          onClick={() => {
+            setEditingProfile(null);
+            profileForm.reset({
+              name: "",
+              description: "",
+              modules: [],
+            });
+            setShowProfileForm(true);
+          }}
+          className="bg-teal-600 hover:bg-teal-700 rounded-full w-14 h-14 shadow-lg"
+          data-testid="button-add-profile"
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
       </div>
 
       {/* User Form Dialog */}
@@ -778,7 +716,7 @@ export default function Settings() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome Completo</FormLabel>
+                    <FormLabel>Nome</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -804,9 +742,7 @@ export default function Settings() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      {editingUser ? "Nova Senha (deixe em branco para manter)" : "Senha"}
-                    </FormLabel>
+                    <FormLabel>Senha {editingUser && "(deixe em branco para manter a atual)"}</FormLabel>
                     <FormControl>
                       <Input type="password" {...field} />
                     </FormControl>
@@ -820,18 +756,16 @@ export default function Settings() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Perfil</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione um perfil" />
+                          <SelectValue />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {profiles?.map((profile) => (
-                          <SelectItem key={profile.id} value={profile.name}>
-                            {profile.name}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="admin">Administrador</SelectItem>
+                        <SelectItem value="dentist">Dentista</SelectItem>
+                        <SelectItem value="reception">Recepcionista</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -844,24 +778,17 @@ export default function Settings() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Escopo de Dados</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione o escopo" />
+                          <SelectValue />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="all">
-                          Todos os dados da clínica
-                        </SelectItem>
-                        <SelectItem value="own">
-                          Apenas dados próprios
-                        </SelectItem>
+                        <SelectItem value="all">Todos os dados</SelectItem>
+                        <SelectItem value="own">Apenas dados próprios</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription>
-                      Define se o usuário pode visualizar dados de todos os dentistas ou apenas os próprios
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -870,21 +797,14 @@ export default function Settings() {
                 control={userForm.control}
                 name="forcePasswordChange"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormItem className="flex items-center space-x-2">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        Solicitar alteração de senha no primeiro acesso
-                      </FormLabel>
-                      <FormDescription>
-                        O usuário será obrigado a trocar a senha no primeiro login
-                      </FormDescription>
-                    </div>
+                    <FormLabel className="font-normal">Forçar alteração de senha no próximo login</FormLabel>
                   </FormItem>
                 )}
               />
@@ -897,7 +817,7 @@ export default function Settings() {
                   Cancelar
                 </Button>
                 <Button 
-                  type="submit" 
+                  type="submit"
                   className="bg-teal-600 hover:bg-teal-700"
                   disabled={createUserMutation.isPending || updateUserMutation.isPending}
                 >
@@ -950,34 +870,30 @@ export default function Settings() {
                 name="modules"
                 render={() => (
                   <FormItem>
-                    <FormLabel>Módulos do Sistema</FormLabel>
-                    <FormDescription>
-                      Selecione os módulos que este perfil terá acesso
-                    </FormDescription>
-                    <div className="grid grid-cols-2 gap-3 mt-2">
+                    <FormLabel>Módulos</FormLabel>
+                    <div className="space-y-2">
                       {SYSTEM_MODULES.map((module) => (
                         <FormField
                           key={module.id}
                           control={profileForm.control}
                           name="modules"
                           render={({ field }) => {
+                            const currentModules = field.value || [];
                             return (
-                              <FormItem
-                                key={module.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
+                              <FormItem key={module.id} className="flex items-start space-x-3">
                                 <FormControl>
                                   <Checkbox
-                                    checked={field.value?.includes(module.id)}
+                                    checked={currentModules.includes(module.id)}
                                     onCheckedChange={(checked) => {
-                                      const currentModules = field.value || [];
-                                      return checked
-                                        ? field.onChange([...currentModules, module.id])
-                                        : field.onChange(
-                                            currentModules?.filter(
-                                              (value) => value !== module.id
-                                            )
-                                          );
+                                      if (checked) {
+                                        field.onChange([...currentModules, module.id]);
+                                      } else {
+                                        field.onChange(
+                                          currentModules?.filter(
+                                            (value) => value !== module.id
+                                          )
+                                        );
+                                      }
                                     }}
                                   />
                                 </FormControl>
@@ -1008,7 +924,7 @@ export default function Settings() {
                   Cancelar
                 </Button>
                 <Button 
-                  type="submit" 
+                  type="submit"
                   className="bg-teal-600 hover:bg-teal-700"
                   disabled={createProfileMutation.isPending || updateProfileMutation.isPending}
                 >
@@ -1065,7 +981,7 @@ export default function Settings() {
                   Cancelar
                 </Button>
                 <Button 
-                  type="submit" 
+                  type="submit"
                   className="bg-teal-600 hover:bg-teal-700"
                   disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
                 >
@@ -1098,60 +1014,6 @@ export default function Settings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Floating Action Buttons */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-3">
-        {selectedSection === 'users' && (
-          <Button
-            onClick={() => {
-              setEditingUser(null);
-              userForm.reset({
-                name: "",
-                email: "",
-                password: "",
-                role: "",
-                dataScope: "all",
-                forcePasswordChange: false,
-              });
-              setShowUserForm(true);
-            }}
-            className="bg-teal-600 hover:bg-teal-700 rounded-full w-14 h-14 shadow-lg"
-          >
-            <Plus className="w-6 h-6" />
-          </Button>
-        )}
-        {selectedSection === 'profiles' && (
-          <Button
-            onClick={() => {
-              setEditingProfile(null);
-              profileForm.reset({
-                name: "",
-                description: "",
-                modules: [],
-              });
-              setShowProfileForm(true);
-            }}
-            className="bg-teal-600 hover:bg-teal-700 rounded-full w-14 h-14 shadow-lg"
-          >
-            <Plus className="w-6 h-6" />
-          </Button>
-        )}
-        {selectedSection === 'categories' && (
-          <Button
-            onClick={() => {
-              setEditingCategory(null);
-              categoryForm.reset({
-                name: "",
-                description: "",
-              });
-              setShowCategoryForm(true);
-            }}
-            className="bg-teal-600 hover:bg-teal-700 rounded-full w-14 h-14 shadow-lg"
-          >
-            <Plus className="w-6 h-6" />
-          </Button>
-        )}
-      </div>
     </div>
   );
 }
