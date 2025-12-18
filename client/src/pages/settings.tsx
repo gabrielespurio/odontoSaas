@@ -489,7 +489,21 @@ export default function Settings() {
             {/* Usuários Tab */}
             <TabsContent value="users" className="space-y-4 mt-6">
               <div>
-                <h3 className="text-lg font-semibold mb-4">Gerenciar Usuários</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Gerenciar Usuários</h3>
+                  <Button 
+                    onClick={() => {
+                      setEditingUser(null);
+                      userForm.reset();
+                      setShowUserForm(true);
+                    }}
+                    className="bg-teal-600 hover:bg-teal-700 gap-2"
+                    data-testid="button-new-user"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Novo Usuário
+                  </Button>
+                </div>
                 {usersLoading ? (
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
@@ -556,6 +570,11 @@ export default function Settings() {
                         currentPage={usersPagination.currentPage}
                         totalPages={usersPagination.totalPages}
                         onPageChange={usersPagination.goToPage}
+                        canGoPrevious={usersPagination.canGoPrevious}
+                        canGoNext={usersPagination.canGoNext}
+                        startIndex={usersPagination.startIndex}
+                        endIndex={usersPagination.endIndex}
+                        totalItems={usersPagination.totalItems}
                       />
                     )}
                   </>
@@ -565,7 +584,21 @@ export default function Settings() {
 
             {/* Categorias Tab */}
             <TabsContent value="categories" className="space-y-4 mt-6">
-              <h3 className="text-lg font-semibold">Categorias de Procedimentos</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Categorias de Procedimentos</h3>
+                <Button 
+                  onClick={() => {
+                    setEditingCategory(null);
+                    categoryForm.reset();
+                    setShowCategoryForm(true);
+                  }}
+                  className="bg-teal-600 hover:bg-teal-700 gap-2"
+                  data-testid="button-new-category"
+                >
+                  <Plus className="w-4 h-4" />
+                  Nova Categoria
+                </Button>
+              </div>
               {categoriesLoading ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
@@ -601,7 +634,21 @@ export default function Settings() {
 
             {/* Perfis Tab */}
             <TabsContent value="profiles" className="space-y-4 mt-6">
-              <h3 className="text-lg font-semibold">Perfis de Usuário</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Perfis de Usuário</h3>
+                <Button 
+                  onClick={() => {
+                    setEditingProfile(null);
+                    profileForm.reset();
+                    setShowProfileForm(true);
+                  }}
+                  className="bg-teal-600 hover:bg-teal-700 gap-2"
+                  data-testid="button-new-profile"
+                >
+                  <Plus className="w-4 h-4" />
+                  Novo Perfil
+                </Button>
+              </div>
               {profilesLoading ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>

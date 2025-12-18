@@ -485,6 +485,11 @@ export default function Companies() {
                       subscriptionEndDate: selectedCompany.subscriptionEndDate || null,
                       createdAt: new Date(selectedCompany.createdAt),
                       updatedAt: new Date(selectedCompany.updatedAt),
+                      whatsappInstanceId: (selectedCompany as any).whatsappInstanceId || null,
+                      whatsappHash: (selectedCompany as any).whatsappHash || null,
+                      whatsappStatus: (selectedCompany as any).whatsappStatus || null,
+                      whatsappQrCode: (selectedCompany as any).whatsappQrCode || null,
+                      whatsappConnectedAt: (selectedCompany as any).whatsappConnectedAt ? new Date((selectedCompany as any).whatsappConnectedAt) : null,
                     } : null}
                     onSubmit={(data) => {
                       if (selectedCompany) {
