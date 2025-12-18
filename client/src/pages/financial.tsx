@@ -157,7 +157,7 @@ export default function Financial() {
               Novo Pagamento
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="!max-w-4xl w-full">
             <DialogHeader>
               <DialogTitle>
                 {editingPayment ? "Editar Pagamento" : "Novo Pagamento"}

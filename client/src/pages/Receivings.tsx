@@ -224,7 +224,7 @@ export default function Receivings() {
 
       {/* Update Status Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="!max-w-6xl w-full !max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Atualizar Recebimento - {updatingReceiving?.receivingNumber}

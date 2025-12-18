@@ -357,7 +357,7 @@ export default function FinancialPayables() {
               Nova Conta a Pagar
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="!max-w-6xl w-full !max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingPayable ? "Editar Conta a Pagar" : "Nova Conta a Pagar"}

@@ -196,7 +196,7 @@ export default function FinancialCashFlow() {
                 Nova Entrada
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="!max-w-4xl w-full">
               <DialogHeader>
                 <DialogTitle>Nova Entrada de Caixa</DialogTitle>
               </DialogHeader>

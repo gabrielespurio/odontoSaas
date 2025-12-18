@@ -223,7 +223,7 @@ export default function StockCategories() {
               Nova Categoria
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="!max-w-4xl w-full">
             <DialogHeader>
               <DialogTitle>
                 {editingCategory ? "Editar Categoria" : "Nova Categoria"}

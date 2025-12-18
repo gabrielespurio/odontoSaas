@@ -320,7 +320,7 @@ export default function FinancialReceivables() {
                 Nova Conta a Receber
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="!max-w-4xl w-full">
               <DialogHeader>
                 <DialogTitle>
                   {editingReceivable ? "Editar Conta a Receber" : "Nova Conta a Receber"}

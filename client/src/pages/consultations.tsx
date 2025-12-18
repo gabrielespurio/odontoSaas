@@ -1652,7 +1652,7 @@ export default function Consultations() {
 
       {/* Consultation Detail Modal */}
       <Dialog open={!!selectedConsultation} onOpenChange={() => setSelectedConsultation(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="!max-w-4xl w-full">
           <DialogHeader>
             <DialogTitle>Detalhes da Consulta</DialogTitle>
           </DialogHeader>

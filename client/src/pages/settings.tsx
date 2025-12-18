@@ -765,7 +765,7 @@ export default function Settings() {
 
       {/* User Form Dialog */}
       <Dialog open={showUserForm} onOpenChange={setShowUserForm}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="!max-w-4xl w-full">
           <DialogHeader>
             <DialogTitle>
               {editingUser ? "Editar Usuário" : "Novo Usuário"}
@@ -911,7 +911,7 @@ export default function Settings() {
 
       {/* Profile Form Dialog */}
       <Dialog open={showProfileForm} onOpenChange={setShowProfileForm}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="!max-w-4xl w-full">
           <DialogHeader>
             <DialogTitle>
               {editingProfile ? "Editar Perfil" : "Novo Perfil"}
@@ -1022,7 +1022,7 @@ export default function Settings() {
 
       {/* Category Form Dialog */}
       <Dialog open={showCategoryForm} onOpenChange={setShowCategoryForm}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="!max-w-4xl w-full">
           <DialogHeader>
             <DialogTitle>
               {editingCategory ? "Editar Categoria" : "Nova Categoria"}

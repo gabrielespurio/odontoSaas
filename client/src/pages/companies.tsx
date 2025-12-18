@@ -295,7 +295,7 @@ export default function Companies() {
               Nova Empresa
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="!max-w-6xl w-full !max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Criar Nova Empresa</DialogTitle>
             </DialogHeader>
@@ -378,7 +378,7 @@ export default function Companies() {
 
       {/* Company Details Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="!max-w-6xl w-full !max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalhes da Empresa</DialogTitle>
           </DialogHeader>

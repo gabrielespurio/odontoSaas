@@ -259,7 +259,7 @@ export default function Suppliers() {
               Novo Fornecedor
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="!max-w-6xl w-full !max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingSupplier ? "Editar Fornecedor" : "Novo Fornecedor"}

@@ -332,7 +332,7 @@ export default function PurchaseOrders() {
               Novo Pedido
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogContent className="!max-w-6xl w-full !max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>
                 {editingOrder ? "Editar Pedido de Compra" : "Novo Pedido de Compra"}
@@ -736,7 +736,7 @@ export default function PurchaseOrders() {
 
       {/* View Order Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="!max-w-6xl w-full !max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalhes do Pedido - {viewingOrder?.orderNumber}</DialogTitle>
           </DialogHeader>
