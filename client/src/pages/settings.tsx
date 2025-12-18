@@ -563,16 +563,6 @@ export default function Settings() {
               </div>
             </TabsContent>
 
-            {/* Procedimentos Tab */}
-            <TabsContent value="procedures" className="space-y-4 mt-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Gerenciar Procedimentos</h3>
-                <div className="text-center py-8 text-gray-500">
-                  <p>Vá para a seção de Procedimentos no menu principal para gerenciar procedimentos</p>
-                </div>
-              </div>
-            </TabsContent>
-
             {/* Categorias Tab */}
             <TabsContent value="categories" className="space-y-4 mt-6">
               <h3 className="text-lg font-semibold">Categorias de Procedimentos</h3>
