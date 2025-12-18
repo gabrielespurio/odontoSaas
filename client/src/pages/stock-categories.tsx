@@ -172,7 +172,7 @@ export default function StockCategories() {
     queryKey: ["/api/product-categories", companyFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (companyFilter) {
+      if (companyFilter.companyId) {
         params.append("companyId", companyFilter.toString());
       }
       const url = `/api/product-categories${params.toString() ? `?${params.toString()}` : ""}`;

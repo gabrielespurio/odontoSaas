@@ -47,7 +47,7 @@ export default function Patients() {
         params.append('search', debouncedSearch);
       }
       
-      if (companyFilter) {
+      if (companyFilter.companyId) {
         params.append('companyId', companyFilter.toString());
       }
       

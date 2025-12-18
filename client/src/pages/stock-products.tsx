@@ -228,7 +228,7 @@ export default function StockProducts() {
     queryKey: ["/api/product-categories", companyFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (companyFilter) {
+      if (companyFilter.companyId) {
         params.append("companyId", companyFilter.toString());
       }
       const url = `/api/product-categories${params.toString() ? `?${params.toString()}` : ""}`;
@@ -252,7 +252,7 @@ export default function StockProducts() {
       if (selectedCategory !== "all") {
         params.append("categoryId", selectedCategory);
       }
-      if (companyFilter) {
+      if (companyFilter.companyId) {
         params.append("companyId", companyFilter.toString());
       }
       const url = `/api/products${params.toString() ? `?${params.toString()}` : ""}`;

@@ -1325,6 +1325,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
       const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
       
+      console.log("[DEBUG] GET /api/procedures - User:", { userId: user.id, userCompanyId: user.companyId });
+      console.log("[DEBUG] Query params:", { requestedCompanyId, limit, offset, search, categoryId });
+      
       // Apply company-based data isolation
       let companyId = user.companyId;
       
@@ -1333,7 +1336,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         companyId = requestedCompanyId;
       }
       
+      console.log("[DEBUG] Final companyId for filtering:", companyId);
+      
       const procedures = await storage.getProcedures(limit, offset, search, categoryId, companyId);
+      console.log("[DEBUG] Procedures returned:", { count: procedures.length, firstCompanyIds: procedures.slice(0, 3).map(p => p.companyId) });
       res.json(procedures);
     } catch (error) {
       console.error("Get procedures error:", error);

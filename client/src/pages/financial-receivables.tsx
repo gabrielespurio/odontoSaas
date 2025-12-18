@@ -104,7 +104,7 @@ export default function FinancialReceivables() {
         params.append('dentistId', selectedDentist);
       }
       
-      if (companyFilter) {
+      if (companyFilter.companyId) {
         params.append('companyId', companyFilter.toString());
       }
       
@@ -131,7 +131,7 @@ export default function FinancialReceivables() {
       const token = localStorage.getItem("token");
       const params = new URLSearchParams();
       
-      if (companyFilter) {
+      if (companyFilter.companyId) {
         params.append('companyId', companyFilter.toString());
       }
       
@@ -158,7 +158,7 @@ export default function FinancialReceivables() {
       const token = localStorage.getItem("token");
       const params = new URLSearchParams();
       
-      if (companyFilter) {
+      if (companyFilter.companyId) {
         params.append('companyId', companyFilter.toString());
       }
       

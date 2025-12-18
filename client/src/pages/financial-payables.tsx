@@ -200,7 +200,7 @@ export default function FinancialPayables() {
       if (selectedCategory !== "all") {
         params.append("category", selectedCategory);
       }
-      if (companyFilter) {
+      if (companyFilter.companyId) {
         params.append("companyId", companyFilter.toString());
       }
       const url = `/api/payables${params.toString() ? `?${params.toString()}` : ""}`;

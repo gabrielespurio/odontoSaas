@@ -40,7 +40,7 @@ export default function Reports() {
         endDate: dateTo
       });
       
-      if (companyFilter) {
+      if (companyFilter.companyId) {
         params.append('companyId', companyFilter.toString());
       }
       

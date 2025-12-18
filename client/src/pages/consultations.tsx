@@ -178,7 +178,7 @@ export default function Consultations() {
         params.append('dentistId', user.id.toString());
       }
       
-      if (companyFilter) {
+      if (companyFilter.companyId) {
         params.append('companyId', companyFilter.toString());
       }
       
@@ -204,7 +204,7 @@ export default function Consultations() {
     queryKey: ["/api/appointments-without-consultation", { companyId: companyFilter }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (companyFilter) {
+      if (companyFilter.companyId) {
         params.append('companyId', companyFilter.toString());
       }
       const url = `/api/appointments-without-consultation${params.toString() ? '?' + params.toString() : ''}`;
@@ -256,7 +256,7 @@ export default function Consultations() {
     queryKey: ["/api/appointments", { companyId: companyFilter }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (companyFilter) {
+      if (companyFilter.companyId) {
         params.append('companyId', companyFilter.toString());
       }
       const url = `/api/appointments${params.toString() ? '?' + params.toString() : ''}`;
