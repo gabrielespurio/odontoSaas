@@ -467,14 +467,18 @@ export default function Settings() {
       <Card>
         <CardContent className="pt-6">
           <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 lg:w-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:w-auto">
               <TabsTrigger value="users">
                 <Users className="w-4 h-4 mr-2" />
                 <span className="hidden sm:inline">Usuários</span>
               </TabsTrigger>
-              <TabsTrigger value="procedures">
+              <TabsTrigger value="categories">
                 <FolderPlus className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Procedimentos</span>
+                <span className="hidden sm:inline">Categorias</span>
+              </TabsTrigger>
+              <TabsTrigger value="profiles">
+                <Users className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Perfis</span>
               </TabsTrigger>
               <TabsTrigger value="notifications">
                 <Bell className="w-4 h-4 mr-2" />
@@ -559,86 +563,76 @@ export default function Settings() {
               </div>
             </TabsContent>
 
-            {/* Procedimentos Tab */}
-            <TabsContent value="procedures" className="space-y-4 mt-6">
-              <Tabs defaultValue="categories" className="w-full">
-                <TabsList className="w-full grid grid-cols-2">
-                  <TabsTrigger value="categories">Categorias</TabsTrigger>
-                  <TabsTrigger value="profiles">Perfis</TabsTrigger>
-                </TabsList>
+            {/* Categorias Tab */}
+            <TabsContent value="categories" className="space-y-4 mt-6">
+              <h3 className="text-lg font-semibold">Categorias de Procedimentos</h3>
+              {categoriesLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {categories?.map((category) => (
+                    <Card key={category.id}>
+                      <CardContent className="flex items-center justify-between p-4">
+                        <div className="flex-1">
+                          <h4 className="font-medium">{category.name}</h4>
+                          <p className="text-sm text-gray-600">{category.description}</p>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEditCategory(category)}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
-                {/* Categorias Subtab */}
-                <TabsContent value="categories" className="space-y-4 mt-4">
-                  <h3 className="text-lg font-semibold">Categorias de Procedimentos</h3>
-                  {categoriesLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {categories?.map((category) => (
-                        <Card key={category.id}>
-                          <CardContent className="flex items-center justify-between p-4">
-                            <div className="flex-1">
-                              <h4 className="font-medium">{category.name}</h4>
-                              <p className="text-sm text-gray-600">{category.description}</p>
-                            </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEditCategory(category)}>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Editar
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* Perfis Subtab */}
-                <TabsContent value="profiles" className="space-y-4 mt-4">
-                  <h3 className="text-lg font-semibold">Perfis de Usuário</h3>
-                  {profilesLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {profiles?.map((profile) => (
-                        <Card key={profile.id}>
-                          <CardContent className="flex items-center justify-between p-4">
-                            <div className="flex-1">
-                              <h4 className="font-medium">{profile.name}</h4>
-                              <p className="text-sm text-gray-600">{profile.description}</p>
-                            </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEditProfile(profile)}>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Editar
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
+            {/* Perfis Tab */}
+            <TabsContent value="profiles" className="space-y-4 mt-6">
+              <h3 className="text-lg font-semibold">Perfis de Usuário</h3>
+              {profilesLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {profiles?.map((profile) => (
+                    <Card key={profile.id}>
+                      <CardContent className="flex items-center justify-between p-4">
+                        <div className="flex-1">
+                          <h4 className="font-medium">{profile.name}</h4>
+                          <p className="text-sm text-gray-600">{profile.description}</p>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEditProfile(profile)}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             {/* Notificações Tab */}
