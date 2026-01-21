@@ -160,7 +160,7 @@ export default function Consultations() {
     return actions;
   };
 
-  const { data: consultations, isLoading: consultationsLoading } = useQuery<Consultation[]>({
+  const { data: consultations, isLoading: consultationsLoading } = useQuery<any[]>({
     queryKey: ["/api/consultations", { 
       status: selectedStatus !== "all" ? selectedStatus : undefined,
       dentistId: user?.role === "dentist" ? user.id : undefined,
@@ -181,18 +181,17 @@ export default function Consultations() {
       if (companyId) {
         params.append('companyId', companyId.toString());
       }
-      
+
       const url = `/api/consultations${params.toString() ? '?' + params.toString() : ''}`;
       
       const response = await fetch(url, {
         headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        credentials: "include",
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (!response.ok) {
-        throw new Error(`${response.status}: ${response.statusText}`);
+        throw new Error('Falha ao carregar consultas');
       }
       
       return response.json();

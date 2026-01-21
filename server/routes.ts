@@ -2750,7 +2750,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-      // Payables (Contas a Pagar)
   app.get("/api/payables", authenticateToken, async (req, res) => {
     try {
       const user = (req as any).user;
@@ -2764,10 +2763,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let companyIdToUse = user.companyId;
       
       // Only superadmins (users without companyId) can specify a different company
-      if (!user.companyId && req.query.companyId) {
+      if (user.companyId === null && req.query.companyId) {
         companyIdToUse = parseInt(req.query.companyId as string);
       } else if (user.companyId === null && !req.query.companyId) {
-        // If system admin hasn't selected a company, we'll try to get all or handle it
+        // If system admin hasn't selected a company, we'll try to get all
         console.warn('[PAYABLES] System admin accessing payables without companyId filter');
       }
       
@@ -2775,16 +2774,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Apply data scope filtering - only admin and "all" scope users can see payables
       if (user.role === "admin" || user.dataScope === "all") {
-        // CRITICAL: Always filter by company, even for admins and "all" scope users
+        // CRITICAL: Filter by company, but allow null for system admin view
         const payables = await storage.getPayables(status, category, startDate, endDate, companyIdToUse);
         res.json(payables);
       } else {
-        // Users with "own" scope cannot see payables (clinic expenses)
         res.json([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Get payables error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Internal server error", error: error.message });
     }
   });
 

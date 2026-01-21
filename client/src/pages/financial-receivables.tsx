@@ -86,7 +86,7 @@ export default function FinancialReceivables() {
   const queryClient = useQueryClient();
   const { companyId } = useCompanyFilter();
 
-  const { data: receivables, isLoading: receivablesLoading } = useQuery<Receivable[]>({
+  const { data: receivables, isLoading: receivablesLoading } = useQuery<any[]>({
     queryKey: ["/api/receivables", {
       status: selectedStatus !== "all" ? selectedStatus : undefined,
       dentistId: selectedDentist !== "all" ? parseInt(selectedDentist) : undefined,
@@ -112,13 +112,12 @@ export default function FinancialReceivables() {
       
       const response = await fetch(url, {
         headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        credentials: "include",
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (!response.ok) {
-        throw new Error(`${response.status}: ${response.statusText}`);
+        throw new Error('Falha ao carregar recebíveis');
       }
       
       return response.json();

@@ -150,11 +150,11 @@ export interface IStorage {
   createReceivableFromConsultation(consultationId: number, procedures: number[], installments?: number): Promise<Receivable[]>;
   
   // Payables (Contas a Pagar)
-  getPayables(status?: string, category?: string, startDate?: Date, endDate?: Date, companyId?: number): Promise<Payable[]>;
-  getPayable(id: number, companyId?: number): Promise<Payable | undefined>;
+  getPayables(status?: string, category?: string, startDate?: Date, endDate?: Date, companyId?: number | null): Promise<Payable[]>;
+  getPayable(id: number, companyId?: number | null): Promise<Payable | undefined>;
   createPayable(payable: InsertPayable): Promise<Payable>;
-  updatePayable(id: number, payable: Partial<InsertPayable>, companyId?: number): Promise<Payable>;
-  deletePayable(id: number, companyId?: number): Promise<void>;
+  updatePayable(id: number, payable: Partial<InsertPayable>, companyId?: number | null): Promise<Payable>;
+  deletePayable(id: number, companyId?: number | null): Promise<void>;
   
   // Cash Flow (Fluxo de Caixa)
   getCashFlow(startDate?: Date, endDate?: Date): Promise<CashFlow[]>;
@@ -1335,14 +1335,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Payables (Contas a Pagar)
-  async getPayables(status?: string, category?: string, startDate?: Date, endDate?: Date, companyId?: number): Promise<Payable[]> {
+  async getPayables(status?: string, category?: string, startDate?: Date, endDate?: Date, companyId?: number | null): Promise<Payable[]> {
     const whereConditions = [];
     
     // CRITICAL: ALWAYS filter by company - this is mandatory for security
-    if (!companyId) {
+    // For system admins (companyId === null), we allow seeing all
+    if (companyId !== undefined && companyId !== null) {
+      whereConditions.push(eq(payables.companyId, companyId));
+    } else if (companyId === undefined) {
       throw new Error("Company ID is required for payables query - security violation prevented");
     }
-    whereConditions.push(eq(payables.companyId, companyId));
+    // If companyId is null, we proceed without company filter (System Admin view)
     
     if (status) {
       whereConditions.push(eq(payables.status, status as any));
