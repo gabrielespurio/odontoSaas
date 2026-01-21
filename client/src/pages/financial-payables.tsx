@@ -202,6 +202,9 @@ export default function FinancialPayables() {
       }
       if (companyId) {
         params.append("companyId", companyId.toString());
+      } else {
+        // Log if companyId is missing for debugging
+        console.warn("CompanyId missing for payables query");
       }
       const url = `/api/payables${params.toString() ? `?${params.toString()}` : ""}`;
       const token = localStorage.getItem("token");

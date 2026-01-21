@@ -2750,7 +2750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Payables (Contas a Pagar)
+      // Payables (Contas a Pagar)
   app.get("/api/payables", authenticateToken, async (req, res) => {
     try {
       const user = (req as any).user;
@@ -2766,6 +2766,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Only superadmins (users without companyId) can specify a different company
       if (!user.companyId && req.query.companyId) {
         companyIdToUse = parseInt(req.query.companyId as string);
+      } else if (user.companyId === null && !req.query.companyId) {
+        // If system admin hasn't selected a company, we'll try to get all or handle it
+        console.warn('[PAYABLES] System admin accessing payables without companyId filter');
       }
       
       console.log(`[PAYABLES] User ID: ${user.id}, User Role: ${user.role}, User CompanyId: ${user.companyId}, Requested CompanyId: ${req.query.companyId}, Using CompanyId: ${companyIdToUse}`);
