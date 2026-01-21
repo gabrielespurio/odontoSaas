@@ -856,7 +856,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard/metrics", authenticateToken, async (req, res) => {
     try {
       const user = req.user;
-      const metrics = await storage.getDashboardMetrics(user.companyId);
+      const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string) : undefined;
+      
+      let companyId = user.companyId;
+      if (user.companyId === null && requestedCompanyId !== undefined) {
+        companyId = requestedCompanyId;
+      }
+
+      const metrics = await storage.getDashboardMetrics(companyId);
       res.json(metrics);
     } catch (error) {
       console.error("Dashboard metrics error:", error);

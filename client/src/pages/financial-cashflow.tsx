@@ -21,6 +21,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+import { useCompanyFilter } from "@/contexts/company-context";
+
 type CashFlowEntry = {
   id: number;
   type: "income" | "expense";
@@ -72,12 +74,40 @@ export default function FinancialCashFlow() {
 
   const { startDate, endDate } = getDateRange();
 
+  const { companyId } = useCompanyFilter();
+
   const { data: cashFlowEntries, isLoading: cashFlowLoading } = useQuery<CashFlowEntry[]>({
-    queryKey: ["/api/cash-flow", { startDate, endDate }],
+    queryKey: ["/api/cash-flow", { startDate, endDate, companyId }],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const params = new URLSearchParams();
+      params.append('startDate', startDate);
+      params.append('endDate', endDate);
+      if (companyId) params.append('companyId', companyId.toString());
+      
+      const response = await fetch(`/api/cash-flow?${params.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Falha ao carregar fluxo de caixa');
+      return response.json();
+    }
   });
 
   const { data: metrics, isLoading: metricsLoading } = useQuery({
-    queryKey: ["/api/financial-metrics", { startDate, endDate }],
+    queryKey: ["/api/financial-metrics", { startDate, endDate, companyId }],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const params = new URLSearchParams();
+      params.append('startDate', startDate);
+      params.append('endDate', endDate);
+      if (companyId) params.append('companyId', companyId.toString());
+      
+      const response = await fetch(`/api/financial-metrics?${params.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Falha ao carregar métricas financeiras');
+      return response.json();
+    }
   });
 
   const formatCurrency = (amount: string | number) => {

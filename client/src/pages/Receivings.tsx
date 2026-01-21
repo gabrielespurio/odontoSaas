@@ -40,6 +40,8 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+import { useCompanyFilter } from "@/contexts/company-context";
+
 type Supplier = {
   id: number;
   name: string;
@@ -106,8 +108,19 @@ export default function Receivings() {
     },
   });
 
+  const { companyId } = useCompanyFilter();
+
   const { data: receivings = [], isLoading } = useQuery<ReceivingWithDetails[]>({
-    queryKey: ['/api/receivings'],
+    queryKey: ['/api/receivings', companyId],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const url = `/api/receivings${companyId ? `?companyId=${companyId}` : ''}`;
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Falha ao carregar recebimentos');
+      return response.json();
+    }
   });
 
   const updateStatusMutation = useMutation({
