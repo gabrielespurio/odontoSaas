@@ -118,7 +118,7 @@ export default function StockProducts() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { companyId: companyFilter } = useCompanyFilter();
+  const { companyId } = useCompanyFilter();
 
   const form = useForm<z.infer<typeof productSchema>>({
     resolver: zodResolver(productSchema),
@@ -138,7 +138,7 @@ export default function StockProducts() {
     mutationFn: (data: z.infer<typeof productSchema>) => {
       return apiRequest("POST", "/api/products", {
         ...data,
-        companyId: companyFilter,
+        companyId: companyId,
       });
     },
     onSuccess: () => {
@@ -225,11 +225,11 @@ export default function StockProducts() {
   };
 
   const { data: categories } = useQuery<ProductCategory[]>({
-    queryKey: ["/api/product-categories", companyFilter],
+    queryKey: ["/api/product-categories", companyId],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (companyFilter.companyId) {
-        params.append("companyId", companyFilter.toString());
+      if (companyId) {
+        params.append("companyId", companyId.toString());
       }
       const url = `/api/product-categories${params.toString() ? `?${params.toString()}` : ""}`;
       const token = localStorage.getItem("token");
@@ -246,14 +246,14 @@ export default function StockProducts() {
   });
 
   const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products", selectedCategory, companyFilter],
+    queryKey: ["/api/products", selectedCategory, companyId],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedCategory !== "all") {
         params.append("categoryId", selectedCategory);
       }
-      if (companyFilter.companyId) {
-        params.append("companyId", companyFilter.toString());
+      if (companyId) {
+        params.append("companyId", companyId.toString());
       }
       const url = `/api/products${params.toString() ? `?${params.toString()}` : ""}`;
       const token = localStorage.getItem("token");

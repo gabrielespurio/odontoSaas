@@ -26,7 +26,7 @@ export default function Patients() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { companyId: companyFilter } = useCompanyFilter();
+  const { companyId } = useCompanyFilter();
 
   // Debounce search to avoid too many API calls
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function Patients() {
   }, [search]);
 
   const { data: patients, isLoading, error } = useQuery<Patient[]>({
-    queryKey: ["/api/patients", { search: debouncedSearch, companyId: companyFilter }],
+    queryKey: ["/api/patients", { search: debouncedSearch, companyId: companyId }],
     queryFn: async () => {
       const token = localStorage.getItem("token");
       const params = new URLSearchParams();
@@ -47,8 +47,8 @@ export default function Patients() {
         params.append('search', debouncedSearch);
       }
       
-      if (companyFilter.companyId) {
-        params.append('companyId', companyFilter);
+      if (companyId) {
+        params.append('companyId', companyId.toString());
       }
       
       const url = `/api/patients${params.toString() ? '?' + params.toString() : ''}`;

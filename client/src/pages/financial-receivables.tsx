@@ -84,13 +84,13 @@ export default function FinancialReceivables() {
   const [payingReceivable, setPayingReceivable] = useState<Receivable | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { companyId: companyFilter } = useCompanyFilter();
+  const { companyId } = useCompanyFilter();
 
   const { data: receivables, isLoading: receivablesLoading } = useQuery<Receivable[]>({
     queryKey: ["/api/receivables", {
       status: selectedStatus !== "all" ? selectedStatus : undefined,
       dentistId: selectedDentist !== "all" ? parseInt(selectedDentist) : undefined,
-      companyId: companyFilter
+      companyId: companyId
     }],
     queryFn: async () => {
       const token = localStorage.getItem("token");
@@ -104,8 +104,8 @@ export default function FinancialReceivables() {
         params.append('dentistId', selectedDentist);
       }
       
-      if (companyFilter.companyId) {
-        params.append('companyId', companyFilter.toString());
+      if (companyId) {
+        params.append('companyId', companyId.toString());
       }
       
       const url = `/api/receivables${params.toString() ? '?' + params.toString() : ''}`;
@@ -126,13 +126,13 @@ export default function FinancialReceivables() {
   });
 
   const { data: patients } = useQuery<Patient[]>({
-    queryKey: ["/api/patients", { companyId: companyFilter }],
+    queryKey: ["/api/patients", { companyId: companyId }],
     queryFn: async () => {
       const token = localStorage.getItem("token");
       const params = new URLSearchParams();
       
-      if (companyFilter.companyId) {
-        params.append('companyId', companyFilter.toString());
+      if (companyId) {
+        params.append('companyId', companyId.toString());
       }
       
       const url = `/api/patients${params.toString() ? '?' + params.toString() : ''}`;
@@ -153,13 +153,13 @@ export default function FinancialReceivables() {
   });
 
   const { data: dentists } = useQuery<any[]>({
-    queryKey: ["/api/users/dentists", { companyId: companyFilter }],
+    queryKey: ["/api/users/dentists", { companyId: companyId }],
     queryFn: async () => {
       const token = localStorage.getItem("token");
       const params = new URLSearchParams();
       
-      if (companyFilter.companyId) {
-        params.append('companyId', companyFilter.toString());
+      if (companyId) {
+        params.append('companyId', companyId.toString());
       }
       
       const url = `/api/users/dentists${params.toString() ? '?' + params.toString() : ''}`;

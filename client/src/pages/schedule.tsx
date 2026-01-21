@@ -33,7 +33,7 @@ export default function Schedule() {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { companyId: companyFilter } = useCompanyFilter();
+  const { companyId } = useCompanyFilter();
 
   // Time slots for schedule (8 AM to 6 PM)
   const timeSlots = Array.from({ length: 20 }, (_, i) => {
@@ -124,7 +124,7 @@ export default function Schedule() {
       startDate: weekDates[0].toISOString().split('T')[0], 
       endDate: weekDates[6].toISOString().split('T')[0],
       dentistId: selectedDentist !== "all" ? parseInt(selectedDentist) : undefined,
-      companyId: companyFilter.companyId
+      companyId: companyId
     }],
     queryFn: async () => {
       const token = localStorage.getItem("token");
@@ -137,8 +137,8 @@ export default function Schedule() {
         params.append('dentistId', selectedDentist);
       }
       
-      if (companyFilter.companyId) {
-        params.append('companyId', companyFilter.companyId.toString());
+      if (companyId) {
+        params.append('companyId', companyId.toString());
       }
       
       const response = await fetch(`/api/appointments?${params.toString()}`, {
@@ -157,11 +157,11 @@ export default function Schedule() {
   });
 
   const { data: dentists } = useQuery<User[]>({
-    queryKey: ["/api/users/dentists", companyFilter.companyId],
+    queryKey: ["/api/users/dentists", companyId],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (companyFilter.companyId) {
-        params.append('companyId', companyFilter.companyId.toString());
+      if (companyId) {
+        params.append('companyId', companyId.toString());
       }
       const url = `/api/users/dentists${params.toString() ? `?${params.toString()}` : ''}`;
       const response = await fetch(url, {
@@ -180,8 +180,8 @@ export default function Schedule() {
     mutationFn: (data: { id: number; status: string }) =>
       apiRequest("PUT", `/api/appointments/${data.id}`, { status: data.status }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments", { companyId: companyFilter.companyId }] });
-      queryClient.invalidateQueries({ queryKey: ["/api/consultations", { companyId: companyFilter }] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments", { companyId: companyId }] });
+      queryClient.invalidateQueries({ queryKey: ["/api/consultations", { companyId: companyId }] });
       toast({
         title: "Sucesso",
         description: "Status do agendamento atualizado",

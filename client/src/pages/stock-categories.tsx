@@ -72,7 +72,7 @@ export default function StockCategories() {
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { companyId: companyFilter } = useCompanyFilter();
+  const { companyId } = useCompanyFilter();
 
   const form = useForm<z.infer<typeof categorySchema>>({
     resolver: zodResolver(categorySchema),
@@ -87,7 +87,7 @@ export default function StockCategories() {
     mutationFn: (data: z.infer<typeof categorySchema>) => {
       return apiRequest("POST", "/api/product-categories", {
         ...data,
-        companyId: companyFilter,
+        companyId: companyId,
       });
     },
     onSuccess: () => {
@@ -169,11 +169,11 @@ export default function StockCategories() {
   };
 
   const { data: categories, isLoading: categoriesLoading } = useQuery<ProductCategory[]>({
-    queryKey: ["/api/product-categories", companyFilter],
+    queryKey: ["/api/product-categories", companyId],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (companyFilter.companyId) {
-        params.append("companyId", companyFilter.toString());
+      if (companyId) {
+        params.append("companyId", companyId.toString());
       }
       const url = `/api/product-categories${params.toString() ? `?${params.toString()}` : ""}`;
       const token = localStorage.getItem("token");

@@ -95,7 +95,7 @@ export default function Consultations() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { companyId: companyFilter } = useCompanyFilter();
+  const { companyId } = useCompanyFilter();
 
   // Status management functions
   const getStatusColor = (status: string) => {
@@ -164,7 +164,7 @@ export default function Consultations() {
     queryKey: ["/api/consultations", { 
       status: selectedStatus !== "all" ? selectedStatus : undefined,
       dentistId: user?.role === "dentist" ? user.id : undefined,
-      companyId: companyFilter
+      companyId: companyId
     }],
     queryFn: async () => {
       const token = localStorage.getItem("token");
@@ -178,8 +178,8 @@ export default function Consultations() {
         params.append('dentistId', user.id.toString());
       }
       
-      if (companyFilter.companyId) {
-        params.append('companyId', companyFilter);
+      if (companyId) {
+        params.append('companyId', companyId.toString());
       }
       
       const url = `/api/consultations${params.toString() ? '?' + params.toString() : ''}`;
@@ -201,11 +201,11 @@ export default function Consultations() {
 
   // Buscar agendamentos que não têm consulta correspondente - SIMPLIFICADO
   const { data: rawAppointmentsWithoutConsultation, error: appointmentsError, isLoading: appointmentsLoading } = useQuery({
-    queryKey: ["/api/appointments-without-consultation", { companyId: companyFilter }],
+    queryKey: ["/api/appointments-without-consultation", { companyId: companyId }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (companyFilter.companyId) {
-        params.append('companyId', companyFilter);
+      if (companyId) {
+        params.append('companyId', companyId.toString());
       }
       const url = `/api/appointments-without-consultation${params.toString() ? '?' + params.toString() : ''}`;
       const response = await fetch(url, {
@@ -253,11 +253,11 @@ export default function Consultations() {
 
   // Query para buscar agendamentos
   const { data: appointments } = useQuery({
-    queryKey: ["/api/appointments", { companyId: companyFilter }],
+    queryKey: ["/api/appointments", { companyId: companyId }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (companyFilter.companyId) {
-        params.append('companyId', companyFilter);
+      if (companyId) {
+        params.append('companyId', companyId.toString());
       }
       const url = `/api/appointments${params.toString() ? '?' + params.toString() : ''}`;
       const response = await fetch(url, {
@@ -302,9 +302,9 @@ export default function Consultations() {
     mutationFn: (data: { id: number; status: string }) =>
       apiRequest("PUT", `/api/consultations/${data.id}`, { status: data.status }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/consultations"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/consultations", { companyId: companyId }] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments", { companyId: companyId }] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments-without-consultation", { companyId: companyId }] });
       toast({
         title: "Sucesso",
         description: "Status do atendimento atualizado",

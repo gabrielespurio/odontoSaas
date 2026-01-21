@@ -84,7 +84,7 @@ export default function FinancialPayables() {
   const [editingPayable, setEditingPayable] = useState<Payable | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { companyId: companyFilter } = useCompanyFilter();
+  const { companyId } = useCompanyFilter();
 
   const form = useForm<z.infer<typeof payableSchema>>({
     resolver: zodResolver(payableSchema),
@@ -191,7 +191,7 @@ export default function FinancialPayables() {
   };
 
   const { data: payables, isLoading: payablesLoading } = useQuery<Payable[]>({
-    queryKey: ["/api/payables", selectedStatus, selectedCategory, companyFilter],
+    queryKey: ["/api/payables", selectedStatus, selectedCategory, companyId],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedStatus !== "all") {
@@ -200,8 +200,8 @@ export default function FinancialPayables() {
       if (selectedCategory !== "all") {
         params.append("category", selectedCategory);
       }
-      if (companyFilter.companyId) {
-        params.append("companyId", companyFilter.toString());
+      if (companyId) {
+        params.append("companyId", companyId.toString());
       }
       const url = `/api/payables${params.toString() ? `?${params.toString()}` : ""}`;
       const token = localStorage.getItem("token");
