@@ -1,0 +1,73 @@
+
+root@vmi2662410:/var/www/sistema-odonto# pm2 logs 10
+[TAILING] Tailing last 15 lines for [10] process (change the value with --lines option)
+/root/.pm2/logs/odontosync-out.log last 15 lines:
+10|odontos | DATABASE_URL env: SET
+10|odontos | Using specified Neon database: ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech
+10|odontos | Full connection string host: ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+10|odontos | NEON_DATABASE_URL env: NOT SET
+10|odontos | DATABASE_URL env: SET
+10|odontos | Using specified Neon database: ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech
+10|odontos | Full connection string host: ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+10|odontos | NEON_DATABASE_URL env: NOT SET
+10|odontos | DATABASE_URL env: SET
+10|odontos | Using specified Neon database: ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech
+10|odontos | Full connection string host: ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+10|odontos | NEON_DATABASE_URL env: NOT SET
+10|odontos | DATABASE_URL env: SET
+10|odontos | Using specified Neon database: ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech
+10|odontos | Full connection string host: ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+
+/root/.pm2/logs/odontosync-error.log last 15 lines:
+10|odontos | }
+10|odontos | The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+10|odontos | TypeError [ERR_INVALID_ARG_TYPE]: The "path" argument must be of type string or an instance of URL. Received undefined
+10|odontos |     at fileURLToPath (node:internal/url:1487:11)
+10|odontos |     at Object.<anonymous> (/var/www/sistema-odonto/dist/index.cjs:6553:47)
+10|odontos |     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+10|odontos |     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+10|odontos |     at Module.load (node:internal/modules/cjs/loader:1275:32)
+10|odontos |     at Module._load (node:internal/modules/cjs/loader:1096:12)
+10|odontos |     at cjsLoader (node:internal/modules/esm/translators:298:15)
+10|odontos |     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:240:7)
+10|odontos |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+10|odontos |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+10|odontos |   code: 'ERR_INVALID_ARG_TYPE'
+10|odontos | }
+
+10|odontosync  | NEON_DATABASE_URL env: NOT SET
+10|odontosync  | DATABASE_URL env: SET
+10|odontosync  | Using specified Neon database: ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech
+10|odontosync  | Full connection string host: ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+10|odontosync  | The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+10|odontosync  | TypeError [ERR_INVALID_ARG_TYPE]: The "path" argument must be of type string or an instance of URL. Received undefined
+10|odontosync  |     at fileURLToPath (node:internal/url:1487:11)
+10|odontosync  |     at Object.<anonymous> (/var/www/sistema-odonto/dist/index.cjs:6553:47)
+10|odontosync  |     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+10|odontosync  |     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+10|odontosync  |     at Module.load (node:internal/modules/cjs/loader:1275:32)
+10|odontosync  |     at Module._load (node:internal/modules/cjs/loader:1096:12)
+10|odontosync  |     at cjsLoader (node:internal/modules/esm/translators:298:15)
+10|odontosync  |     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:240:7)
+10|odontosync  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+10|odontosync  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+10|odontosync  |   code: 'ERR_INVALID_ARG_TYPE'
+10|odontosync  | }
+10|odontosync  | NEON_DATABASE_URL env: NOT SET
+10|odontosync  | DATABASE_URL env: SET
+10|odontosync  | Using specified Neon database: ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech
+10|odontosync  | Full connection string host: ep-round-violet-acrmg7wt-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+10|odontosync  | The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+10|odontosync  | TypeError [ERR_INVALID_ARG_TYPE]: The "path" argument must be of type string or an instance of URL. Received undefined
+10|odontosync  |     at fileURLToPath (node:internal/url:1487:11)
+10|odontosync  |     at Object.<anonymous> (/var/www/sistema-odonto/dist/index.cjs:6553:47)
+10|odontosync  |     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+10|odontosync  |     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+10|odontosync  |     at Module.load (node:internal/modules/cjs/loader:1275:32)
+10|odontosync  |     at Module._load (node:internal/modules/cjs/loader:1096:12)
+10|odontosync  |     at cjsLoader (node:internal/modules/esm/translators:298:15)
+10|odontosync  |     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:240:7)
+10|odontosync  |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+10|odontosync  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+10|odontosync  |   code: 'ERR_INVALID_ARG_TYPE'
+10|odontosync  | }
