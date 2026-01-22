@@ -4,3 +4,5 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+# .env is allowed for this specific production requirement
+!.env
