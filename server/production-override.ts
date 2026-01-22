@@ -96,6 +96,12 @@ export function overrideProductionServing(app: Express): void {
     }
   });
 
+  // API Route Logger - Debugging production requests
+  app.use('/api', (req, res, next) => {
+    console.log(`📡 API Request: ${req.method} ${req.path}`);
+    next();
+  });
+
   // Other assets (images, etc.)
   app.get('/assets/:filename', (req, res) => {
     const filename = req.params.filename;
@@ -121,11 +127,16 @@ export function overrideProductionServing(app: Express): void {
   });
 
   // SPA fallback - ONLY for non-asset, non-API routes
-  app.get('*', (req, res) => {
+  app.get('*', (req, res, next) => {
     // Explicitly block asset requests from going to SPA fallback
-    if (req.path.startsWith('/assets/') || req.path.startsWith('/api/')) {
-      console.log(`🚫 Blocked fallback for: ${req.path}`);
+    if (req.path.startsWith('/assets/')) {
+      console.log(`🚫 Blocked fallback for asset: ${req.path}`);
       return res.status(404).send('Resource not found');
+    }
+
+    if (req.path.startsWith('/api/')) {
+      console.log(`➡️ Passing through API request: ${req.path}`);
+      return next();
     }
     
     const indexPath = path.join(distPath, 'index.html');

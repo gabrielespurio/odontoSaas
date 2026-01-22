@@ -463,7 +463,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auth routes
+  app.post("/api/login", async (req, res) => {
+    console.log("Login attempt at /api/login:", req.body?.email);
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+    
+    try {
+      // Find user by email
+      let user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        console.log("User not found:", email);
+        return res.status(401).json({ message: "Email/username ou senha incorretos" });
+      }
+
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      
+      if (!isValidPassword) {
+        console.log("Invalid password for user:", email);
+        return res.status(401).json({ message: "Email/username ou senha incorretos" });
+      }
+
+      const token = jwt.sign(
+        { id: user.id, email: user.email, role: user.role, companyId: user.companyId, dataScope: user.dataScope },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      res.json({ 
+        token, 
+        user: { 
+          id: user.id, 
+          name: user.name, 
+          email: user.email, 
+          role: user.role,
+          companyId: user.companyId,
+          dataScope: user.dataScope 
+        },
+        forcePasswordChange: user.forcePasswordChange 
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/auth/login", async (req, res) => {
+    console.log("Login attempt at /api/auth/login:", req.body?.email);
     try {
       const { email, password } = req.body;
       
@@ -475,13 +524,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let user = await storage.getUserByEmail(email);
       
       if (!user) {
-        return res.status(401).json({ message: "Invalid credentials" });
+        console.log("User not found:", email);
+        return res.status(401).json({ message: "Email/username ou senha incorretos" });
       }
 
       const isValidPassword = await bcrypt.compare(password, user.password);
       
       if (!isValidPassword) {
-        return res.status(401).json({ message: "Invalid credentials" });
+        console.log("Invalid password for user:", email);
+        return res.status(401).json({ message: "Email/username ou senha incorretos" });
       }
 
       const token = jwt.sign(
