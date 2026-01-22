@@ -1,0 +1,65 @@
+root@vmi2662410:/var/www/sistema-odonto# npm run build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+✘ [ERROR] Top-level await is currently not supported with the "cjs" output format
+
+    vite.config.ts:13:10:
+      13 │           await import("@replit/vite-plugin-cartographer").then((m) =>
+         ╵           ~~~
+
+✘ [ERROR] "@replit/vite-plugin-runtime-error-modal" resolved to an ESM file. ESM file cannot be loaded by require. See https://vite.dev/guide/troubleshooting.html#this-package-is-esm-only for more details. [plugin externalize-deps]
+
+    node_modules/vite/node_modules/esbuild/lib/main.js:1225:27:
+      1225 │         let result = await callback({
+           ╵                            ^
+
+    at file:///var/www/sistema-odonto/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:66911:23
+    at requestCallbacks.on-resolve (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:1225:28)
+    at handleRequest (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:647:17)
+    at handleIncomingPacket (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:672:7)
+    at Socket.readFromStdout (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+
+  This error came from the "onResolve" callback registered here:
+
+    node_modules/vite/node_modules/esbuild/lib/main.js:1150:20:
+      1150 │       let promise = setup({
+           ╵                     ^
+
+    at setup (file:///var/www/sistema-odonto/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:66873:18)
+    at handlePlugins (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:1150:21)
+    at buildOrContextImpl (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:873:5)
+    at Object.buildOrContext (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:699:5)
+    at /var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:2023:15
+    at new Promise (<anonymous>)
+    at Object.build (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:2022:25)
+    at build (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:1873:51)
+    at bundleConfigFile (file:///var/www/sistema-odonto/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:66828:24)
+
+  The plugin "externalize-deps" was triggered by this import
+
+    vite.config.ts:4:32:
+      4 │ import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+        ╵                                 ~~~~~~~~~~~~~~~
+
+failed to load config from /var/www/sistema-odonto/vite.config.ts
+error during build:
+Error: Build failed with 2 errors:
+node_modules/vite/node_modules/esbuild/lib/main.js:1225:27: ERROR: [plugin: externalize-deps] "@replit/vite-plugin-runtime-error-modal" resolved to an ESM file. ESM file cannot be loaded by require. See https://vite.dev/guide/troubleshooting.html#this-package-is-esm-only for more details.
+vite.config.ts:13:10: ERROR: Top-level await is currently not supported with the "cjs" output format
+    at failureErrorWithLog (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+    at /var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:945:25
+    at runOnEndCallbacks (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:1315:45)
+    at buildResponseToResult (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:943:7)
+    at /var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:970:16
+    at responseCallbacks.<computed> (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:622:9)
+    at handleIncomingPacket (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:677:12)
+    at Socket.readFromStdout (/var/www/sistema-odonto/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)

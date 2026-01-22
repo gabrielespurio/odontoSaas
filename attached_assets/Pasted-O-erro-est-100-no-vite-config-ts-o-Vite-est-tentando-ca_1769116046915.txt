@@ -1,0 +1,88 @@
+O erro está 100% no vite.config.ts: o Vite está tentando carregar o config em CJS (CommonJS), mas o seu arquivo tem:
+
+top-level await (isso quebra quando o output do loader é cjs)
+
+import estático de um pacote ESM-only (@replit/vite-plugin-runtime-error-modal), e isso quebra porque em CJS ele tenta virar require().
+
+A correção mais segura (sem mexer em "type": "module" do projeto todo) é: remover os imports estáticos dos plugins da Replit e carregar esses plugins com dynamic import dentro de um defineConfig(async () => ...) (aí não existe top-level await e não existe require do ESM).
+
+1) Ajuste o vite.config.ts (substitua pelo modelo abaixo)
+
+Abra e edite:
+
+nano /var/www/sistema-odonto/vite.config.ts
+
+
+Substitua o conteúdo por este (ajuste apenas o que for específico do seu projeto, se necessário):
+
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+// Observação:
+// - Sem imports estáticos dos plugins @replit (eles são ESM-only).
+// - Sem top-level await.
+// - Carrega plugins @replit via dynamic import dentro do async config.
+
+export default defineConfig(async () => {
+  const plugins = [react()];
+
+  // Ative plugins da Replit somente quando fizer sentido (ex.: ambiente Replit)
+  // Se você quiser forçar sempre, remova o if e mantenha o push.
+  const isReplit =
+    !!process.env.REPL_ID ||
+    !!process.env.REPL_SLUG ||
+    !!process.env.REPL_OWNER;
+
+  if (isReplit) {
+    const { default: runtimeErrorOverlay } = await import(
+      "@replit/vite-plugin-runtime-error-modal"
+    );
+
+    const { cartographer } = await import("@replit/vite-plugin-cartographer");
+
+    plugins.push(runtimeErrorOverlay());
+    plugins.push(cartographer());
+  }
+
+  return {
+    plugins,
+    // Se seu projeto já tinha outras configs (base, resolve.alias, server.proxy etc),
+    // traga para cá também.
+    build: {
+      // mantenha/ajuste conforme seu projeto
+      sourcemap: false,
+    },
+  };
+});
+
+Por que isso resolve?
+
+await fica dentro de uma função async (não é top-level await).
+
+Os pacotes ESM-only são carregados com import() (não viram require()).
+
+2) Rode o build novamente
+cd /var/www/sistema-odonto
+npm run build
+
+3) Se ainda aparecer plugin da Replit em ambiente “não Replit”
+
+Se você não está no Replit (VPS normal) e não precisa desses plugins, você pode ir ainda mais direto:
+
+Remover totalmente qualquer uso de @replit/* no vite.config.ts
+
+E opcionalmente remover do projeto:
+
+npm remove @replit/vite-plugin-runtime-error-modal @replit/vite-plugin-cartographer
+
+
+Isso evita qualquer chance de conflito.
+
+Próximo passo (se o build passar)
+
+Me envie o output do npm run build e também:
+
+ls -lah /var/www/sistema-odonto/dist
+
+
+Aí eu te digo exatamente como ajustar o PM2 e o Nginx para servir o dist correto (frontend) e o dist/index.js (backend bundlado), sem colisão de portas.
