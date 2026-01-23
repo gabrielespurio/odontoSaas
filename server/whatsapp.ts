@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import QRCode from 'qrcode';
 
 const EVOLUTION_API_BASE_URL = 'https://evolutionapi.eduflow.com.br';
 const EVOLUTION_API_KEY = 'vyspKHAUPJcGL5RkvdBrdUBGMDmnS6AG';
@@ -48,6 +49,29 @@ export async function startHazapiSession(whatsappId: number = HAZAPI_WHATSAPP_ID
   }
 }
 
+// Convert raw QR code text to base64 image
+async function generateQRCodeImage(text: string): Promise<string | null> {
+  try {
+    // Generate QR code as base64 data URL
+    const qrCodeDataUrl = await QRCode.toDataURL(text, {
+      width: 300,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      }
+    });
+    
+    // Remove the "data:image/png;base64," prefix if needed (frontend may add it)
+    // Actually keep it since the frontend expects the full data URL
+    console.log('QR code image generated successfully');
+    return qrCodeDataUrl;
+  } catch (error) {
+    console.error('Error generating QR code image:', error);
+    return null;
+  }
+}
+
 // Get QR Code from Hazapi API
 export async function getHazapiQRCode(whatsappId: number = HAZAPI_WHATSAPP_ID): Promise<string | null> {
   try {
@@ -63,42 +87,37 @@ export async function getHazapiQRCode(whatsappId: number = HAZAPI_WHATSAPP_ID): 
     });
 
     const responseText = await response.text();
-    console.log(`Hazapi qrCodeSession raw response (status ${response.status}):`, responseText.substring(0, 500));
+    console.log(`Hazapi qrCodeSession raw response (status ${response.status}):`, responseText.substring(0, 200));
 
     if (!response.ok) {
       console.error(`Hazapi qrCodeSession error: ${response.status}`);
       return null;
     }
 
-    // Try to parse as JSON, but the response might be the QR code directly
+    // Clean up the response - remove quotes if it's a JSON string
+    let qrCodeText = responseText;
     try {
-      const data = JSON.parse(responseText);
-      console.log('Hazapi QR Code response keys:', Object.keys(data));
-      
-      // Check various possible property names
-      const qrCode = data.qrcode || data.base64 || data.qr || data.qrCode || data.image || data.data;
-      if (qrCode) {
-        console.log(`Found QR code in response (length: ${qrCode.length})`);
-        return qrCode;
+      const parsed = JSON.parse(responseText);
+      if (typeof parsed === 'string') {
+        qrCodeText = parsed;
       }
-      
-      // If data is a string that looks like base64
-      if (typeof data === 'string' && data.length > 100) {
-        console.log('Response is a raw string, using as QR code');
-        return data;
-      }
-      
-      console.log('Could not find QR code in response. Full response:', JSON.stringify(data).substring(0, 200));
-      return null;
-    } catch (parseError) {
-      // Response might be raw base64 or image data
-      if (responseText.length > 100) {
-        console.log(`Response is not JSON, using raw response as QR code (length: ${responseText.length})`);
-        return responseText;
-      }
-      console.error('Failed to parse response and response is too short');
+    } catch {
+      // Not JSON, use as-is
+    }
+
+    // Remove surrounding quotes if present
+    qrCodeText = qrCodeText.replace(/^["']|["']$/g, '');
+    
+    if (!qrCodeText || qrCodeText.length < 50) {
+      console.error('QR code text is empty or too short');
       return null;
     }
+
+    console.log(`Converting raw QR text to image (length: ${qrCodeText.length})`);
+    
+    // Generate QR code image from the text
+    const qrCodeImage = await generateQRCodeImage(qrCodeText);
+    return qrCodeImage;
   } catch (error) {
     console.error('Error getting Hazapi QR Code:', error);
     return null;
