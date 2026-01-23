@@ -133,11 +133,16 @@ export default function WhatsAppSettings() {
     mutationFn: async () => {
       const payload = companyIdToUse ? { companyId: companyIdToUse } : {};
       const response = await apiRequest("POST", "/api/whatsapp/setup", payload);
-      return response;
+      const data = await response.json();
+      return data;
     },
     onSuccess: (data: { qrCode?: string }) => {
+      console.log('Setup mutation success, data:', data);
       if (data?.qrCode) {
+        console.log('Setting generated QR code, length:', data.qrCode.length);
         setGeneratedQrCode(data.qrCode);
+      } else {
+        console.log('No QR code in response');
       }
       queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/status"] });
       toast({
@@ -157,10 +162,21 @@ export default function WhatsAppSettings() {
 
   // Refresh QR code mutation
   const refreshQRMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/whatsapp/refresh-qr", 
-      companyIdToUse ? { companyId: companyIdToUse } : {}
-    ),
-    onSuccess: () => {
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/whatsapp/refresh-qr", 
+        companyIdToUse ? { companyId: companyIdToUse } : {}
+      );
+      const data = await response.json();
+      return data;
+    },
+    onSuccess: (data: { qrCode?: string }) => {
+      console.log('Refresh QR mutation success, data:', data);
+      if (data?.qrCode) {
+        console.log('Setting refreshed QR code, length:', data.qrCode.length);
+        setGeneratedQrCode(data.qrCode);
+      } else {
+        console.log('No QR code in refresh response');
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/status"] });
       toast({
         title: "QR Code atualizado!",
