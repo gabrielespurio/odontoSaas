@@ -13,7 +13,9 @@ import {
   getInstanceQRCode, 
   checkInstanceStatus,
   sendWhatsAppMessageByCompany,
-  getWhatsAppInstanceDetails 
+  getWhatsAppInstanceDetails,
+  setupHazapiWhatsApp,
+  getHazapiQRCode
 } from "./whatsapp";
 import { sendDailyReminders } from "./scheduler";
 import { formatDateForDatabase, formatDateForFrontend } from "./utils/date-formatter";
@@ -4024,37 +4026,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Setting up WhatsApp for company: ${company.name} (ID: ${company.id})`);
 
-      // Create WhatsApp instance
-      const result = await createWhatsAppInstance(company.id, company.name);
+      // Use Hazapi API to setup WhatsApp
+      const result = await setupHazapiWhatsApp();
       
-      if (!result) {
-        console.error('Failed to create WhatsApp instance - no result returned');
-        return res.status(500).json({ message: "Falha ao criar instância do WhatsApp" });
+      if (!result.success) {
+        console.error('Failed to setup Hazapi WhatsApp:', result.message);
+        return res.status(500).json({ message: result.message });
       }
 
-      console.log('WhatsApp instance creation result:', JSON.stringify(result, null, 2));
-
-      // Generate consistent instance ID
+      console.log('Hazapi WhatsApp setup successful');
+      console.log(`QR Code present: ${!!result.qrCode}`);
+      
+      // Generate instance ID for tracking
       const cleanName = company.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-      const instanceId = `odontosync_${company.id}_${cleanName}`;
+      const instanceId = `hazapi_${company.id}_${cleanName}`;
       
-      console.log(`Generated instance ID: ${instanceId}`);
-      console.log(`QR Code present: ${!!result.qrcode?.base64}`);
-      console.log(`QR Code length: ${result.qrcode?.base64?.length || 0}`);
-      
-      // Update company with WhatsApp info - handle both old and new API response formats
-      const hash = result.hash || result.instance?.instanceId;
-      const qrCode = result.qrcode?.base64;
-      
-      console.log(`Hash extracted: ${hash}`);
-      console.log(`QR Code extracted: ${qrCode ? 'Yes' : 'No'} (${qrCode?.length || 0} chars)`);
-      
+      // Update company with WhatsApp info
       await db.update(companies)
         .set({
           whatsappInstanceId: instanceId,
-          whatsappHash: hash,
-          whatsappStatus: qrCode ? 'qrcode' : 'connecting',
-          whatsappQrCode: qrCode,
+          whatsappHash: 'hazapi',
+          whatsappStatus: result.qrCode ? 'qrcode' : 'connecting',
+          whatsappQrCode: result.qrCode,
         })
         .where(eq(companies.id, companyIdToUse));
 
@@ -4062,12 +4055,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const responseData = {
         instanceId,
-        hash: result.hash || result.instance?.instanceId,
-        qrCode: result.qrcode?.base64,
-        status: result.qrcode?.base64 ? 'qrcode' : 'connecting'
+        hash: 'hazapi',
+        qrCode: result.qrCode,
+        status: result.qrCode ? 'qrcode' : 'connecting'
       };
       
-      console.log('Setup response:', JSON.stringify(responseData, null, 2));
+      console.log('Setup response:', JSON.stringify({ ...responseData, qrCode: result.qrCode ? 'present' : 'absent' }, null, 2));
       res.json(responseData);
     } catch (error) {
       console.error("Setup WhatsApp error:", error);
@@ -4103,13 +4096,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Refreshing QR code for instance: ${company.whatsappInstanceId}`);
 
-      // Get new QR code
-      const qrCode = await getInstanceQRCode(company.whatsappInstanceId);
+      // Get new QR code from Hazapi API
+      const qrCode = await getHazapiQRCode();
       
       console.log(`QR code refresh result: ${!!qrCode} (length: ${qrCode?.length || 0})`);
       
       if (!qrCode) {
-        console.error('Failed to get QR code from Evolution API');
+        console.error('Failed to get QR code from Hazapi API');
         return res.status(500).json({ message: "Falha ao obter QR code" });
       }
 

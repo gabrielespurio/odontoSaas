@@ -4,6 +4,103 @@ const EVOLUTION_API_BASE_URL = 'https://evolutionapi.eduflow.com.br';
 const EVOLUTION_API_KEY = 'vyspKHAUPJcGL5RkvdBrdUBGMDmnS6AG';
 const WHATSAPP_API_KEY = process.env.WHATSAPP_API_KEY;
 
+// Hazapi WhatsApp API Configuration
+const HAZAPI_BASE_URL = 'https://gestaoapi.hazapi.com.br/v2/api/external/048fcb78-ff39-4365-9388-d1e6e72efdea';
+const HAZAPI_AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZW5hbnRJZCI6NiwicHJvZmlsZSI6ImFkbWluIiwic2Vzc2lvbklkIjoyMCwiaWF0IjoxNzY5MTI5MzEzLCJleHAiOjE4MzIyMDEzMTN9.gdTRyuogzqUc1y1gtRoQBQ4S_1bHCwY8PFtK18WQuJU';
+const HAZAPI_WHATSAPP_ID = 20;
+
+export interface HazapiStartSessionResponse {
+  message?: string;
+  error?: string;
+}
+
+export interface HazapiQRCodeResponse {
+  qrcode?: string;
+  base64?: string;
+  error?: string;
+}
+
+// Start WhatsApp session using Hazapi API
+export async function startHazapiSession(whatsappId: number = HAZAPI_WHATSAPP_ID): Promise<{ success: boolean; message: string }> {
+  try {
+    console.log(`Starting Hazapi WhatsApp session with ID: ${whatsappId}`);
+    
+    const response = await fetch(`${HAZAPI_BASE_URL}/startSession`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${HAZAPI_AUTH_TOKEN}`
+      },
+      body: JSON.stringify({ whatsappId })
+    });
+
+    const responseText = await response.text();
+    console.log(`Hazapi startSession response: ${responseText}`);
+
+    if (responseText.includes(`Whatsapp started: ${whatsappId}`)) {
+      return { success: true, message: responseText };
+    }
+    
+    return { success: false, message: responseText };
+  } catch (error) {
+    console.error('Error starting Hazapi session:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+// Get QR Code from Hazapi API
+export async function getHazapiQRCode(whatsappId: number = HAZAPI_WHATSAPP_ID): Promise<string | null> {
+  try {
+    console.log(`Getting Hazapi QR Code for WhatsApp ID: ${whatsappId}`);
+    
+    const response = await fetch(`${HAZAPI_BASE_URL}/qrCodeSession`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${HAZAPI_AUTH_TOKEN}`
+      },
+      body: JSON.stringify({ whatsappId })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Hazapi qrCodeSession error: ${response.status} - ${errorText}`);
+      return null;
+    }
+
+    const data = await response.json() as HazapiQRCodeResponse;
+    console.log('Hazapi QR Code response received');
+    
+    // Return the QR code (could be base64 or direct image data)
+    return data.qrcode || data.base64 || null;
+  } catch (error) {
+    console.error('Error getting Hazapi QR Code:', error);
+    return null;
+  }
+}
+
+// Setup WhatsApp using Hazapi API (start session + get QR code)
+export async function setupHazapiWhatsApp(whatsappId: number = HAZAPI_WHATSAPP_ID): Promise<{ success: boolean; qrCode?: string; message: string }> {
+  // Step 1: Start session
+  const startResult = await startHazapiSession(whatsappId);
+  
+  if (!startResult.success) {
+    return { success: false, message: `Failed to start session: ${startResult.message}` };
+  }
+
+  // Wait a moment for the session to initialize
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // Step 2: Get QR Code
+  const qrCode = await getHazapiQRCode(whatsappId);
+  
+  if (!qrCode) {
+    return { success: false, message: 'Session started but failed to get QR code' };
+  }
+
+  return { success: true, qrCode, message: 'WhatsApp session started successfully' };
+}
+
 export interface WhatsAppMessage {
   number: string;
   text: string;
