@@ -15,7 +15,8 @@ import {
   sendWhatsAppMessageByCompany,
   getWhatsAppInstanceDetails,
   setupHazapiWhatsApp,
-  getHazapiQRCode
+  getHazapiQRCode,
+  startHazapiSession
 } from "./whatsapp";
 import { sendDailyReminders } from "./scheduler";
 import { formatDateForDatabase, formatDateForFrontend } from "./utils/date-formatter";
@@ -4096,12 +4097,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Refreshing QR code for instance: ${company.whatsappInstanceId}`);
 
-      // Get new QR code from Hazapi API
-      const qrCode = await getHazapiQRCode();
+      // Use full Hazapi flow: startSession + getQRCode
+      const result = await setupHazapiWhatsApp();
       
-      console.log(`QR code refresh result: ${!!qrCode} (length: ${qrCode?.length || 0})`);
+      if (!result.success) {
+        console.error('Failed to setup Hazapi WhatsApp:', result.message);
+        return res.status(500).json({ message: result.message });
+      }
       
-      if (!qrCode) {
+      console.log(`QR code refresh result: ${!!result.qrCode} (length: ${result.qrCode?.length || 0})`);
+      
+      if (!result.qrCode) {
         console.error('Failed to get QR code from Hazapi API');
         return res.status(500).json({ message: "Falha ao obter QR code" });
       }
@@ -4109,14 +4115,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update QR code in database
       await db.update(companies)
         .set({
-          whatsappQrCode: qrCode,
+          whatsappQrCode: result.qrCode,
           whatsappStatus: 'qrcode'
         })
         .where(eq(companies.id, companyIdToUse));
 
       console.log('QR code updated in database');
 
-      res.json({ qrCode });
+      res.json({ qrCode: result.qrCode });
     } catch (error) {
       console.error("Refresh QR code error:", error);
       res.status(500).json({ message: "Internal server error" });

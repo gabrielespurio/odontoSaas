@@ -320,10 +320,10 @@ export default function WhatsAppSettings() {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={handleRefreshQR}
-                    disabled={refreshQRMutation.isPending}
+                    onClick={handleSetupWhatsApp}
+                    disabled={setupMutation.isPending}
                   >
-                    {refreshQRMutation.isPending ? (
+                    {setupMutation.isPending ? (
                       <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
                       <RefreshCw className="w-4 h-4 mr-2" />
