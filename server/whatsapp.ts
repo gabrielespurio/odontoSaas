@@ -127,22 +127,34 @@ export async function getHazapiQRCode(whatsappId: number = HAZAPI_WHATSAPP_ID): 
 // Setup WhatsApp using Hazapi API (start session + get QR code)
 export async function setupHazapiWhatsApp(whatsappId: number = HAZAPI_WHATSAPP_ID): Promise<{ success: boolean; qrCode?: string; message: string }> {
   // Step 1: Start session
+  console.log('Step 1: Starting Hazapi session...');
   const startResult = await startHazapiSession(whatsappId);
   
   if (!startResult.success) {
     return { success: false, message: `Failed to start session: ${startResult.message}` };
   }
+  
+  console.log('Session started successfully, waiting for initialization...');
 
-  // Wait a moment for the session to initialize
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  // Wait longer for the session to fully initialize (3 seconds)
+  await new Promise(resolve => setTimeout(resolve, 3000));
 
-  // Step 2: Get QR Code
-  const qrCode = await getHazapiQRCode(whatsappId);
+  // Step 2: Get QR Code with retry
+  console.log('Step 2: Getting QR code...');
+  let qrCode = await getHazapiQRCode(whatsappId);
+  
+  // If first attempt fails, wait and retry once
+  if (!qrCode) {
+    console.log('First QR code attempt failed, waiting and retrying...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    qrCode = await getHazapiQRCode(whatsappId);
+  }
   
   if (!qrCode) {
-    return { success: false, message: 'Session started but failed to get QR code' };
+    return { success: false, message: 'Session started but failed to get QR code after retries' };
   }
 
+  console.log('QR code obtained successfully');
   return { success: true, qrCode, message: 'WhatsApp session started successfully' };
 }
 

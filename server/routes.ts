@@ -3955,33 +3955,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Empresa não encontrada" });
       }
 
-      // If instance exists, check current status
+      // Return database status without calling external APIs (to avoid timeouts)
       if (company.whatsappInstanceId) {
-        const currentStatus = await checkInstanceStatus(company.whatsappInstanceId);
-        
-        // Get instance details if connected
-        let instanceDetails = null;
-        if (currentStatus === 'connected') {
-          instanceDetails = await getWhatsAppInstanceDetails(company.whatsappInstanceId);
-        }
-        
-        // Update status in database if changed
-        if (currentStatus !== company.whatsappStatus) {
-          await db.update(companies)
-            .set({ 
-              whatsappStatus: currentStatus,
-              whatsappConnectedAt: currentStatus === 'connected' ? new Date() : null
-            })
-            .where(eq(companies.id, companyIdToUse));
-        }
-
         res.json({
-          status: currentStatus,
+          status: company.whatsappStatus || 'qrcode',
           instanceId: company.whatsappInstanceId,
           qrCode: company.whatsappQrCode,
           connectedAt: company.whatsappConnectedAt,
-          phoneNumber: instanceDetails?.phoneNumber,
-          profileName: instanceDetails?.profileName
+          phoneNumber: null,
+          profileName: null
         });
       } else {
         res.json({
