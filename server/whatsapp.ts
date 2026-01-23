@@ -62,17 +62,43 @@ export async function getHazapiQRCode(whatsappId: number = HAZAPI_WHATSAPP_ID): 
       body: JSON.stringify({ whatsappId })
     });
 
+    const responseText = await response.text();
+    console.log(`Hazapi qrCodeSession raw response (status ${response.status}):`, responseText.substring(0, 500));
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Hazapi qrCodeSession error: ${response.status} - ${errorText}`);
+      console.error(`Hazapi qrCodeSession error: ${response.status}`);
       return null;
     }
 
-    const data = await response.json() as HazapiQRCodeResponse;
-    console.log('Hazapi QR Code response received');
-    
-    // Return the QR code (could be base64 or direct image data)
-    return data.qrcode || data.base64 || null;
+    // Try to parse as JSON, but the response might be the QR code directly
+    try {
+      const data = JSON.parse(responseText);
+      console.log('Hazapi QR Code response keys:', Object.keys(data));
+      
+      // Check various possible property names
+      const qrCode = data.qrcode || data.base64 || data.qr || data.qrCode || data.image || data.data;
+      if (qrCode) {
+        console.log(`Found QR code in response (length: ${qrCode.length})`);
+        return qrCode;
+      }
+      
+      // If data is a string that looks like base64
+      if (typeof data === 'string' && data.length > 100) {
+        console.log('Response is a raw string, using as QR code');
+        return data;
+      }
+      
+      console.log('Could not find QR code in response. Full response:', JSON.stringify(data).substring(0, 200));
+      return null;
+    } catch (parseError) {
+      // Response might be raw base64 or image data
+      if (responseText.length > 100) {
+        console.log(`Response is not JSON, using raw response as QR code (length: ${responseText.length})`);
+        return responseText;
+      }
+      console.error('Failed to parse response and response is too short');
+      return null;
+    }
   } catch (error) {
     console.error('Error getting Hazapi QR Code:', error);
     return null;
