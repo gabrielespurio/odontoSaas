@@ -36,6 +36,7 @@ type TestMessageFormData = z.infer<typeof testMessageSchema>;
 export default function WhatsAppSettings() {
   const [showTestDialog, setShowTestDialog] = useState(false);
   const [localSelectedCompanyId, setLocalSelectedCompanyId] = useState<number | null>(null);
+  const [generatedQrCode, setGeneratedQrCode] = useState<string | null>(null);
   const { toast } = useToast();
   const { selectedCompanyId: contextSelectedCompanyId, companies: contextCompanies, isSystemAdmin } = useCompanyContext();
 
@@ -129,11 +130,15 @@ export default function WhatsAppSettings() {
 
   // Setup WhatsApp mutation
   const setupMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const payload = companyIdToUse ? { companyId: companyIdToUse } : {};
-      return apiRequest("POST", "/api/whatsapp/setup", payload);
+      const response = await apiRequest("POST", "/api/whatsapp/setup", payload);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data: { qrCode?: string }) => {
+      if (data?.qrCode) {
+        setGeneratedQrCode(data.qrCode);
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/status"] });
       toast({
         title: "WhatsApp configurado!",
@@ -141,6 +146,7 @@ export default function WhatsAppSettings() {
       });
     },
     onError: () => {
+      setGeneratedQrCode(null);
       toast({
         title: "Erro na configuração",
         description: "Não foi possível configurar o WhatsApp.",
@@ -280,7 +286,7 @@ export default function WhatsAppSettings() {
             </div>
           )}
 
-          {(whatsappStatus?.status === 'qrcode' || whatsappStatus?.qrCode) && (
+          {(whatsappStatus?.status === 'qrcode' || whatsappStatus?.status === 'disconnected' || generatedQrCode) && (
             <div className="space-y-4">
               <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                 <div className="flex items-center space-x-2 mb-2">
@@ -293,14 +299,13 @@ export default function WhatsAppSettings() {
                 
                 <div className="mb-4">
                   
-                  {whatsappStatus.qrCode && whatsappStatus.qrCode.length > 20 ? (
+                  {generatedQrCode && generatedQrCode.length > 20 ? (
                     <div className="flex justify-center">
                       <div className="bg-white p-4 rounded-lg shadow-lg">
                         <img 
-                          src={whatsappStatus.qrCode.startsWith('data:') ? whatsappStatus.qrCode : `data:image/png;base64,${whatsappStatus.qrCode}`}
+                          src={generatedQrCode.startsWith('data:') ? generatedQrCode : `data:image/png;base64,${generatedQrCode}`}
                           alt="WhatsApp QR Code"
                           className="w-64 h-64 border border-gray-200"
-
                         />
                       </div>
                     </div>
@@ -308,8 +313,17 @@ export default function WhatsAppSettings() {
                     <div className="flex justify-center">
                       <div className="w-48 h-48 border rounded-lg flex items-center justify-center bg-gray-100">
                         <div className="text-center">
-                          <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin text-gray-400" />
-                          <p className="text-sm text-gray-500">Gerando QR Code...</p>
+                          {setupMutation.isPending ? (
+                            <>
+                              <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin text-gray-400" />
+                              <p className="text-sm text-gray-500">Gerando QR Code...</p>
+                            </>
+                          ) : (
+                            <>
+                              <QrCode className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                              <p className="text-sm text-gray-500">Clique em "Atualizar QR" para gerar</p>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

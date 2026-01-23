@@ -3955,12 +3955,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Empresa não encontrada" });
       }
 
-      // Return database status without calling external APIs (to avoid timeouts)
+      // Return database status without QR code (QR code only generated on demand)
       if (company.whatsappInstanceId) {
         res.json({
-          status: company.whatsappStatus || 'qrcode',
+          status: company.whatsappStatus || 'disconnected',
           instanceId: company.whatsappInstanceId,
-          qrCode: company.whatsappQrCode,
+          qrCode: null,
           connectedAt: company.whatsappConnectedAt,
           phoneNumber: null,
           profileName: null
