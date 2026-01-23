@@ -9,14 +9,11 @@ import { z } from "zod";
 import { 
   sendWhatsAppMessage, 
   formatAppointmentMessage, 
-  createWhatsAppInstance, 
-  getInstanceQRCode, 
-  checkInstanceStatus,
   sendWhatsAppMessageByCompany,
-  getWhatsAppInstanceDetails,
   setupHazapiWhatsApp,
   getHazapiQRCode,
-  startHazapiSession
+  startHazapiSession,
+  getHazapiChannelStatus
 } from "./whatsapp";
 import { sendDailyReminders } from "./scheduler";
 import { formatDateForDatabase, formatDateForFrontend } from "./utils/date-formatter";
@@ -3931,10 +3928,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         companyIdToUse = parseInt(req.query.companyId as string);
       }
       
-      // Use the currently selected company from the header (companyId 3 = Teste 3)
+      // Use the currently selected company from the header
       if (!user.companyId && !req.query.companyId) {
-        // For superadmin, default to company ID 3 (Teste 3) as shown in the header
-        companyIdToUse = 3;
+        companyIdToUse = 1;
       }
       
       console.log(`Getting WhatsApp status for company: ${companyIdToUse} (user: ${user.id})`);
@@ -3943,11 +3939,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Company ID is required" });
       }
 
-      // Get company WhatsApp info
+      // Get company WhatsApp info from database
       const [company] = await db.select({
         whatsappInstanceId: companies.whatsappInstanceId,
         whatsappStatus: companies.whatsappStatus,
-        whatsappQrCode: companies.whatsappQrCode,
         whatsappConnectedAt: companies.whatsappConnectedAt,
       }).from(companies).where(eq(companies.id, companyIdToUse));
 
@@ -3955,8 +3950,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Empresa não encontrada" });
       }
 
-      // Return database status without QR code (QR code only generated on demand)
-      if (company.whatsappInstanceId) {
+      // Check real-time status from Hazapi API
+      const channelInfo = await getHazapiChannelStatus();
+      
+      if (channelInfo) {
+        // Map Hazapi status to our status format
+        let status = 'disconnected';
+        if (channelInfo.status === 'CONNECTED' || channelInfo.status === 'connected') {
+          status = 'connected';
+        } else if (channelInfo.status === 'DISCONNECTED' || channelInfo.status === 'disconnected') {
+          status = 'disconnected';
+        } else if (channelInfo.status === 'qrcode' || channelInfo.status === 'QRCODE') {
+          status = 'qrcode';
+        }
+
+        // Update database with real-time status
+        if (status !== company.whatsappStatus) {
+          await db.update(companies)
+            .set({ 
+              whatsappStatus: status,
+              whatsappConnectedAt: status === 'connected' ? new Date() : company.whatsappConnectedAt
+            })
+            .where(eq(companies.id, companyIdToUse));
+        }
+
+        res.json({
+          status,
+          instanceId: company.whatsappInstanceId || `hazapi_${companyIdToUse}`,
+          qrCode: null,
+          connectedAt: status === 'connected' ? company.whatsappConnectedAt : null,
+          phoneNumber: channelInfo.number || null,
+          profileName: channelInfo.name || null
+        });
+      } else {
+        // Fallback to database status if Hazapi API fails
         res.json({
           status: company.whatsappStatus || 'disconnected',
           instanceId: company.whatsappInstanceId,
@@ -3964,13 +3991,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           connectedAt: company.whatsappConnectedAt,
           phoneNumber: null,
           profileName: null
-        });
-      } else {
-        res.json({
-          status: 'not_configured',
-          instanceId: null,
-          qrCode: null,
-          connectedAt: null
         });
       }
     } catch (error) {
