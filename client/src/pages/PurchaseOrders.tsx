@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, ShoppingCart, Eye } from "lucide-react";
+import { 
+  Plus, 
+  Edit, 
+  Trash2, 
+  ShoppingCart, 
+  Eye, 
+  FileText 
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
