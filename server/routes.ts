@@ -3225,14 +3225,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Create company error:", error);
       
       // Handle database unique constraint errors more gracefully
-      if (error.code === '23505') {
+      if (error.code === '23505' || (error.message && error.message.includes('unique constraint'))) {
+        const detail = error.detail || error.message;
         return res.status(400).json({ 
           message: "Dados duplicados detectados", 
-          details: error.detail || "CNPJ ou Email já cadastrado no sistema."
+          details: detail.includes('cnpj') ? "Este CNPJ já está cadastrado no sistema." : 
+                   detail.includes('email') ? "Este Email já está cadastrado no sistema." : 
+                   "CNPJ ou Email já cadastrado no sistema."
         });
       }
       
-      res.status(500).json({ message: "Internal server error", details: error.message });
+      res.status(500).json({ message: error.message || "Internal server error", details: error.message });
     }
   });
 

@@ -120,12 +120,13 @@ export default function Companies() {
         body: JSON.stringify(data),
       });
       
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erro ao criar empresa");
+        throw new Error(responseData.details || responseData.message || "Erro ao criar empresa");
       }
       
-      return response.json();
+      return responseData;
     },
     onSuccess: (data: CompanyWithAdmin) => {
       queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
