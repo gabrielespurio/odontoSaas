@@ -744,7 +744,7 @@ export default function PurchaseOrders() {
 
       {/* View Order Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-5xl p-0 overflow-hidden border-none shadow-2xl">
+        <DialogContent className="max-w-5xl !w-[90vw] p-0 overflow-hidden border-none shadow-2xl">
           <DialogHeader className="p-6 pb-4 bg-primary text-primary-foreground">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-white/20 rounded-lg">
