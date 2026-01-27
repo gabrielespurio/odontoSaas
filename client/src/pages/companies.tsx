@@ -453,7 +453,7 @@ export default function Companies() {
 
       {/* Edit Company Dialog */}
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
-        <DialogContent className="max-w-[90vw] w-[90vw] h-[95vh] flex flex-col p-0">
+        <DialogContent className="!max-w-[90vw] w-[90vw] !max-h-[95vh] h-[95vh] flex flex-col p-0">
           <DialogHeader className="px-6 py-4 border-b shrink-0">
             <DialogTitle className="text-xl font-semibold flex items-center gap-3">
               <Building2 className="h-6 w-6 text-teal-600" />
