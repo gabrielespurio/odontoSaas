@@ -263,16 +263,27 @@ export default function Companies() {
       return <Badge variant="destructive">Inativo</Badge>;
     }
     
-    const today = new Date();
+    const now = new Date();
+    const nowTime = now.getTime();
     const trialEnd = company.trialEndDate ? new Date(company.trialEndDate) : null;
+    const subscriptionStart = company.subscriptionStartDate ? new Date(company.subscriptionStartDate) : null;
     const subscriptionEnd = company.subscriptionEndDate ? new Date(company.subscriptionEndDate) : null;
     
-    if (trialEnd && trialEnd > today) {
-      return <Badge variant="secondary">Trial</Badge>;
+    // Verifica se tem assinatura ativa
+    const hasActiveSubscription = subscriptionStart && subscriptionStart.getTime() <= nowTime && 
+      (!subscriptionEnd || subscriptionEnd.getTime() >= nowTime);
+    
+    if (hasActiveSubscription) {
+      return <Badge variant="default">Ativo</Badge>;
     }
     
-    if (subscriptionEnd && subscriptionEnd > today) {
-      return <Badge variant="default">Ativo</Badge>;
+    // Se trial ainda está válido e não tem assinatura ativa
+    if (trialEnd) {
+      const trialEndAdjusted = new Date(trialEnd);
+      trialEndAdjusted.setUTCHours(23, 59, 59, 999);
+      if (trialEndAdjusted.getTime() >= nowTime) {
+        return <Badge variant="secondary">Trial</Badge>;
+      }
     }
     
     return <Badge variant="outline">Período expirado</Badge>;
