@@ -1651,49 +1651,110 @@ export default function Consultations() {
 
       {/* Consultation Detail Modal */}
       <Dialog open={!!selectedConsultation} onOpenChange={() => setSelectedConsultation(null)}>
-        <DialogContent className="!max-w-4xl w-full">
-          <DialogHeader>
-            <DialogTitle>Detalhes da Consulta</DialogTitle>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className="p-6 pb-4 bg-primary text-primary-foreground">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold">Detalhes da Consulta</DialogTitle>
+                <p className="text-sm text-white/80">Informações completas do atendimento</p>
+              </div>
+            </div>
           </DialogHeader>
-          {selectedConsultation && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-neutral-700">Paciente</Label>
-                  <p className="text-sm text-neutral-900">{selectedConsultation.patient?.name}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-neutral-700">Dentista</Label>
-                  <p className="text-sm text-neutral-900">{selectedConsultation.dentist?.name}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-neutral-700">Data</Label>
-                  <p className="text-sm text-neutral-900">{formatDate(selectedConsultation.date)}</p>
+
+          <div className="p-6 space-y-6 bg-background">
+            {/* Seção Principal - Grid */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Paciente</Label>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <UserIcon className="w-4 h-4 text-primary" />
+                  </div>
+                  <span className="font-medium text-foreground">
+                    {patients?.find(p => p.id === selectedConsultation?.patientId)?.name || selectedConsultation?.patient?.name || "N/A"}
+                  </span>
                 </div>
               </div>
-              
-              {selectedConsultation.procedures && selectedConsultation.procedures.length > 0 && (
-                <div>
-                  <Label className="text-sm font-medium text-neutral-700">Procedimentos</Label>
-                  <p className="text-sm text-neutral-900">{selectedConsultation.procedures.join(", ")}</p>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dentista</Label>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Stethoscope className="w-4 h-4 text-primary" />
+                  </div>
+                  <span className="font-medium text-foreground">
+                    {dentists?.find(d => d.id === selectedConsultation?.dentistId)?.name || selectedConsultation?.dentist?.name || "N/A"}
+                  </span>
                 </div>
-              )}
-              
-              {selectedConsultation.clinicalNotes && (
-                <div>
-                  <Label className="text-sm font-medium text-neutral-700">Observações Clínicas</Label>
-                  <p className="text-sm text-neutral-900">{selectedConsultation.clinicalNotes}</p>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data e Horário</Label>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Calendar className="w-4 h-4 text-primary" />
+                  </div>
+                  <span className="font-medium text-foreground">
+                    {selectedConsultation?.date ? formatDate(selectedConsultation.date) : "N/A"}
+                  </span>
                 </div>
-              )}
-              
-              {selectedConsultation.observations && (
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status Atual</Label>
                 <div>
-                  <Label className="text-sm font-medium text-neutral-700">Observações Gerais</Label>
-                  <p className="text-sm text-neutral-900">{selectedConsultation.observations}</p>
+                  <Badge className={`${getStatusColor(selectedConsultation?.status || "")} text-white border-none px-3 py-1`}>
+                    {getStatusLabel(selectedConsultation?.status || "")}
+                  </Badge>
                 </div>
-              )}
+              </div>
             </div>
-          )}
+
+            {/* Procedimentos */}
+            <div className="space-y-2 pt-4 border-t">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Procedimentos Realizados</Label>
+              <div className="flex flex-wrap gap-2">
+                {selectedConsultation?.procedures && selectedConsultation.procedures.length > 0 ? (
+                  selectedConsultation.procedures.map((proc: any, index: number) => (
+                    <Badge key={index} variant="secondary" className="bg-primary/5 text-primary border-primary/20 hover:bg-primary/10 transition-colors">
+                      {proc}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-muted-foreground italic">Nenhum procedimento registrado</span>
+                )}
+              </div>
+            </div>
+
+            {/* Observações / Notas */}
+            {(selectedConsultation?.clinicalNotes || selectedConsultation?.observations) && (
+              <div className="space-y-2 pt-4 border-t">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notas Clínicas</Label>
+                <div className="p-3 bg-muted/30 rounded-lg text-sm text-foreground leading-relaxed border border-border/50">
+                  {selectedConsultation?.clinicalNotes || selectedConsultation?.observations || "Sem observações."}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 bg-muted/20 border-t flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setSelectedConsultation(null)} className="hover-elevate">
+              Fechar
+            </Button>
+            {selectedConsultation && getStatusActions(selectedConsultation.status).map((action) => (
+              <Button
+                key={action.value}
+                onClick={() => handleActionClick(selectedConsultation, action.value)}
+                className={`gap-2 hover-elevate ${action.value === 'cancelado' ? 'bg-destructive hover:bg-destructive/90 text-white' : 'bg-primary hover:bg-primary/90 text-white'}`}
+              >
+                <action.icon className="w-4 h-4" />
+                {action.label}
+              </Button>
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
 
