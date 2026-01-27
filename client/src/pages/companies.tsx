@@ -138,9 +138,10 @@ export default function Companies() {
       });
     },
     onError: (error: Error) => {
+      console.error("Create company error details:", error);
       toast({
         title: "Erro ao criar empresa",
-        description: error.message,
+        description: error.message || "Ocorreu um erro interno. Verifique se o CNPJ ou Email já estão cadastrados.",
         variant: "destructive",
       });
     },

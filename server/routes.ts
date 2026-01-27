@@ -3207,10 +3207,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionEndDate: companyData.subscriptionEndDate ? companyData.subscriptionEndDate : null,
       };
       
-      const [company] = await db.insert(companies).values(cleanedData).returning();
-      res.json(company);
-    } catch (error) {
+      // Check for duplicate CNPJ if provided
+      if (cleanedData.cnpj) {
+        const allCompanies = await storage.getCompanies();
+        const duplicate = allCompanies.find(c => c.cnpj === cleanedData.cnpj);
+        if (duplicate) {
+          return res.status(400).json({ 
+            message: "CNPJ já cadastrado", 
+            details: `A empresa "${duplicate.name}" já utiliza este CNPJ.` 
+          });
+        }
+      }
+
+      const { company, adminUser } = await storage.createCompanyWithAdmin(cleanedData);
+      res.json({ company, adminUser });
+    } catch (error: any) {
       console.error("Create company error:", error);
+      
+      // Handle database unique constraint errors more gracefully
+      if (error.code === '23505') {
+        return res.status(400).json({ 
+          message: "Dados duplicados detectados", 
+          details: error.detail || "CNPJ ou Email já cadastrado no sistema."
+        });
+      }
+      
       res.status(500).json({ message: "Internal server error", details: error.message });
     }
   });
