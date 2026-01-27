@@ -12,7 +12,7 @@ export async function runSaasMigration() {
       WHERE table_schema = 'public' AND table_name = 'companies'
     `);
 
-    if (tablesResult.length === 0) {
+    if (tablesResult.rows?.length === 0) {
       console.log("Creating companies table...");
       
       // Create companies table
@@ -24,6 +24,8 @@ export async function runSaasMigration() {
           "cnpj" TEXT UNIQUE,
           "email" TEXT NOT NULL,
           "phone" TEXT NOT NULL,
+          "responsible_name" TEXT NOT NULL DEFAULT 'Admin',
+          "responsible_phone" TEXT NOT NULL DEFAULT '000',
           "cep" TEXT,
           "street" TEXT,
           "number" TEXT,
@@ -48,19 +50,33 @@ export async function runSaasMigration() {
           "name", 
           "email", 
           "phone", 
+          "responsible_name",
+          "responsible_phone",
           "plan_type",
           "max_users",
           "max_patients",
-          "is_active"
-        ) VALUES (
-          'OdontoSync Clinic', 
-          'admin@odontosync.com', 
-          '(11) 99999-9999', 
-          'enterprise',
-          50,
-          5000,
-          true
-        )
+          "is_active",
+          "created_at"
+        ) VALUES 
+        ('Clinica Ativa', 'contato@ativa.com', '123', 'Marcos', '123', 'enterprise', 50, 5000, true, NOW() - INTERVAL '1 month'),
+        ('Clinica Expirada', 'contato@expirada.com', '123', 'Ana', '123', 'basic', 5, 500, true, NOW() - INTERVAL '2 months'),
+        ('Clinica Trial 1', 'trial1@test.com', '123', 'Jose', '123', 'basic', 5, 500, true, NOW()),
+        ('Clinica Trial 2', 'trial2@test.com', '123', 'Maria', '123', 'basic', 5, 500, true, NOW()),
+        ('Clinica Nova', 'nova@test.com', '123', 'Pedro', '123', 'basic', 5, 500, true, NOW())
+      `);
+
+      // Update dates for specific scenarios
+      await db.execute(sql`
+        -- Ativa (ID 1)
+        UPDATE companies SET subscription_start_date = NOW() - INTERVAL '1 month' WHERE id = 1;
+        -- Expirada (ID 2)
+        UPDATE companies SET trial_end_date = NOW() - INTERVAL '1 day' WHERE id = 2;
+        -- Trial 1 (ID 3) - Expiring soon
+        UPDATE companies SET trial_end_date = NOW() + INTERVAL '3 days' WHERE id = 3;
+        -- Trial 2 (ID 4)
+        UPDATE companies SET trial_end_date = NOW() + INTERVAL '15 days' WHERE id = 4;
+        -- Nova (ID 5)
+        UPDATE companies SET trial_end_date = NOW() + INTERVAL '30 days' WHERE id = 5;
       `);
     }
 
