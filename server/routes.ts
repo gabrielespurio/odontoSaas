@@ -4220,68 +4220,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const allCompanies = await storage.getCompanies();
       const now = new Date();
-      
-      // console.log("=== SAAS METRICS DEBUG ===");
-      // console.log("Current time (now):", now.toISOString());
+      const nowTime = now.getTime();
       
       const totalCompanies = allCompanies.length;
+      
+      // Lógica simplificada para Trial:
+      // Se tem data de trial no futuro e não tem uma assinatura ativa HOJE
       const trialCount = allCompanies.filter(c => {
         if (!c.trialEndDate) return false;
-        const trialExpiry = new Date(c.trialEndDate);
-        trialExpiry.setUTCHours(23, 59, 59, 999);
-        const isTrialActive = trialExpiry.getTime() >= now.getTime();
-        const hasNoSubscription = !c.subscriptionStartDate || new Date(c.subscriptionStartDate).getTime() > now.getTime();
-        return isTrialActive && hasNoSubscription;
+        
+        const trialEnd = new Date(c.trialEndDate);
+        trialEnd.setUTCHours(23, 59, 59, 999);
+        const isTrialFuture = trialEnd.getTime() >= nowTime;
+        
+        if (!isTrialFuture) return false;
+
+        // Se tem assinatura ativa iniciada, não é mais trial
+        if (c.subscriptionStartDate) {
+          const subStart = new Date(c.subscriptionStartDate);
+          if (subStart.getTime() <= nowTime) {
+            // Assinatura começou. Ela ainda é válida?
+            if (!c.subscriptionEndDate) return false; // Assinatura vitalícia ativa
+            const subEnd = new Date(c.subscriptionEndDate);
+            subEnd.setUTCHours(23, 59, 59, 999);
+            if (subEnd.getTime() >= nowTime) return false; // Assinatura válida ativa
+          }
+        }
+        
+        return true;
       }).length;
       
       const activeSubscriptionCount = allCompanies.filter(c => {
         if (!c.subscriptionStartDate) return false;
         const subStart = new Date(c.subscriptionStartDate);
-        if (subStart.getTime() > now.getTime()) return false;
+        if (subStart.getTime() > nowTime) return false;
         
         if (!c.subscriptionEndDate) return true;
         const subEnd = new Date(c.subscriptionEndDate);
         subEnd.setUTCHours(23, 59, 59, 999);
-        return subEnd.getTime() >= now.getTime();
+        return subEnd.getTime() >= nowTime;
       }).length;
 
       const expiredCount = allCompanies.filter(c => {
-        const hasStartedSubscription = c.subscriptionStartDate && new Date(c.subscriptionStartDate).getTime() <= now.getTime();
+        // Se já tem assinatura ativa, ela não está expirada (está ativa)
+        // Se teve assinatura e o fim já passou, está expirada
+        // Se nunca teve assinatura e o trial passou, está expirada
         
-        if (hasStartedSubscription) {
+        const hasStartedSub = c.subscriptionStartDate && new Date(c.subscriptionStartDate).getTime() <= nowTime;
+        
+        if (hasStartedSub) {
           if (!c.subscriptionEndDate) return false;
           const subEnd = new Date(c.subscriptionEndDate);
           subEnd.setUTCHours(23, 59, 59, 999);
-          return subEnd.getTime() < now.getTime();
+          return subEnd.getTime() < nowTime;
         }
         
         if (c.trialEndDate) {
           const trialEnd = new Date(c.trialEndDate);
           trialEnd.setUTCHours(23, 59, 59, 999);
-          return trialEnd.getTime() < now.getTime();
+          return trialEnd.getTime() < nowTime;
         }
         
         return false;
       }).length;
-      
-      // console.log(`Final metrics: total=${totalCompanies}, trial=${trialCount}, active=${activeSubscriptionCount}, expired=${expiredCount}`);
-      // REMOVE DEBUG LOGS AFTER VERIFICATION
-      // console.log("=== END DEBUG ===");
 
       // Cálculo de crescimento
-      const thisMonth = now.getMonth();
-      const thisYear = now.getFullYear();
+      const thisMonth = now.getUTCMonth();
+      const thisYear = now.getUTCFullYear();
       const lastMonth = thisMonth === 0 ? 11 : thisMonth - 1;
       const lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
 
       const newCompaniesThisMonth = allCompanies.filter(c => {
         const created = new Date(c.createdAt);
-        return created.getMonth() === thisMonth && created.getFullYear() === thisYear;
+        return created.getUTCMonth() === thisMonth && created.getUTCFullYear() === thisYear;
       }).length;
 
       const newCompaniesLastMonth = allCompanies.filter(c => {
         const created = new Date(c.createdAt);
-        return created.getMonth() === lastMonth && created.getFullYear() === lastMonthYear;
+        return created.getUTCMonth() === lastMonth && created.getUTCFullYear() === lastMonthYear;
       }).length;
 
       const growthPercentage = newCompaniesLastMonth === 0 
@@ -4292,11 +4308,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const monthlyHistory = [];
       for (let i = 5; i >= 0; i--) {
         const d = new Date();
-        d.setMonth(d.getMonth() - i);
-        const monthName = d.toLocaleString('pt-BR', { month: 'short' });
+        d.setUTCMonth(d.getUTCMonth() - i);
+        const monthName = d.toLocaleString('pt-BR', { month: 'short', timeZone: 'UTC' });
         const count = allCompanies.filter(c => {
           const created = new Date(c.createdAt);
-          return created.getMonth() === d.getMonth() && created.getFullYear() === d.getFullYear();
+          return created.getUTCMonth() === d.getUTCMonth() && created.getUTCFullYear() === d.getUTCFullYear();
         }).length;
         monthlyHistory.push({ month: monthName, count });
       }
@@ -4304,7 +4320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const trialsExpiringSoon = allCompanies.filter(c => {
         if (!c.trialEndDate) return false;
         const expiry = new Date(c.trialEndDate);
-        const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const diffDays = Math.ceil((expiry.getTime() - nowTime) / (1000 * 60 * 60 * 24));
         return diffDays > 0 && diffDays <= 7;
       }).length;
 
