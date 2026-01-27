@@ -153,6 +153,46 @@ export default function SaasManagement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Lista de Empresas em Trial */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Clock className="w-5 h-5 text-yellow-500" />
+            Empresas em Período Trial
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 font-semibold">Empresa</th>
+                  <th className="text-right py-2 font-semibold">Vencimento do Trial</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics?.trialCompaniesList && metrics.trialCompaniesList.length > 0 ? (
+                  metrics.trialCompaniesList.map((company: any) => (
+                    <tr key={company.id} className="border-b last:border-0">
+                      <td className="py-3 font-medium">{company.name}</td>
+                      <td className="py-3 text-right text-muted-foreground">
+                        {new Date(company.trialEndDate).toLocaleDateString('pt-BR')}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={2} className="py-8 text-center text-muted-foreground">
+                      Nenhuma empresa em trial no momento.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

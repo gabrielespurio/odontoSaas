@@ -4324,6 +4324,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return diffDays > 0 && diffDays <= 7;
       }).length;
 
+      // Lista de empresas em trial para o novo card
+      const trialCompaniesList = allCompanies
+        .filter(c => {
+          if (!c.trialEndDate) return false;
+          const trialEnd = new Date(c.trialEndDate);
+          trialEnd.setUTCHours(23, 59, 59, 999);
+          const isTrialFuture = trialEnd.getTime() >= nowTime;
+          if (!isTrialFuture) return false;
+
+          if (c.subscriptionStartDate) {
+            const subStart = new Date(c.subscriptionStartDate);
+            if (subStart.getTime() <= nowTime) {
+              if (!c.subscriptionEndDate) return false;
+              const subEnd = new Date(c.subscriptionEndDate);
+              subEnd.setUTCHours(23, 59, 59, 999);
+              if (subEnd.getTime() >= nowTime) return false;
+            }
+          }
+          return true;
+        })
+        .map(c => ({
+          id: c.id,
+          name: c.name,
+          trialEndDate: c.trialEndDate
+        }));
+
       res.json({
         totalCompanies,
         trialCount,
@@ -4332,7 +4358,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         newCompaniesThisMonth,
         growthPercentage,
         monthlyHistory,
-        trialsExpiringSoon
+        trialsExpiringSoon,
+        trialCompaniesList
       });
     } catch (error) {
       console.error("SaaS metrics error:", error);
