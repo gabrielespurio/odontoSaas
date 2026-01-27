@@ -4221,45 +4221,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allCompanies = await storage.getCompanies();
       const now = new Date();
       
+      // console.log("=== SAAS METRICS DEBUG ===");
+      // console.log("Current time (now):", now.toISOString());
+      
       const totalCompanies = allCompanies.length;
       const trialCount = allCompanies.filter(c => {
         if (!c.trialEndDate) return false;
         const trialExpiry = new Date(c.trialEndDate);
-        trialExpiry.setHours(23, 59, 59, 999); // Incluir o dia inteiro
-        const isTrialActive = trialExpiry >= now;
-        const hasNoSubscription = !c.subscriptionStartDate || new Date(c.subscriptionStartDate) > now;
+        trialExpiry.setUTCHours(23, 59, 59, 999);
+        const isTrialActive = trialExpiry.getTime() >= now.getTime();
+        const hasNoSubscription = !c.subscriptionStartDate || new Date(c.subscriptionStartDate).getTime() > now.getTime();
         return isTrialActive && hasNoSubscription;
       }).length;
       
       const activeSubscriptionCount = allCompanies.filter(c => {
         if (!c.subscriptionStartDate) return false;
         const subStart = new Date(c.subscriptionStartDate);
-        if (subStart > now) return false;
+        if (subStart.getTime() > now.getTime()) return false;
         
         if (!c.subscriptionEndDate) return true;
         const subEnd = new Date(c.subscriptionEndDate);
-        subEnd.setHours(23, 59, 59, 999); // Incluir o dia inteiro
-        return subEnd >= now;
+        subEnd.setUTCHours(23, 59, 59, 999);
+        return subEnd.getTime() >= now.getTime();
       }).length;
 
       const expiredCount = allCompanies.filter(c => {
-        const hasStartedSubscription = c.subscriptionStartDate && new Date(c.subscriptionStartDate) <= now;
+        const hasStartedSubscription = c.subscriptionStartDate && new Date(c.subscriptionStartDate).getTime() <= now.getTime();
         
         if (hasStartedSubscription) {
           if (!c.subscriptionEndDate) return false;
           const subEnd = new Date(c.subscriptionEndDate);
-          subEnd.setHours(23, 59, 59, 999);
-          return subEnd < now;
+          subEnd.setUTCHours(23, 59, 59, 999);
+          return subEnd.getTime() < now.getTime();
         }
         
         if (c.trialEndDate) {
           const trialEnd = new Date(c.trialEndDate);
-          trialEnd.setHours(23, 59, 59, 999);
-          return trialEnd < now;
+          trialEnd.setUTCHours(23, 59, 59, 999);
+          return trialEnd.getTime() < now.getTime();
         }
         
         return false;
       }).length;
+      
+      // console.log(`Final metrics: total=${totalCompanies}, trial=${trialCount}, active=${activeSubscriptionCount}, expired=${expiredCount}`);
+      // REMOVE DEBUG LOGS AFTER VERIFICATION
+      // console.log("=== END DEBUG ===");
 
       // Cálculo de crescimento
       const thisMonth = now.getMonth();
