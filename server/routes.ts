@@ -4222,9 +4222,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const now = new Date();
       
       const totalCompanies = allCompanies.length;
-      const trialCount = allCompanies.filter(c => c.trialEndDate && new Date(c.trialEndDate) > now && !c.subscriptionStartDate).length;
-      const activeSubscriptionCount = allCompanies.filter(c => c.subscriptionEndDate && new Date(c.subscriptionEndDate) > now).length;
-      const expiredCount = allCompanies.filter(c => c.subscriptionEndDate && new Date(c.subscriptionEndDate) < now).length;
+      const trialCount = allCompanies.filter(c => {
+        if (!c.trialEndDate) return false;
+        const trialExpiry = new Date(c.trialEndDate);
+        const isTrialActive = trialExpiry >= now;
+        const hasNoSubscription = !c.subscriptionStartDate || new Date(c.subscriptionStartDate) > now;
+        return isTrialActive && hasNoSubscription;
+      }).length;
+      
+      const activeSubscriptionCount = allCompanies.filter(c => {
+        if (!c.subscriptionStartDate) return false;
+        const subStart = new Date(c.subscriptionStartDate);
+        if (subStart > now) return false;
+        
+        if (!c.subscriptionEndDate) return true; // Infinite/renewing subscription
+        const subEnd = new Date(c.subscriptionEndDate);
+        return subEnd >= now;
+      }).length;
+
+      const expiredCount = allCompanies.filter(c => {
+        const hasStartedSubscription = c.subscriptionStartDate && new Date(c.subscriptionStartDate) <= now;
+        
+        if (hasStartedSubscription) {
+          if (!c.subscriptionEndDate) return false;
+          return new Date(c.subscriptionEndDate) < now;
+        }
+        
+        // If never had a subscription, check if trial is expired
+        if (c.trialEndDate) {
+          return new Date(c.trialEndDate) < now;
+        }
+        
+        return false;
+      }).length;
 
       // Cálculo de crescimento
       const thisMonth = now.getMonth();
