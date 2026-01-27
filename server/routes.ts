@@ -900,6 +900,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // DEBUG: Temporary endpoint to check company data (REMOVE AFTER DEBUGGING)
+  app.get("/api/debug/companies-trial", async (req, res) => {
+    try {
+      const allCompanies = await storage.getCompanies();
+      const now = new Date();
+      const nowTime = now.getTime();
+      
+      const debugData = allCompanies.map(c => {
+        const trialEnd = c.trialEndDate ? new Date(c.trialEndDate) : null;
+        const trialEndAdjusted = trialEnd ? new Date(trialEnd) : null;
+        if (trialEndAdjusted) trialEndAdjusted.setUTCHours(23, 59, 59, 999);
+        
+        const subStart = c.subscriptionStartDate ? new Date(c.subscriptionStartDate) : null;
+        const subEnd = c.subscriptionEndDate ? new Date(c.subscriptionEndDate) : null;
+        
+        const isTrialFuture = trialEndAdjusted ? trialEndAdjusted.getTime() >= nowTime : false;
+        const hasActiveSubscription = subStart && subStart.getTime() <= nowTime && 
+          (!subEnd || subEnd.getTime() >= nowTime);
+        
+        return {
+          id: c.id,
+          name: c.name,
+          trialEndDate: c.trialEndDate,
+          trialEndDateParsed: trialEndAdjusted?.toISOString(),
+          subscriptionStartDate: c.subscriptionStartDate,
+          subscriptionEndDate: c.subscriptionEndDate,
+          isTrialFuture,
+          hasActiveSubscription,
+          shouldCountAsTrial: isTrialFuture && !hasActiveSubscription
+        };
+      });
+      
+      res.json({
+        serverTime: now.toISOString(),
+        serverTimeMs: nowTime,
+        companies: debugData
+      });
+    } catch (error) {
+      console.error("Debug error:", error);
+      res.status(500).json({ error: String(error) });
+    }
+  });
+
   // Protected routes
   app.use("/api", authenticateToken);
 
@@ -4223,6 +4266,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const nowTime = now.getTime();
       
       const totalCompanies = allCompanies.length;
+      
+      // DEBUG: Log para verificar empresas
+      console.log("=== DEBUG SAAS METRICS ===");
+      console.log("Now:", now.toISOString(), "nowTime:", nowTime);
+      allCompanies.forEach(c => {
+        console.log(`Company: ${c.name}`);
+        console.log(`  trialEndDate: ${c.trialEndDate}`);
+        console.log(`  subscriptionStartDate: ${c.subscriptionStartDate}`);
+        console.log(`  subscriptionEndDate: ${c.subscriptionEndDate}`);
+        if (c.trialEndDate) {
+          const trialEnd = new Date(c.trialEndDate);
+          trialEnd.setUTCHours(23, 59, 59, 999);
+          console.log(`  trialEnd parsed: ${trialEnd.toISOString()}, time: ${trialEnd.getTime()}`);
+          console.log(`  isTrialFuture: ${trialEnd.getTime() >= nowTime}`);
+        }
+      });
+      console.log("=== END DEBUG ===");
       
       // Lógica simplificada para Trial:
       // Se tem data de trial no futuro e não tem uma assinatura ativa HOJE
