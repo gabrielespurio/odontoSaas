@@ -4187,6 +4187,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // SaaS Management Routes (Superadmin only)
+  app.get("/api/saas/metrics", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    if (req.user?.role !== "admin" && req.user?.role !== "Administrador" || req.user?.companyId !== null) {
+      return res.status(403).json({ message: "Acesso negado" });
+    }
+
+    try {
+      const allCompanies = await storage.getCompanies();
+      const now = new Date();
+      
+      const totalCompanies = allCompanies.length;
+      const trialCount = allCompanies.filter(c => c.trialEndDate && new Date(c.trialEndDate) > now && !c.subscriptionStartDate).length;
+      const activeSubscriptionCount = allCompanies.filter(c => c.subscriptionEndDate && new Date(c.subscriptionEndDate) > now).length;
+      const expiredCount = allCompanies.filter(c => c.subscriptionEndDate && new Date(c.subscriptionEndDate) < now).length;
+
+      // Cálculo de crescimento
+      const thisMonth = now.getMonth();
+      const thisYear = now.getFullYear();
+      const lastMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+      const lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+
+      const newCompaniesThisMonth = allCompanies.filter(c => {
+        const created = new Date(c.createdAt);
+        return created.getMonth() === thisMonth && created.getFullYear() === thisYear;
+      }).length;
+
+      const newCompaniesLastMonth = allCompanies.filter(c => {
+        const created = new Date(c.createdAt);
+        return created.getMonth() === lastMonth && created.getFullYear() === lastMonthYear;
+      }).length;
+
+      const growthPercentage = newCompaniesLastMonth === 0 
+        ? (newCompaniesThisMonth > 0 ? 100 : 0)
+        : Math.round(((newCompaniesThisMonth - newCompaniesLastMonth) / newCompaniesLastMonth) * 100);
+
+      // Histórico mensal (últimos 6 meses)
+      const monthlyHistory = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const monthName = d.toLocaleString('pt-BR', { month: 'short' });
+        const count = allCompanies.filter(c => {
+          const created = new Date(c.createdAt);
+          return created.getMonth() === d.getMonth() && created.getFullYear() === d.getFullYear();
+        }).length;
+        monthlyHistory.push({ month: monthName, count });
+      }
+
+      const trialsExpiringSoon = allCompanies.filter(c => {
+        if (!c.trialEndDate) return false;
+        const expiry = new Date(c.trialEndDate);
+        const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        return diffDays > 0 && diffDays <= 7;
+      }).length;
+
+      res.json({
+        totalCompanies,
+        trialCount,
+        activeSubscriptionCount,
+        expiredCount,
+        newCompaniesThisMonth,
+        growthPercentage,
+        monthlyHistory,
+        trialsExpiringSoon
+      });
+    } catch (error) {
+      console.error("SaaS metrics error:", error);
+      res.status(500).json({ message: "Erro ao carregar métricas do SaaS" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
