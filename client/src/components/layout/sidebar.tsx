@@ -62,6 +62,7 @@ const navigation = [
   { name: "Relatórios", href: "/reports", icon: FileText, module: "reports" },
   { name: "Configurações", href: "/settings", icon: Settings, module: "settings" },
   { name: "Empresa", href: "/companies", icon: Building2, module: "companies" },
+  { name: "Gestão", href: "/saas-management", icon: BarChart3, module: "saas-management" },
 ];
 
 interface SidebarProps {

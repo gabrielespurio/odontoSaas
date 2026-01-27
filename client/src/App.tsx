@@ -29,6 +29,7 @@ import StockProducts from "@/pages/stock-products";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import Companies from "@/pages/companies";
+import SaasManagement from "@/pages/saas-management";
 import MainLayout from "@/components/layout/main-layout";
 import ProtectedRoute from "@/components/protected-route";
 import NotFound from "@/pages/not-found";
@@ -95,6 +96,7 @@ function Router() {
         <Route path="/reports" component={() => <ProtectedRoute module="reports"><Reports /></ProtectedRoute>} />
         <Route path="/settings" component={() => <ProtectedRoute module="settings"><Settings /></ProtectedRoute>} />
         <Route path="/companies" component={() => <ProtectedRoute module="companies"><Companies /></ProtectedRoute>} />
+        <Route path="/saas-management" component={() => <ProtectedRoute module="saas-management"><SaasManagement /></ProtectedRoute>} />
         <Route component={NotFound} />
       </Switch>
     </MainLayout>

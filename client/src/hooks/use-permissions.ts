@@ -68,7 +68,13 @@ export function usePermissions() {
     }
     
     // Admin role has access to everything (backward compatibility)
-    if (user.role === "admin" || user.role === "Administrador") return true;
+    if (user.role === "admin" || user.role === "Administrador") {
+      // Mas o módulo saas-management e companies é restrito a quem não tem companyId
+      if (module === "saas-management" || module === "companies") {
+        return user.companyId === null || user.companyId === undefined || userCompany?.isSystemAdmin === true;
+      }
+      return true;
+    }
     
     // If no profile found, use default permissions for legacy roles
     if (!userProfile) {
