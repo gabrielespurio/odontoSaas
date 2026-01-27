@@ -285,14 +285,14 @@ export default function PurchaseOrders() {
     setDialogOpen(true);
   };
 
-  const getStatusColor = (status: string) => {
+    const getStatusColor = (status: string) => {
     switch (status) {
       case "draft":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-500 text-white";
       case "received":
-        return "bg-green-100 text-green-800";
+        return "bg-green-600 text-white";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-500 text-white";
     }
   };
 
@@ -736,90 +736,108 @@ export default function PurchaseOrders() {
 
       {/* View Order Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="!max-w-6xl w-full !max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Detalhes do Pedido - {viewingOrder?.orderNumber}</DialogTitle>
-          </DialogHeader>
-          {viewingOrder && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Fornecedor</label>
-                  <p className="mt-1">{viewingOrder.supplier?.name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Status</label>
-                  <p className="mt-1">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(viewingOrder.status)}`}>
-                      {getStatusLabel(viewingOrder.status)}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Data do Pedido</label>
-                  <p className="mt-1">{viewingOrder.orderDate}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Data Prevista de Entrega</label>
-                  <p className="mt-1">{viewingOrder.expectedDeliveryDate || "Não informada"}</p>
-                </div>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className="p-6 pb-4 bg-primary text-primary-foreground">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <ShoppingCart className="w-5 h-5 text-white" />
               </div>
-
               <div>
-                <h3 className="text-lg font-medium mb-4">Itens do Pedido</h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Descrição
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Quantidade
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Preço Unit.
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Total
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {viewingOrder.items.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {item.description}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {item.quantity}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            R$ {parseFloat(item.unitPrice).toFixed(2)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            R$ {parseFloat(item.totalPrice).toFixed(2)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <DialogTitle className="text-xl font-bold">Pedido {viewingOrder?.orderNumber}</DialogTitle>
+                <p className="text-sm text-white/80">Detalhes do pedido de compra</p>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {viewingOrder && (
+            <div className="bg-background">
+              <div className="p-6 space-y-6">
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Fornecedor</label>
+                    <p className="font-medium text-foreground">{viewingOrder.supplier?.name}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</label>
+                    <div>
+                      <Badge className={`${getStatusColor(viewingOrder.status)} border-none px-3 py-1`}>
+                        {getStatusLabel(viewingOrder.status)}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data do Pedido</label>
+                    <p className="font-medium text-foreground">{viewingOrder.orderDate}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Previsão de Entrega</label>
+                    <p className="font-medium text-foreground">{viewingOrder.expectedDeliveryDate || "Não informada"}</p>
+                  </div>
+                </div>
+
+                {/* Items Table */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Itens do Pedido</h3>
+                  <div className="rounded-xl border border-border/50 overflow-hidden shadow-sm">
+                    <Table>
+                      <TableHeader className="bg-muted/50">
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead className="text-xs font-bold">Descrição</TableHead>
+                          <TableHead className="text-xs font-bold text-center">Qtd</TableHead>
+                          <TableHead className="text-xs font-bold text-right">Preço Unit.</TableHead>
+                          <TableHead className="text-xs font-bold text-right">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {viewingOrder.items.map((item, index) => (
+                          <TableRow key={index} className="hover:bg-muted/30 transition-colors border-border/50">
+                            <TableCell className="text-sm font-medium py-3">
+                              {item.description}
+                            </TableCell>
+                            <TableCell className="text-sm text-center py-3">
+                              {item.quantity}
+                            </TableCell>
+                            <TableCell className="text-sm text-right py-3 tabular-nums">
+                              R$ {parseFloat(item.unitPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                            <TableCell className="text-sm text-right py-3 font-semibold tabular-nums text-primary">
+                              R$ {parseFloat(item.totalPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pt-4 border-t border-border/50">
+                  <div className="space-y-1 max-w-md">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Observações</label>
+                    <p className="text-sm text-foreground leading-relaxed italic">
+                      {viewingOrder.notes || "Nenhuma observação registrada."}
+                    </p>
+                  </div>
+                  <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 min-w-[200px]">
+                    <label className="text-xs font-bold uppercase tracking-wider text-primary mb-1 block">Valor Total do Pedido</label>
+                    <p className="text-2xl font-black text-primary tabular-nums">
+                      R$ {parseFloat(viewingOrder.totalAmount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Valor Total</label>
-                  <p className="mt-1 text-lg font-semibold">R$ {parseFloat(viewingOrder.totalAmount).toFixed(2)}</p>
-                </div>
+              <div className="p-4 bg-muted/20 border-t flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setViewDialogOpen(false)} className="hover-elevate">
+                  Fechar
+                </Button>
+                {viewingOrder.status === 'draft' && (
+                  <Button onClick={() => { setViewDialogOpen(false); handleEdit(viewingOrder); }} className="gap-2 bg-primary text-white hover:bg-primary/90 hover-elevate">
+                    <Edit className="w-4 h-4" />
+                    Editar Pedido
+                  </Button>
+                )}
               </div>
-
-              {viewingOrder.notes && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Observações</label>
-                  <p className="mt-1">{viewingOrder.notes}</p>
-                </div>
-              )}
             </div>
           )}
         </DialogContent>
