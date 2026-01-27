@@ -4225,6 +4225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const trialCount = allCompanies.filter(c => {
         if (!c.trialEndDate) return false;
         const trialExpiry = new Date(c.trialEndDate);
+        trialExpiry.setHours(23, 59, 59, 999); // Incluir o dia inteiro
         const isTrialActive = trialExpiry >= now;
         const hasNoSubscription = !c.subscriptionStartDate || new Date(c.subscriptionStartDate) > now;
         return isTrialActive && hasNoSubscription;
@@ -4235,8 +4236,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const subStart = new Date(c.subscriptionStartDate);
         if (subStart > now) return false;
         
-        if (!c.subscriptionEndDate) return true; // Infinite/renewing subscription
+        if (!c.subscriptionEndDate) return true;
         const subEnd = new Date(c.subscriptionEndDate);
+        subEnd.setHours(23, 59, 59, 999); // Incluir o dia inteiro
         return subEnd >= now;
       }).length;
 
@@ -4245,12 +4247,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (hasStartedSubscription) {
           if (!c.subscriptionEndDate) return false;
-          return new Date(c.subscriptionEndDate) < now;
+          const subEnd = new Date(c.subscriptionEndDate);
+          subEnd.setHours(23, 59, 59, 999);
+          return subEnd < now;
         }
         
-        // If never had a subscription, check if trial is expired
         if (c.trialEndDate) {
-          return new Date(c.trialEndDate) < now;
+          const trialEnd = new Date(c.trialEndDate);
+          trialEnd.setHours(23, 59, 59, 999);
+          return trialEnd < now;
         }
         
         return false;
