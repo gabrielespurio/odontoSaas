@@ -142,7 +142,7 @@ export default function Settings() {
   });
 
   // Fetch user profiles
-  const { data: profiles, isLoading: profilesLoading } = useQuery<UserProfile[]>({
+  const { data: rawProfiles, isLoading: profilesLoading } = useQuery<UserProfile[]>({
     queryKey: ["/api/user-profiles", { companyId: companyFilter }],
     queryFn: async () => {
       const token = localStorage.getItem("token");
@@ -168,6 +168,11 @@ export default function Settings() {
       return response.json();
     },
   });
+
+  // Remove duplicates from the list (keeping only unique names)
+  const profiles = rawProfiles ? rawProfiles.filter((profile, index, self) =>
+    index === self.findIndex((p) => p.name === profile.name)
+  ) : [];
 
   // User form
   const userForm = useForm<UserFormData>({
