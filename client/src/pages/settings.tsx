@@ -522,46 +522,51 @@ export default function Settings() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {usersPagination.currentData.map((user: User) => (
-                            <TableRow key={user.id}>
-                              <TableCell className="font-medium">{user.name}</TableCell>
-                              <TableCell>{user.email}</TableCell>
-                              <TableCell>
-                                <Badge variant={getRoleBadgeVariant(user.role)}>
-                                  {getRoleLabel(user.role)}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Badge 
-                                  variant={user.dataScope === "all" ? "default" : "secondary"}
-                                >
-                                  {user.dataScope === "all" ? "Todos os dados" : "Dados próprios"}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm">
-                                      <MoreHorizontal className="w-4 h-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                                      <Edit className="w-4 h-4 mr-2" />
-                                      Editar
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem 
-                                      onClick={() => handleDeleteUser(user)}
-                                      className="text-red-600"
-                                    >
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                      Excluir
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                          {usersPagination.currentData.map((user: User) => {
+                            const isSystemProfile = ["Administrador", "Dentista", "Recepcionista"].includes(user.role);
+                            return (
+                              <TableRow key={user.id}>
+                                <TableCell className="font-medium">{user.name}</TableCell>
+                                <TableCell>{user.email}</TableCell>
+                                <TableCell>
+                                  <Badge variant={getRoleBadgeVariant(user.role.toLowerCase())}>
+                                    {user.role}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge 
+                                    variant={user.dataScope === "all" ? "default" : "secondary"}
+                                  >
+                                    {user.dataScope === "all" ? "Todos os dados" : "Dados próprios"}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="sm">
+                                        <MoreHorizontal className="w-4 h-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                                        <Edit className="w-4 h-4 mr-2" />
+                                        Editar
+                                      </DropdownMenuItem>
+                                      {!isSystemProfile && (
+                                        <DropdownMenuItem 
+                                          onClick={() => handleDeleteUser(user)}
+                                          className="text-red-600"
+                                        >
+                                          <Trash2 className="w-4 h-4 mr-2" />
+                                          Excluir
+                                        </DropdownMenuItem>
+                                      )}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </div>
@@ -635,7 +640,7 @@ export default function Settings() {
             {/* Perfis Tab */}
             <TabsContent value="profiles" className="space-y-4 mt-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Perfis de Usuário</h3>
+                <h3 className="text-lg font-semibold">Perfis de Acesso</h3>
                 <Button 
                   onClick={() => {
                     setEditingProfile(null);
@@ -655,29 +660,53 @@ export default function Settings() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {profiles?.map((profile) => (
-                    <Card key={profile.id}>
-                      <CardContent className="flex items-center justify-between p-4">
-                        <div className="flex-1">
-                          <h4 className="font-medium">{profile.name}</h4>
-                          <p className="text-sm text-gray-600">{profile.description}</p>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEditProfile(profile)}>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {profiles?.map((profile) => {
+                    const isSystemProfile = ["Administrador", "Dentista", "Recepcionista"].includes(profile.name);
+                    return (
+                      <Card key={profile.id}>
+                        <CardContent className="flex items-center justify-between p-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium">{profile.name}</h4>
+                              {isSystemProfile && (
+                                <Badge variant="secondary" className="text-[10px] h-4">Sistema</Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600">{profile.description}</p>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditProfile(profile)}>
+                                <Eye className="w-4 h-4 mr-2" />
+                                {isSystemProfile ? "Visualizar" : "Editar"}
+                              </DropdownMenuItem>
+                              {!isSystemProfile && (
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    if (confirm("Deseja realmente excluir este perfil?")) {
+                                      apiRequest("DELETE", `/api/user-profiles/${profile.id}`).then(() => {
+                                        queryClient.invalidateQueries({ queryKey: ["/api/user-profiles"] });
+                                        toast({ title: "Perfil excluído com sucesso" });
+                                      });
+                                    }
+                                  }}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </TabsContent>
@@ -858,52 +887,56 @@ export default function Settings() {
               <FormField
                 control={profileForm.control}
                 name="modules"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>Módulos</FormLabel>
-                    <div className="space-y-2">
-                      {SYSTEM_MODULES.map((module) => (
-                        <FormField
-                          key={module.id}
-                          control={profileForm.control}
-                          name="modules"
-                          render={({ field }) => {
-                            const currentModules = field.value || [];
-                            return (
-                              <FormItem key={module.id} className="flex items-start space-x-3">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={currentModules.includes(module.id)}
-                                    onCheckedChange={(checked) => {
-                                      if (checked) {
-                                        field.onChange([...currentModules, module.id]);
-                                      } else {
-                                        field.onChange(
-                                          currentModules?.filter(
-                                            (value) => value !== module.id
-                                          )
-                                        );
-                                      }
-                                    }}
-                                  />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                  <FormLabel className="text-sm font-normal">
-                                    {module.name}
-                                  </FormLabel>
-                                  <FormDescription className="text-xs">
-                                    {module.description}
-                                  </FormDescription>
-                                </div>
-                              </FormItem>
-                            );
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={() => {
+                  const isSystemProfile = ["Administrador", "Dentista", "Recepcionista"].includes(editingProfile?.name || "");
+                  return (
+                    <FormItem>
+                      <FormLabel>Módulos</FormLabel>
+                      <div className="space-y-2">
+                        {SYSTEM_MODULES.map((module) => (
+                          <FormField
+                            key={module.id}
+                            control={profileForm.control}
+                            name="modules"
+                            render={({ field }) => {
+                              const currentModules = field.value || [];
+                              return (
+                                <FormItem key={module.id} className="flex items-start space-x-3">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={currentModules.includes(module.id)}
+                                      disabled={isSystemProfile}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          field.onChange([...currentModules, module.id]);
+                                        } else {
+                                          field.onChange(
+                                            currentModules?.filter(
+                                              (value) => value !== module.id
+                                            )
+                                          );
+                                        }
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel className="text-sm font-normal">
+                                      {module.name}
+                                    </FormLabel>
+                                    <FormDescription className="text-xs">
+                                      {module.description}
+                                    </FormDescription>
+                                  </div>
+                                </FormItem>
+                              );
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
               <div className="flex justify-end space-x-2">
                 <Button 
@@ -911,15 +944,17 @@ export default function Settings() {
                   variant="outline" 
                   onClick={() => setShowProfileForm(false)}
                 >
-                  Cancelar
+                  {["Administrador", "Dentista", "Recepcionista"].includes(editingProfile?.name || "") ? "Fechar" : "Cancelar"}
                 </Button>
-                <Button 
-                  type="submit"
-                  className="bg-teal-600 hover:bg-teal-700"
-                  disabled={createProfileMutation.isPending || updateProfileMutation.isPending}
-                >
-                  {editingProfile ? "Atualizar" : "Criar"}
-                </Button>
+                {!["Administrador", "Dentista", "Recepcionista"].includes(editingProfile?.name || "") && (
+                  <Button 
+                    type="submit"
+                    className="bg-teal-600 hover:bg-teal-700"
+                    disabled={createProfileMutation.isPending || updateProfileMutation.isPending}
+                  >
+                    {editingProfile ? "Atualizar" : "Criar"}
+                  </Button>
+                )}
               </div>
             </form>
           </Form>
