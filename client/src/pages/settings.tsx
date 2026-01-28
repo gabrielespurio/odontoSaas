@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Users, Settings2, Edit, MoreHorizontal, Trash2, FolderPlus, Bell, MessageCircle } from "lucide-react";
+import { Plus, Users, Settings2, Edit, MoreHorizontal, Trash2, FolderPlus, Bell, MessageCircle, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useCompanyFilter } from "@/contexts/company-context";
