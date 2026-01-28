@@ -887,50 +887,39 @@ export default function Settings() {
               <FormField
                 control={profileForm.control}
                 name="modules"
-                render={() => {
+                render={({ field }) => {
                   const isSystemProfile = ["Administrador", "Dentista", "Recepcionista"].includes(editingProfile?.name || "");
                   return (
                     <FormItem>
                       <FormLabel>Módulos</FormLabel>
                       <div className="space-y-2">
                         {SYSTEM_MODULES.map((module) => (
-                          <FormField
-                            key={module.id}
-                            control={profileForm.control}
-                            name="modules"
-                            render={({ field }) => {
-                              const currentModules = field.value || [];
-                              return (
-                                <FormItem key={module.id} className="flex items-start space-x-3">
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={currentModules.includes(module.id)}
-                                      disabled={isSystemProfile}
-                                      onCheckedChange={(checked) => {
-                                        if (checked) {
-                                          field.onChange([...currentModules, module.id]);
-                                        } else {
-                                          field.onChange(
-                                            currentModules?.filter(
-                                              (value) => value !== module.id
-                                            )
-                                          );
-                                        }
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <div className="space-y-1 leading-none">
-                                    <FormLabel className="text-sm font-normal">
-                                      {module.name}
-                                    </FormLabel>
-                                    <FormDescription className="text-xs">
-                                      {module.description}
-                                    </FormDescription>
-                                  </div>
-                                </FormItem>
-                              );
-                            }}
-                          />
+                          <FormItem key={module.id} className="flex items-start space-x-3">
+                            <FormControl>
+                              <Checkbox
+                                checked={(field.value || []).includes(module.id)}
+                                disabled={isSystemProfile}
+                                onCheckedChange={(checked) => {
+                                  const currentModules = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...currentModules, module.id]);
+                                  } else {
+                                    field.onChange(
+                                      currentModules.filter((id: string) => id !== module.id)
+                                    );
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-sm font-normal">
+                                {module.name}
+                              </FormLabel>
+                              <FormDescription className="text-xs">
+                                {module.description}
+                              </FormDescription>
+                            </div>
+                          </FormItem>
                         ))}
                       </div>
                       <FormMessage />
