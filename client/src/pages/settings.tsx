@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -169,10 +169,20 @@ export default function Settings() {
     },
   });
 
-  // Remove duplicates from the list (keeping only unique names)
-  const profiles = rawProfiles ? rawProfiles.filter((profile, index, self) =>
-    index === self.findIndex((p) => p.name.trim().toLowerCase() === profile.name.trim().toLowerCase())
-  ) : [];
+  // Remove duplicates and add native profiles
+  const profiles = useMemo(() => {
+    const systemProfiles: UserProfile[] = [
+      { id: -1, name: "Administrador", description: "Acesso total ao sistema", modules: [], companyId: null },
+      { id: -2, name: "Dentista", description: "Acesso a pacientes e prontuários", modules: [], companyId: null },
+      { id: -3, name: "Recepcionista", description: "Acesso a agenda e pacientes", modules: [], companyId: null },
+    ];
+
+    const allProfiles = rawProfiles ? [...systemProfiles, ...rawProfiles] : systemProfiles;
+    
+    return allProfiles.filter((profile, index, self) =>
+      index === self.findIndex((p) => p.name.trim().toLowerCase() === profile.name.trim().toLowerCase())
+    );
+  }, [rawProfiles]);
 
   // User form
   const userForm = useForm<UserFormData>({
