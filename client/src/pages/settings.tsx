@@ -172,9 +172,27 @@ export default function Settings() {
   // Remove duplicates and add native profiles
   const profiles = useMemo(() => {
     const systemProfiles: UserProfile[] = [
-      { id: -1, name: "Administrador", description: "Acesso total ao sistema", modules: [], companyId: null },
-      { id: -2, name: "Dentista", description: "Acesso a pacientes e prontuários", modules: [], companyId: null },
-      { id: -3, name: "Recepcionista", description: "Acesso a agenda e pacientes", modules: [], companyId: null },
+      { 
+        id: -1, 
+        name: "Administrador", 
+        description: "Acesso total ao sistema", 
+        modules: ["dashboard", "patients", "appointments", "consultations", "procedures", "financial", "purchases", "inventory", "reports", "settings", "company", "management"], 
+        companyId: null 
+      },
+      { 
+        id: -2, 
+        name: "Dentista", 
+        description: "Acesso a pacientes e prontuários", 
+        modules: ["dashboard", "patients", "appointments", "consultations", "procedures", "reports"], 
+        companyId: null 
+      },
+      { 
+        id: -3, 
+        name: "Recepcionista", 
+        description: "Acesso a agenda e pacientes", 
+        modules: ["dashboard", "patients", "appointments", "reports"], 
+        companyId: null 
+      },
     ];
 
     const allProfiles = rawProfiles ? [...systemProfiles, ...rawProfiles] : systemProfiles;
