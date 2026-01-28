@@ -171,7 +171,7 @@ export default function Settings() {
 
   // Remove duplicates from the list (keeping only unique names)
   const profiles = rawProfiles ? rawProfiles.filter((profile, index, self) =>
-    index === self.findIndex((p) => p.name === profile.name)
+    index === self.findIndex((p) => p.name.trim().toLowerCase() === profile.name.trim().toLowerCase())
   ) : [];
 
   // User form
