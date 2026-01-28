@@ -176,7 +176,7 @@ export default function Settings() {
         id: -1, 
         name: "Administrador", 
         description: "Acesso total ao sistema", 
-        modules: ["dashboard", "patients", "appointments", "consultations", "procedures", "financial", "purchases", "inventory", "reports", "settings", "company", "management"], 
+        modules: ["dashboard", "patients", "agenda", "appointments", "consultations", "procedures", "financial", "purchases", "inventory", "reports", "settings", "company", "management"], 
         companyId: null 
       },
       { 
