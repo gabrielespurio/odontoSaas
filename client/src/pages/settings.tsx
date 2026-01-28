@@ -771,13 +771,15 @@ export default function Settings() {
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Selecione um perfil" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="admin">Administrador</SelectItem>
-                        <SelectItem value="dentist">Dentista</SelectItem>
-                        <SelectItem value="reception">Recepcionista</SelectItem>
+                        {profiles?.map((profile) => (
+                          <SelectItem key={profile.id} value={profile.name}>
+                            {profile.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
