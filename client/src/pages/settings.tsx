@@ -142,7 +142,7 @@ export default function Settings() {
   });
 
   // Fetch user profiles
-  const { data: rawProfiles, isLoading: profilesLoading } = useQuery<UserProfile[]>({
+  const { data: profiles, isLoading: profilesLoading } = useQuery<UserProfile[]>({
     queryKey: ["/api/user-profiles", { companyId: companyFilter }],
     queryFn: async () => {
       const token = localStorage.getItem("token");
@@ -168,39 +168,6 @@ export default function Settings() {
       return response.json();
     },
   });
-
-  // Remove duplicates and add native profiles
-  const profiles = useMemo(() => {
-    const systemProfiles: UserProfile[] = [
-      { 
-        id: -1, 
-        name: "Administrador", 
-        description: "Acesso total ao sistema", 
-        modules: ["dashboard", "patients", "appointments", "consultations", "procedures", "financial", "purchases", "inventory", "reports", "settings", "company", "management"], 
-        companyId: null 
-      },
-      { 
-        id: -2, 
-        name: "Dentista", 
-        description: "Acesso a pacientes e prontuários", 
-        modules: ["dashboard", "patients", "appointments", "consultations", "procedures", "reports"], 
-        companyId: null 
-      },
-      { 
-        id: -3, 
-        name: "Recepcionista", 
-        description: "Acesso a agenda e pacientes", 
-        modules: ["dashboard", "patients", "appointments", "reports"], 
-        companyId: null 
-      },
-    ];
-
-    const allProfiles = rawProfiles ? [...systemProfiles, ...rawProfiles] : systemProfiles;
-    
-    return allProfiles.filter((profile, index, self) =>
-      index === self.findIndex((p) => p.name.trim().toLowerCase() === profile.name.trim().toLowerCase())
-    );
-  }, [rawProfiles]);
 
   // User form
   const userForm = useForm<UserFormData>({
@@ -699,12 +666,7 @@ export default function Settings() {
                       <Card key={profile.id}>
                         <CardContent className="flex items-center justify-between p-4">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-medium">{profile.name}</h4>
-                              {isSystemProfile && (
-                                <Badge variant="secondary" className="text-[10px] h-4">Sistema</Badge>
-                              )}
-                            </div>
+                            <h4 className="font-medium">{profile.name}</h4>
                             <p className="text-sm text-gray-600">{profile.description}</p>
                           </div>
                           <DropdownMenu>
@@ -714,34 +676,24 @@ export default function Settings() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => {
-                                setEditingProfile(profile);
-                                profileForm.reset({
-                                  name: profile.name,
-                                  description: profile.description,
-                                  modules: profile.modules || [],
-                                });
-                                setShowProfileForm(true);
-                              }}>
+                              <DropdownMenuItem onClick={() => handleEditProfile(profile)}>
                                 <Eye className="w-4 h-4 mr-2" />
-                                {isSystemProfile ? "Visualizar" : "Editar"}
+                                Editar
                               </DropdownMenuItem>
-                              {!isSystemProfile && (
-                                <DropdownMenuItem 
-                                  onClick={() => {
-                                    if (confirm("Deseja realmente excluir este perfil?")) {
-                                      apiRequest("DELETE", `/api/user-profiles/${profile.id}`).then(() => {
-                                        queryClient.invalidateQueries({ queryKey: ["/api/user-profiles"] });
-                                        toast({ title: "Perfil excluído com sucesso" });
-                                      });
-                                    }
-                                  }}
-                                  className="text-red-600"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Excluir
-                                </DropdownMenuItem>
-                              )}
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  if (confirm("Deseja realmente excluir este perfil?")) {
+                                    apiRequest("DELETE", `/api/user-profiles/${profile.id}`).then(() => {
+                                      queryClient.invalidateQueries({ queryKey: ["/api/user-profiles"] });
+                                      toast({ title: "Perfil excluído com sucesso" });
+                                    });
+                                  }
+                                }}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Excluir
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </CardContent>
@@ -929,7 +881,6 @@ export default function Settings() {
                 control={profileForm.control}
                 name="modules"
                 render={({ field }) => {
-                  const isSystemProfile = ["Administrador", "Dentista", "Recepcionista"].includes(editingProfile?.name || "");
                   return (
                     <FormItem>
                       <FormLabel>Módulos</FormLabel>
@@ -939,7 +890,6 @@ export default function Settings() {
                             <FormControl>
                               <Checkbox
                                 checked={(field.value || []).includes(module.id)}
-                                disabled={isSystemProfile}
                                 onCheckedChange={(checked) => {
                                   const currentModules = field.value || [];
                                   if (checked) {
@@ -974,17 +924,15 @@ export default function Settings() {
                   variant="outline" 
                   onClick={() => setShowProfileForm(false)}
                 >
-                  {["Administrador", "Dentista", "Recepcionista"].includes(editingProfile?.name || "") ? "Fechar" : "Cancelar"}
+                  Cancelar
                 </Button>
-                {!["Administrador", "Dentista", "Recepcionista"].includes(editingProfile?.name || "") && (
-                  <Button 
-                    type="submit"
-                    className="bg-teal-600 hover:bg-teal-700"
-                    disabled={createProfileMutation.isPending || updateProfileMutation.isPending}
-                  >
-                    {editingProfile ? "Atualizar" : "Criar"}
-                  </Button>
-                )}
+                <Button 
+                  type="submit"
+                  className="bg-teal-600 hover:bg-teal-700"
+                  disabled={createProfileMutation.isPending || updateProfileMutation.isPending}
+                >
+                  {editingProfile ? "Atualizar" : "Criar"}
+                </Button>
               </div>
             </form>
           </Form>
