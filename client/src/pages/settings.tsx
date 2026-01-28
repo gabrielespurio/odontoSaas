@@ -494,7 +494,14 @@ export default function Settings() {
                   <Button 
                     onClick={() => {
                       setEditingUser(null);
-                      userForm.reset();
+                      userForm.reset({
+                        name: "",
+                        email: "",
+                        password: "",
+                        role: "",
+                        dataScope: "all",
+                        forcePasswordChange: false,
+                      });
                       setShowUserForm(true);
                     }}
                     className="bg-teal-600 hover:bg-teal-700 gap-2"
