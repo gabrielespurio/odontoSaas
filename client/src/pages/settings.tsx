@@ -714,7 +714,15 @@ export default function Settings() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditProfile(profile)}>
+                              <DropdownMenuItem onClick={() => {
+                                setEditingProfile(profile);
+                                profileForm.reset({
+                                  name: profile.name,
+                                  description: profile.description,
+                                  modules: profile.modules || [],
+                                });
+                                setShowProfileForm(true);
+                              }}>
                                 <Eye className="w-4 h-4 mr-2" />
                                 {isSystemProfile ? "Visualizar" : "Editar"}
                               </DropdownMenuItem>
